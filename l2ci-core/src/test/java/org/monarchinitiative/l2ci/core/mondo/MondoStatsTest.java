@@ -18,8 +18,8 @@ public class MondoStatsTest {
     @BeforeAll
     public static void setup() {
         ClassLoader classLoader = HPOParserTest.class.getClassLoader();
-        String hpoFilePath=classLoader.getResource("hp.json").getFile();
-        HPOParser parser = new HPOParser(hpoFilePath);
+        String mondoFilePath=classLoader.getResource("mondo.json").getFile();
+        HPOParser parser = new HPOParser(mondoFilePath);
         assertNotNull(parser);
         Ontology ont = parser.getHPO();
         assertNotNull(ont);
@@ -31,42 +31,42 @@ public class MondoStatsTest {
         Map<String, String> metaInfo = mondo.getMetaInfo();
         assertNotNull(metaInfo.keySet());
         assertNotNull(metaInfo.entrySet());
-        assertEquals(metaInfo.get("data-version"), "http://purl.obolibrary.org/obo/hp/releases/2022-02-14/hp.json");
+        assertEquals(metaInfo.get("data-version"), "http://purl.obolibrary.org/obo/mondo/releases/2022-04-04/mondo.owl");
     }
 
     @Test
     public void testNTerms() {
         int nTerms = mondo.getNTerms();
-        assertEquals(nTerms, 16480, 1e0);
+        assertEquals(nTerms, 25957, 1e0);
     }
 
     @Test
     public void testNAlternateTermIDs() {
         int nAlternateTermIDs = mondo.getNAlternateTermIDs();
-        assertEquals(nAlternateTermIDs, 321, 1e0);
+        assertEquals(nAlternateTermIDs, 2822, 1e0);
     }
 
     @Test
     public void testNNonObsoleteTerms() {
         int nNonObsoleteTerms = mondo.getNNonObsoleteTerms();
-        assertEquals(nNonObsoleteTerms, 16480, 1e0);
+        assertEquals(nNonObsoleteTerms, 25957, 1e0);
     }
 
     @Test
     public void testNRelations() {
         int nRelations = mondo.getNRelations();
-        assertEquals(nRelations, 20724, 1e0);
+        assertEquals(nRelations, 46377, 1e0);
     }
 
     @Test
     public void testNDefinitions() {
         int nDefinitions = mondo.getNDefinitions();
-        assertEquals(nDefinitions, 17281, 1e0);
+        assertEquals(nDefinitions, 15507, 1e0);
     }
 
     @Test
     public void testNSynonyms() {
         int nSynonyms = mondo.getNSynonyms();
-        assertEquals(nSynonyms, 37521, 1e0);
+        assertEquals(nSynonyms, 103074, 1e0);
     }
 }

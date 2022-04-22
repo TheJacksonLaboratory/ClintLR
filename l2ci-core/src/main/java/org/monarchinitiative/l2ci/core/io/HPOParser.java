@@ -1,11 +1,14 @@
 package org.monarchinitiative.l2ci.core.io;
 
 import org.monarchinitiative.phenol.io.OntologyLoader;
+import org.monarchinitiative.phenol.io.utils.CurieUtilBuilder;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
+import org.prefixcommons.CurieUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 public class HPOParser {
     private static Logger LOGGER = LoggerFactory.getLogger(HPOParser.class);
@@ -23,7 +26,8 @@ public class HPOParser {
             LOGGER.error(String.format("Unable to find HPO file at %s", path));
             return;
         }
-        this.hpo = OntologyLoader.loadOntology(new File(path));
+        CurieUtil newCurie = CurieUtilBuilder.withDefaultsAnd(Map.of("HGNC", "http://identifiers.org/hgnc/"));
+        this.hpo = OntologyLoader.loadOntology(new File(path), newCurie, "MONDO", "HGNC");
     }
 
     public Ontology getHPO() {

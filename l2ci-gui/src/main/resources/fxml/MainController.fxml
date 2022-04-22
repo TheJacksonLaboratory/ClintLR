@@ -20,108 +20,131 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.web.WebView?>
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.MainController">
-   <children>
-      <BorderPane prefHeight="1000.0" prefWidth="1200.0">
-         <top>
-            <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
-               <children>
-                  <MenuBar>
-                    <menus>
-                      <Menu mnemonicParsing="false" text="File">
-                        <items>
-                          <MenuItem fx:id="loadMenuItem" onAction="#loadFile" text="Load File" />
-                          <MenuItem fx:id="showMondoStatsMenuItem" onAction="#showMondoStats" text="Show Mondo Stats" />
-                          <MenuItem mnemonicParsing="false" text="Close" />
-                        </items>
-                      </Menu>
-                      <Menu mnemonicParsing="false" text="Edit">
-                        <items>
-                          <MenuItem mnemonicParsing="false" text="Delete" />
-                        </items>
-                      </Menu>
-                      <Menu mnemonicParsing="false" text="Help">
-                        <items>
-                          <MenuItem mnemonicParsing="false" text="About" />
-                        </items>
-                      </Menu>
-                    </menus>
-                  </MenuBar>
-               </children>
-            </HBox>
-         </top>
-          <center>
-              <SplitPane dividerPositions="0.5" focusTraversable="true" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1">
-                  <VBox BorderPane.alignment="CENTER">
-                      <Label styleClass="bluelabel" stylesheets="@../css/style.css" text="Browse HPO Terms">
+<?import javafx.scene.control.Slider?>
+<BorderPane prefHeight="1000.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.MainController">
+     <top>
+        <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
+           <children>
+              <MenuBar>
+                <menus>
+                  <Menu mnemonicParsing="false" text="File">
+                    <items>
+                      <MenuItem fx:id="loadMenuItem" onAction="#loadFile" text="Load Mondo File" />
+                      <MenuItem fx:id="showMondoStatsMenuItem" onAction="#showMondoStats" text="Show Mondo Stats" />
+                      <MenuItem mnemonicParsing="false" onAction="#close" text="Close" />
+                    </items>
+                  </Menu>
+                  <Menu mnemonicParsing="false" text="Edit">
+                    <items>
+                      <MenuItem mnemonicParsing="false" text="Delete" />
+                    </items>
+                  </Menu>
+                  <Menu mnemonicParsing="false" text="Help">
+                    <items>
+                      <MenuItem mnemonicParsing="false" text="About" />
+                    </items>
+                  </Menu>
+                </menus>
+              </MenuBar>
+           </children>
+        </HBox>
+     </top>
+      <center>
+          <SplitPane dividerPositions="0.5" focusTraversable="true" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1">
+              <VBox BorderPane.alignment="CENTER">
+                  <Label styleClass="bluelabel" stylesheets="@../css/style.css" text="Browse HPO Terms">
+                      <VBox.margin>
+                          <Insets bottom="5.0" left="15.0" top="5.0" />
+                      </VBox.margin>
+                  </Label>
+                  <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
+                      <TextField fx:id="autocompleteTextfield" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="320.0" promptText="autocomplete HPO term...">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                          </HBox.margin>
+                      </TextField>
+                      <Button minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#goButtonAction" styleClass="Button" stylesheets="@../css/style.css" text="Go" textOverrun="CLIP">
+                          <tooltip>
+                              <Tooltip text="tell me what to do" />
+                          </tooltip>
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
+                          </HBox.margin>
+                      </Button>
+                  </HBox>
+                  <Label styleClass="bluelabel" stylesheets="@../css/style.css" text="Pretest Probability">
+                      <VBox.margin>
+                          <Insets bottom="5.0" left="15.0" top="5.0" />
+                      </VBox.margin>
+                  </Label>
+                  <HBox>
+                      <Slider fx:id="probSlider" prefWidth="200">
                           <VBox.margin>
                               <Insets bottom="5.0" left="15.0" top="5.0" />
                           </VBox.margin>
-                      </Label>
-                      <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
-                          <TextField fx:id="autocompleteTextfield" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="320.0" promptText="autocomplete HPO term...">
-                              <HBox.margin>
-                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                              </HBox.margin>
-                          </TextField>
-                          <Button minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#goButtonAction" styleClass="Button" stylesheets="@../css/style.css" text="Go" textOverrun="CLIP">
-                              <tooltip>
-                                  <Tooltip text="tell me what to do" />
-                              </tooltip>
-                              <HBox.margin>
-                                  <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
-                              </HBox.margin>
-                          </Button>
-                      </HBox>
-                      <HBox>
-                          <Label minWidth="300.0" styleClass="smallfontlabel" stylesheets="@../css/style.css">
-                              <HBox.margin>
-                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                              </HBox.margin>
-                          </Label>
-                      </HBox>
-                      <TreeView fx:id="ontologyTreeView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                      </Slider>
+                      <TextField fx:id="sliderTextField" prefWidth="50.0">
                           <VBox.margin>
-                              <Insets left="5.0" right="5.0" top="5.0" />
+                              <Insets bottom="5.0" left="15.0" top="5.0" />
                           </VBox.margin>
-                      </TreeView>
-                  </VBox>
+                      </TextField>
+                      <Button minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#liricalButtonAction" styleClass="Button" stylesheets="@../css/style.css" text="Run LIRICAL" textOverrun="CLIP">
+                          <tooltip>
+                              <Tooltip text="Run LIRICAL" />
+                          </tooltip>
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
+                          </HBox.margin>
+                      </Button>
+                  </HBox>
+                  <HBox>
+                      <Label minWidth="300.0" styleClass="smallfontlabel" stylesheets="@../css/style.css">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                          </HBox.margin>
+                      </Label>
+                  </HBox>
+                  <TreeView fx:id="ontologyTreeView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                      <VBox.margin>
+                          <Insets left="5.0" right="5.0" top="5.0" />
+                      </VBox.margin>
+                  </TreeView>
+              </VBox>
 
-                  <AnchorPane>
-                      <WebView fx:id="infoWebView" maxHeight="-1.0" minHeight="-1.0" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="130.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
-                      <HBox prefHeight="130.0" AnchorPane.bottomAnchor="1.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
-                          <GridPane>
-                              <columnConstraints>
-                                  <ColumnConstraints hgrow="SOMETIMES" />
-                                  <ColumnConstraints hgrow="SOMETIMES" minWidth="-Infinity" />
-                              </columnConstraints>
-                              <rowConstraints>
-                                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                              </rowConstraints>
-                              <HBox.margin>
-                                  <Insets bottom="5.0" left="20.0" right="20.0" top="5.0" />
-                              </HBox.margin>
-                          </GridPane>
-                      </HBox>
-                  </AnchorPane>
-              </SplitPane>
-          </center>
-          <bottom>
-              <StackPane BorderPane.alignment="CENTER_LEFT">
-                  <AnchorPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="140.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
-                      <HBox fx:id="statusHBox" alignment="CENTER_LEFT" />
-                      <HBox AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                          <Label fx:id="copyrightLabel" minHeight="20.0" HBox.hgrow="ALWAYS">
-                              <HBox.margin>
-                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                              </HBox.margin>
-                          </Label>
-                      </HBox>
-                  </AnchorPane>
-              </StackPane>
-          </bottom>
-      </BorderPane>
-   </children>
-</AnchorPane>
+              <AnchorPane>
+                  <WebView fx:id="infoWebView" maxHeight="-1.0" minHeight="-1.0" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="130.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
+                  <HBox prefHeight="130.0" AnchorPane.bottomAnchor="1.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                      <GridPane>
+                          <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="-Infinity" />
+                          </columnConstraints>
+                          <rowConstraints>
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="20.0" right="20.0" top="5.0" />
+                          </HBox.margin>
+                      </GridPane>
+                  </HBox>
+              </AnchorPane>
+          </SplitPane>
+      </center>
+      <bottom>
+          <StackPane BorderPane.alignment="CENTER_LEFT">
+              <AnchorPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="140.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+                  <HBox fx:id="statusHBox" alignment="CENTER_LEFT" />
+                  <HBox AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                      <Label fx:id="copyrightLabel" minHeight="20.0" HBox.hgrow="ALWAYS">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                          </HBox.margin>
+                      </Label>
+                  </HBox>
+              </AnchorPane>
+          </StackPane>
+      </bottom>
+</BorderPane>
+
