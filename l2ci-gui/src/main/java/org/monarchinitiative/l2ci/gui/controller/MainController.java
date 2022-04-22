@@ -10,6 +10,7 @@ import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.web.WebEngine;
@@ -104,6 +105,16 @@ public class MainController {
     @FXML
     private TreeView<OntologyTermWrapper> ontologyTreeView;
 
+    /**
+     * Slider to adjust pretest probability before running LIRICAL
+     */
+    @FXML
+    private Slider probSlider = new Slider();
+    @FXML
+    private TextField sliderTextField = new TextField();
+
+    private double preTestProb;
+
     public enum MessageType {
         INFO, WARNING, ERROR
     }
@@ -144,7 +155,30 @@ public class MainController {
         });
         this.executor.submit(task);
         String ver = MainController.getVersion();
-        copyrightLabel.setText("L4CI, v. " + ver + ", \u00A9 Monarch Initiative 2017-2021");
+        copyrightLabel.setText("L4CI, v. " + ver + ", \u00A9 Monarch Initiative 2022");
+        probSlider.setMin(0);
+        probSlider.setMax(1);
+        probSlider.setValue(0.5);
+        probSlider.setMajorTickUnit(0.25);
+        probSlider.setShowTickLabels(true);
+        probSlider.setShowTickMarks(true);
+        preTestProb = probSlider.getValue();
+        probSlider.valueProperty().addListener(e -> sliderAction());
+        sliderTextField.setText(String.valueOf(probSlider.getValue()));
+        sliderTextField.setOnKeyReleased(event ->  {
+            if (event.getCode().equals(KeyCode.ENTER)) {
+                String text = sliderTextField.textProperty().get();
+                if (!text.equals("")) {
+                    try {
+                        double value = Double.parseDouble(text);
+                        adjustLimits(probSlider, value);
+                        probSlider.setValue(value);
+                    } catch (NumberFormatException nfe) {
+                        nfe.printStackTrace();
+                    }
+                }
+            }
+        });
 
         ChangeListener<? super Object> listener = (obs, oldval, newval) -> activateIfResourcesAvailable();
         optionalHpoResource.ontologyProperty().addListener(listener);
@@ -158,7 +192,8 @@ public class MainController {
     @FXML
     public void loadFile(Event e) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("HPO JSON File", "*.json"));
+        fileChooser.setTitle("Import Local Mondo JSON File");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Mondo JSON File", "*.json"));
         Stage stage = MainApp.mainStage;
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
@@ -166,7 +201,10 @@ public class MainController {
             HPOParser parser = new HPOParser(mondoJsonPath);
             ont = parser.getHPO();
             if (ont != null) {
-                System.out.println("Loaded Ontology " + ont.toString() + " from file " + file.getAbsolutePath());
+                optionalHpoResource.setOntology(ont);
+                pgProperties.setProperty("hpo.json.path", mondoJsonPath);
+                logger.info("Loaded Ontology {} from file {}", ont.toString(), file.getAbsolutePath());
+                activateOntologyTree();
             }
         }
     }
@@ -174,6 +212,7 @@ public class MainController {
     @FXML
     public void showMondoStats(ActionEvent actionEvent) {
         if (ont != null) {
+            System.out.println("Mondo Stats for Ontology " + ont.toString() + ":\n");
             MondoStats mondo = new MondoStats(ont);
             mondo.run();
         } else {
@@ -181,6 +220,12 @@ public class MainController {
             alert.setContentText("Cannot show Mondo Stats. No active Ontology.");
             alert.showAndWait();
         }
+    }
+
+    @FXML
+    private void close(ActionEvent e) {
+        logger.trace("Closing down");
+        Platform.exit();
     }
 
     private void activateIfResourcesAvailable() {
@@ -255,7 +300,7 @@ public class MainController {
         } catch (Exception e) {
             // do nothing
         }
-        if (version == null) version = "1.6.0"; // this works on a maven build but needs to be reassigned in intellij
+        if (version == null) version = "0.0.1"; // this works on a maven build but needs to be reassigned in intellij
         return version;
     }
 
@@ -341,11 +386,11 @@ public class MainController {
         if (treeItem == null)
             return;
         Term term = treeItem.getValue().term;
-        if (optionalHpoaResource.getIndirectAnnotMap() == null) {
-            logger.error("Attempt to get Indirect annotation map but it was null");
-            return;
-        }
-        List<HpoDisease> annotatedDiseases =  optionalHpoaResource.getIndirectAnnotMap().getOrDefault(term.id(), List.of());
+//        if (optionalHpoaResource.getIndirectAnnotMap() == null) {
+//            logger.error("Attempt to get Indirect annotation map but it was null");
+//            return;
+//        }
+        List<HpoDisease> annotatedDiseases =  new ArrayList<>();//optionalHpoaResource.getIndirectAnnotMap().getOrDefault(term.id(), List.of());
         int n_descendents = 42;//getDescendents(model.getHpoOntology(),term.getId()).size();
         //todo--add number of descendents to HTML
         String content = HpoHtmlPageGenerator.getHTML(term, annotatedDiseases);
@@ -396,6 +441,41 @@ public class MainController {
         }
         expandUntilTerm(term);
         autocompleteTextfield.clear();
+    }
+
+    private void updateLimits(Slider slider, double min, double max) {
+        slider.setMin(min);
+        slider.setMax(max);
+        double range = max - min;
+        double incValue = range/4;
+        slider.setMajorTickUnit(incValue);
+    }
+
+    private void adjustLimits(Slider slider, double value) {
+        double curMin = slider.getMin();
+        double curMax = slider.getMax();
+        if (value > curMax) {
+            double newMax = value * 2.0;
+            while (newMax < value) {
+                newMax *= 2.0;
+            }
+            updateLimits(slider, curMin, newMax);
+            slider.setValue(value);
+        } else if (value <= curMax / 4.0) {
+            double newMax = curMax / 4.0;
+            updateLimits(slider, curMin, newMax);
+            slider.setValue(value);
+        }
+    }
+
+    private void sliderAction() {
+        preTestProb = probSlider.getValue();
+        sliderTextField.setText(String.valueOf(preTestProb));
+    }
+
+    @FXML
+    public void liricalButtonAction(ActionEvent actionEvent) {
+        System.out.println("Pretest Probability = " + preTestProb);
     }
 
     /**
