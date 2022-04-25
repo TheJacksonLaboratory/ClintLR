@@ -31,12 +31,18 @@ class HpoHtmlPageGenerator {
         String comment = (term.getComment() == null) ? "-" : term.getComment();
         String diseaseTable = getDiseaseTableHTML(annotatedDiseases, termID);
         List<SimpleXref> pmids=term.getPmidXrefs();
+        List<SimpleXref> xrefs = term.getDatabaseXrefs();
         String pmidList;
         if (pmids.isEmpty())
             pmidList="-";
         else
             pmidList= pmids.stream().map(SimpleXref::getCurie).collect(Collectors.joining(": "));
-        return String.format(HTML_TEMPLATE, CSS, term.getName(), termID, definition, comment, synonyms, pmidList,diseaseTable);
+        String xrefList;
+        if (xrefs.isEmpty())
+            xrefList="-";
+        else
+            xrefList= xrefs.stream().map(SimpleXref::getCurie).collect(Collectors.joining(": "));
+        return String.format(HTML_TEMPLATE, CSS, term.getName(), termID, definition, comment, synonyms, pmidList, xrefList, diseaseTable);
     }
 
     /**
@@ -62,7 +68,7 @@ class HpoHtmlPageGenerator {
                   </thead>
                   <tfoot>
                     <tr>
-                      <td colspan="2">More information: <a href="http://www.human-phenotype-ontology.org">HPO Website</a></td>
+                      <td colspan="2">More information: <a href="https://mondo.monarchinitiative.org/">Mondo Website</a></td>
                     </tr>
                   </tfoot>""".indent(2), Id, diseases.size());
         StringBuilder sb = new StringBuilder();
@@ -226,6 +232,7 @@ class HpoHtmlPageGenerator {
             "<p><b>Comment:</b> %s</p>" +
             "<p><b>Synonyms:</b> %s</p>" +
             "<p><b>PMID:</b> %s</p>" +
+            "<p><b>xrefs:</b> %s</p>" +
             "%s" +
             "</body></html>";
 

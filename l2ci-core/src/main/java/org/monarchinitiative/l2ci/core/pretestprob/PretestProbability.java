@@ -15,17 +15,19 @@ public class PretestProbability {
                               Set<TermId> diseaseToBeAdjusted,
                               Double summand) {
 
-        // 1. get cur
+
         for (var e: diseaseToPretestMap.entrySet()) {
             TermId diseaseId = e.getKey();
             double p = e.getValue();
-            diseaseToPretestMap.put(diseaseId, p+summand);
-            // next line better than above?
-            //diseaseToPretestMap.merge(diseaseId, summand, Double::sum);
+            diseaseToPretestMap.merge(diseaseId, summand, Double::sum);
         }
         // Normalize the map
-        //double sum = diseaseToPretestMap.values().stream().
-        //for each diseaseToPretestMap.merge(diseaseId, sum, Double::divide);
+        double mapSum = diseaseToPretestMap.values().stream().reduce(0.0, Double::sum);
+        diseaseToPretestMap.forEach((key, value) -> diseaseToPretestMap.replace(key, value / mapSum));
         adjustedDiseaseToPretestMap = Map.copyOf(diseaseToPretestMap);
+    }
+
+    public Map<TermId, Double> getAdjustedDiseaseToPretestMap() {
+        return adjustedDiseaseToPretestMap;
     }
 }

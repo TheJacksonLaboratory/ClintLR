@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
+import org.monarchinitiative.l2ci.core.pretestprob.PretestProbability;
 import org.monarchinitiative.l2ci.gui.MainApp;
 import org.monarchinitiative.l2ci.gui.PopUps;
 import org.monarchinitiative.l2ci.gui.StartupTask;
@@ -117,6 +118,24 @@ public class MainController {
 
     public enum MessageType {
         INFO, WARNING, ERROR
+    }
+
+    private enum Relation {
+        ANCESTOR("ancestor"),
+        CHILD("child"),
+        DESCENDENT("descendent"),
+        PARENT("parent");
+
+        private final String name;
+
+        Relation(String n) {
+            this.name = n;
+        }
+
+        @Override
+        public String toString() {
+            return this.name;
+        }
     }
 
     @Autowired
@@ -212,7 +231,7 @@ public class MainController {
     @FXML
     public void showMondoStats(ActionEvent actionEvent) {
         if (ont != null) {
-            System.out.println("Mondo Stats for Ontology " + ont.toString() + ":\n");
+            System.out.println("Mondo Stats for Ontology " + ont + ":\n");
             MondoStats mondo = new MondoStats(ont);
             mondo.run();
         } else {
@@ -360,7 +379,7 @@ public class MainController {
         Platform.runLater(() -> {
             infoWebEngine = infoWebView.getEngine();
             infoWebEngine.loadContent("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>HPO tree browser</title></head>" +
-                    "<body><p>Click on HPO term in the tree browser to display additional information</p></body></html>");
+                    "<body><p>Click on Mondo term in the tree browser to display additional information</p></body></html>");
         });
     }
 
@@ -375,6 +394,19 @@ public class MainController {
                 WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
             });
         }
+    }
+
+    private void makeSelectedDiseaseMap(double adjProb) {
+        Map<TermId, Double> selectedDiseaseMap = new HashMap<>();
+        Term selectedTerm = ontologyTreeView.getSelectionModel().getSelectedItem().getValue().term;
+        selectedDiseaseMap.put(selectedTerm.id(), 0.0);
+        Set<Term> descendents = getTermRelations(selectedTerm, Relation.DESCENDENT);
+        for (Term desc : descendents) {
+            selectedDiseaseMap.put(desc.id(), 0.0);
+        }
+        PretestProbability pretestProbability = new PretestProbability(selectedDiseaseMap, selectedDiseaseMap.keySet(), adjProb);
+        Map<TermId, Double> newMap = pretestProbability.getAdjustedDiseaseToPretestMap();
+        System.out.println(newMap);
     }
 
     /**
@@ -476,6 +508,7 @@ public class MainController {
     @FXML
     public void liricalButtonAction(ActionEvent actionEvent) {
         System.out.println("Pretest Probability = " + preTestProb);
+        makeSelectedDiseaseMap(preTestProb);
     }
 
     /**
@@ -495,11 +528,11 @@ public class MainController {
             // find root -> term path through the tree
             Stack<Term> termStack = new Stack<>();
             termStack.add(term);
-            Set<Term> parents = getTermParents(term);
+            Set<Term> parents = getTermRelations(term, Relation.PARENT);
             while (parents.size() != 0) {
                 Term parent = parents.iterator().next();
                 termStack.add(parent);
-                parents = getTermParents(parent);
+                parents = getTermRelations(parent, Relation.PARENT);
             }
 
             // expand tree nodes in top -> down direction
@@ -551,25 +584,43 @@ public class MainController {
     }
 
     /**
-     * Get the parents of "term"
+     * Get the relations of "term"
      *
      * @param term HPO Term of interest
-     * @return parents of term (not including term itself).
+     * @param relation Relation of interest (ancestor, descendent, child, parent)
+     * @return relations of term (not including term itself).
      */
-    private Set<Term> getTermParents(Term term) {
+    private Set<Term> getTermRelations(Term term, Relation relation) {
         Ontology ontology = optionalHpoResource.getOntology();
         if (ontology == null) {
             logger.error("Ontology null");
             PopUps.showInfoMessage("Error: Could not initialize Ontology", "ERROR");
             return Set.of();
         }
-        Set<TermId> parentIds = getParentTerms(ontology, term.id(), false);
-        Set<Term> eltern = new HashSet<>();
-        parentIds.forEach(tid -> {
+        TermId termId = term.id();
+        Set<TermId> relationIds;
+        switch (relation) {
+            case ANCESTOR:
+                relationIds = getAncestorTerms(ontology, termId, false);
+                break;
+            case DESCENDENT:
+                relationIds = getDescendents(ontology, termId);
+                break;
+            case CHILD:
+                relationIds = getChildTerms(ontology, termId, false);
+                break;
+            case PARENT:
+                relationIds = getParentTerms(ontology, termId, false);
+                break;
+            default:
+                return Set.of();
+        }
+        Set<Term> relations = new HashSet<>();
+        relationIds.forEach(tid -> {
             Term ht = ontology.getTermMap().get(tid);
-            eltern.add(ht);
+            relations.add(ht);
         });
-        return eltern;
+        return relations;
     }
 
     private boolean existsPathFromRoot(Term term) {
