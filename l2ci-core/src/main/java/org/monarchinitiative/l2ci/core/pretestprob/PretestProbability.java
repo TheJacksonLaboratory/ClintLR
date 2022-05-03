@@ -9,7 +9,7 @@ import java.util.Set;
  * Class to adjust the pretest probability
  */
 public class PretestProbability {
-    private final Map<TermId, Double> adjustedDiseaseToPretestMap;
+    private static Map<TermId, Double> adjustedDiseaseToPretestMap;
 
     public PretestProbability(Map<TermId, Double> diseaseToPretestMap,
                               Set<TermId> diseaseToBeAdjusted,
@@ -27,7 +27,7 @@ public class PretestProbability {
         adjustedDiseaseToPretestMap = Map.copyOf(diseaseToPretestMap);
     }
 
-    public Map<TermId, Double> getAdjustedDiseaseToPretestMap() {
+    public static Map<TermId, Double> getAdjustedDiseaseToPretestMap() {
         return adjustedDiseaseToPretestMap;
     }
 }

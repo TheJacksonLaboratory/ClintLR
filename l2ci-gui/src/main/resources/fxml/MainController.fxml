@@ -26,25 +26,26 @@
         <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
            <children>
               <MenuBar>
-                <menus>
-                  <Menu mnemonicParsing="false" text="File">
-                    <items>
-                      <MenuItem fx:id="loadMenuItem" onAction="#loadFile" text="Load Mondo File" />
-                      <MenuItem fx:id="showMondoStatsMenuItem" onAction="#showMondoStats" text="Show Mondo Stats" />
-                      <MenuItem mnemonicParsing="false" onAction="#close" text="Close" />
-                    </items>
-                  </Menu>
-                  <Menu mnemonicParsing="false" text="Edit">
-                    <items>
-                      <MenuItem mnemonicParsing="false" text="Delete" />
-                    </items>
-                  </Menu>
-                  <Menu mnemonicParsing="false" text="Help">
-                    <items>
-                      <MenuItem mnemonicParsing="false" text="About" />
-                    </items>
-                  </Menu>
-                </menus>
+                 <menus>
+                     <Menu mnemonicParsing="false" text="File">
+                        <items>
+                          <MenuItem onAction="#loadFile" text="Load Mondo File" />
+                          <MenuItem onAction="#showMondoStats" text="Show Mondo Stats" />
+                          <MenuItem onAction="#saveMapOutputFile" text="Save Map to File"/>
+                          <MenuItem mnemonicParsing="false" onAction="#close" text="Close" />
+                        </items>
+                     </Menu>
+                     <Menu mnemonicParsing="false" text="Edit">
+                        <items>
+                          <MenuItem mnemonicParsing="false" text="Delete" />
+                        </items>
+                     </Menu>
+                     <Menu mnemonicParsing="false" text="Help">
+                        <items>
+                           <MenuItem mnemonicParsing="false" text="About" />
+                        </items>
+                     </Menu>
+                 </menus>
               </MenuBar>
            </children>
         </HBox>
@@ -52,7 +53,7 @@
       <center>
           <SplitPane dividerPositions="0.5" focusTraversable="true" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1">
               <VBox BorderPane.alignment="CENTER">
-                  <Label styleClass="bluelabel" stylesheets="@../css/style.css" text="Browse HPO Terms">
+                  <Label styleClass="bluelabel" stylesheets="@../css/style.css" text="Browse Mondo Terms">
                       <VBox.margin>
                           <Insets bottom="5.0" left="15.0" top="5.0" />
                       </VBox.margin>

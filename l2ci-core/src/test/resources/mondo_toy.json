@@ -1,0 +1,518 @@
+{
+  "graphs" : [ {
+      "id" : "http://purl.obolibrary.org/obo/mondo.owl",
+      "meta" : {
+        "basicPropertyValues" : [ {
+          "pred" : "http://purl.obolibrary.org/obo/IAO_0000700",
+          "val" : "http://purl.obolibrary.org/obo/MONDO_0000001"
+        }, {
+          "pred" : "http://purl.org/dc/elements/1.1/description",
+          "val" : "A semi-automatically constructed ontology that merges in multiple disease resources to yield a coherent merged ontology."
+        }, {
+          "pred" : "http://purl.org/dc/elements/1.1/title",
+          "val" : "Mondo Disease Ontology"
+        }, {
+          "pred" : "http://purl.org/dc/terms/license",
+          "val" : "http://creativecommons.org/licenses/by/4.0/"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "http://purl.obolibrary.org/obo/chebi.owl"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "http://purl.obolibrary.org/obo/doid.owl"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "http://purl.obolibrary.org/obo/envo.owl"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "http://purl.obolibrary.org/obo/go.owl"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "http://purl.obolibrary.org/obo/hp.owl"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "http://purl.obolibrary.org/obo/mf.owl"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "http://purl.obolibrary.org/obo/ncbitaxon.owl"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "http://purl.obolibrary.org/obo/ncit.owl"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "http://purl.obolibrary.org/obo/uberon.owl"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "http://www.orpha.net/ontology/orphanet.owl"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "https://id.nlm.nih.gov/mesh/"
+        }, {
+          "pred" : "http://purl.org/dc/terms/source",
+          "val" : "https://rarediseases.info.nih.gov/"
+        }, {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#hasOBOFormatVersion",
+          "val" : "1.2"
+        }, {
+          "pred" : "http://www.w3.org/2000/01/rdf-schema#comment",
+          "val" : "Includes Ontology(OntologyID(Anonymous-51)) [Axioms: 78818 Logical Axioms: 0]"
+        }, {
+          "pred" : "http://xmlns.com/foaf/0.1/homepage",
+          "val" : "http://obofoundry.org/ontology/mondo.html"
+        } ],
+        "version" : "http://purl.obolibrary.org/obo/mondo/releases/2022-04-04/mondo.owl"
+      },
+    "nodes" : [ {
+      "id" : "http://purl.obolibrary.org/obo/MONDO_0007192",
+      "lbl" : "beta-amino acids, renal transport of",
+      "type" : "CLASS",
+      "meta" : {
+        "synonyms" : [ {
+          "synonymType" : "http://purl.obolibrary.org/obo/mondo#ABBREVIATION",
+          "pred" : "hasExactSynonym",
+          "val" : "AABT",
+          "xrefs" : [ "MONDO:Lexical", "OMIM:109660" ]
+        }, {
+          "pred" : "hasRelatedSynonym",
+          "val" : "BETA-amino acids, renal TRANSPORT OF",
+          "xrefs" : [ "MONDO:Lexical", "OMIM:109660" ]
+        }, {
+          "pred" : "hasRelatedSynonym",
+          "val" : "taurine renal reabsorption",
+          "xrefs" : [ "OMIM:109660" ]
+        } ],
+        "xrefs" : [ {
+          "val" : "OMIM:109660"
+        }, {
+          "val" : "UMLS:C1862289"
+        } ],
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://linkedlifedata.com/resource/umls/id/C1862289"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "https://omim.org/entry/109660"
+        } ]
+      }
+    }, {
+      "id" : "http://purl.obolibrary.org/obo/MONDO_0007402",
+      "lbl" : "creatine phosphokinase, elevated serum",
+      "type" : "CLASS",
+      "meta" : {
+        "synonyms" : [ {
+          "pred" : "hasExactSynonym",
+          "val" : "creatine phosphokinase, elevated serum",
+          "xrefs" : [ "OMIM:123320" ]
+        }, {
+          "pred" : "hasRelatedSynonym",
+          "val" : "CPK, elevated serum",
+          "xrefs" : [ "OMIM:123320" ]
+        }, {
+          "pred" : "hasRelatedSynonym",
+          "val" : "hyperCKemia, idiopathic",
+          "xrefs" : [ "OMIM:123320" ]
+        } ],
+        "xrefs" : [ {
+          "val" : "OMIM:123320"
+        } ],
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "https://omim.org/entry/123320"
+        } ]
+      }
+    }, {
+      "id" : "http://purl.obolibrary.org/obo/MONDO_0007584",
+      "lbl" : "exostoses-anetodermia-brachydactyly type E syndrome",
+      "type" : "CLASS",
+      "meta" : {
+        "definition" : {
+          "val" : "Exostoses-anetodermia-brachydactyly type E syndrome is an association reported in a single kindred characterized by the variable presence of the following features: anetodermia (macular atrophy of the skin), multiple exostoses, and brachydactyly type E. There have been no further descriptions in the literature since 1985.",
+          "xrefs" : [ "Orphanet:1962" ]
+        },
+        "subsets" : [ "http://purl.obolibrary.org/obo/mondo#ordo_malformation_syndrome" ],
+        "synonyms" : [ {
+          "pred" : "hasRelatedSynonym",
+          "val" : "exostoses with anetodermia and brachydactyly, type E",
+          "xrefs" : [ "OMIM:133690" ]
+        } ],
+        "xrefs" : [ {
+          "val" : "ICD10CM:Q87.5"
+        }, {
+          "val" : "MESH:C565034"
+        }, {
+          "val" : "OMIM:133690"
+        }, {
+          "val" : "Orphanet:1962"
+        }, {
+          "val" : "UMLS:C1851428"
+        } ],
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://identifiers.org/mesh/C565034"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://linkedlifedata.com/resource/umls/id/C1851428"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://www.orpha.net/ORDO/Orphanet_1962"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "https://omim.org/entry/133690"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#narrowMatch",
+          "val" : "http://apps.who.int/classifications/icd10/browse/2010/en#/Q87.5"
+        } ]
+      }
+    }, {
+      "id" : "http://purl.obolibrary.org/obo/MONDO_0008496",
+      "lbl" : "storm syndrome",
+      "type" : "CLASS",
+      "meta" : {
+        "subsets" : [ "http://purl.obolibrary.org/obo/mondo#gard_rare" ],
+        "synonyms" : [ {
+          "pred" : "hasExactSynonym",
+          "val" : "storm syndrome",
+          "xrefs" : [ "OMIM:185069" ]
+        }, {
+          "pred" : "hasRelatedSynonym",
+          "val" : "pleiotropic, autosomal dominant disorder affecting connective tissue",
+          "xrefs" : [ "GARD:0005035" ]
+        } ],
+        "xrefs" : [ {
+          "val" : "GARD:0005035"
+        }, {
+          "val" : "MESH:C566109"
+        }, {
+          "val" : "OMIM:185069"
+        }, {
+          "val" : "UMLS:C1861452"
+        } ],
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "val" : "https://rarediseases.info.nih.gov/diseases/5035/storm-syndrome"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://identifiers.org/mesh/C566109"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://linkedlifedata.com/resource/umls/id/C1861452"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "https://omim.org/entry/185069"
+        } ]
+      }
+    }, {
+      "id" : "http://purl.obolibrary.org/obo/MONDO_0009508",
+      "lbl" : "Lambotte syndrome",
+      "type" : "CLASS",
+      "meta" : {
+        "synonyms" : [ {
+          "pred" : "hasExactSynonym",
+          "val" : "Lambotte syndrome",
+          "xrefs" : [ "OMIM:245552" ]
+        }, {
+          "pred" : "hasRelatedSynonym",
+          "val" : "microcephaly, holoprosencephaly, and intrauterine Growth retardation",
+          "xrefs" : [ "OMIM:245552" ]
+        } ],
+        "xrefs" : [ {
+          "val" : "GARD:0008470"
+        }, {
+          "val" : "MESH:C537549"
+        }, {
+          "val" : "OMIM:245552"
+        }, {
+          "val" : "UMLS:C1855550"
+        } ],
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://identifiers.org/mesh/C537549"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://linkedlifedata.com/resource/umls/id/C1855550"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "https://omim.org/entry/245552"
+        } ]
+      }
+    }, {
+      "id" : "http://purl.obolibrary.org/obo/MONDO_0010174",
+      "lbl" : "Valinemia",
+      "type" : "CLASS",
+      "meta" : {
+        "definition" : {
+          "val" : "Valinemia is a very rare metabolic disorder characterized by abnormally high levels of the amino acid valine in the blood and urine.Infants with valinemia reportedly experience lack of appetite, vomiting, and failure to thrive. In some cases, the condition may be life-threatening. Low muscle tone (hypotonia), excessive drowsiness, hyperactivity, and developmental delay have also been reported. Valinemia is caused by a deficiency of the enzymevaline transaminase, which is needed for the breakdown (metabolism) of valine in the body. It is inherited in an autosomal recessive manner, although the gene responsible for the condition is not yet known. Treatment includes adiet low in valine (introduced during early infancy) which usually improves symptoms and brings valine levels to normal.",
+          "xrefs" : [ "https://rarediseases.info.nih.gov/diseases/7845/valinemia" ]
+        },
+        "subsets" : [ "http://purl.obolibrary.org/obo/mondo#gard_rare" ],
+        "synonyms" : [ {
+          "pred" : "hasExactSynonym",
+          "val" : "Valinemia",
+          "xrefs" : [ "OMIM:277100" ]
+        }, {
+          "pred" : "hasRelatedSynonym",
+          "val" : "hypervalinemia",
+          "xrefs" : [ "OMIM:277100" ]
+        }, {
+          "pred" : "hasRelatedSynonym",
+          "val" : "valine transaminase deficiency",
+          "xrefs" : [ "OMIM:277100" ]
+        } ],
+        "xrefs" : [ {
+          "val" : "GARD:0007845"
+        }, {
+          "val" : "MESH:C536524"
+        }, {
+          "val" : "OMIM:277100"
+        }, {
+          "val" : "SCTID:47719001"
+        }, {
+          "val" : "UMLS:C0268573"
+        } ],
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "val" : "https://rarediseases.info.nih.gov/diseases/7845/valinemia"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://identifiers.org/mesh/C536524"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://identifiers.org/snomedct/47719001"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://linkedlifedata.com/resource/umls/id/C0268573"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "https://omim.org/entry/277100"
+        } ]
+      }
+    }, {
+      "id" : "http://purl.obolibrary.org/obo/MONDO_0011111",
+      "lbl" : "horns in sheep",
+      "type" : "CLASS",
+      "meta" : {
+        "comments" : [ "Reason: out of scope. Term to consider: none" ],
+        "subsets" : [ "http://purl.obolibrary.org/obo/mondo#obsoletion_candidate" ],
+        "synonyms" : [ {
+          "pred" : "hasExactSynonym",
+          "val" : "horns in sheep",
+          "xrefs" : [ "OMIM:601563" ]
+        }, {
+          "pred" : "hasRelatedSynonym",
+          "val" : "Ho",
+          "xrefs" : [ "OMIM:601563" ]
+        } ],
+        "xrefs" : [ {
+          "val" : "OMIM:601563"
+        } ],
+        "basicPropertyValues" : [ {
+          "pred" : "http://purl.obolibrary.org/obo/IAO_0006012",
+          "val" : "2022-05-01"
+        }, {
+          "pred" : "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "val" : "https://github.com/monarch-initiative/mondo/issues/4424"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "https://omim.org/entry/601563"
+        } ]
+      }
+    }, {
+      "id" : "http://purl.obolibrary.org/obo/MONDO_0015185",
+      "lbl" : "intestinal polyposis syndrome",
+      "type" : "CLASS",
+      "meta" : {
+        "subsets" : [ "http://purl.obolibrary.org/obo/mondo#disease_grouping", "http://purl.obolibrary.org/obo/mondo#ordo_group_of_disorders" ],
+        "xrefs" : [ {
+          "val" : "MESH:D044483"
+        }, {
+          "val" : "MedDRA:10057018"
+        }, {
+          "val" : "NCIT:C155954"
+        }, {
+          "val" : "Orphanet:104010"
+        }, {
+          "val" : "SCTID:254589009"
+        }, {
+          "val" : "UMLS:C0345891"
+        }, {
+          "val" : "UMLS:CN197525"
+        } ],
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.w3.org/2004/02/skos/core#closeMatch",
+          "val" : "http://identifiers.org/meddra/10057018"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://identifiers.org/snomedct/254589009"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://linkedlifedata.com/resource/umls/id/C0345891"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://linkedlifedata.com/resource/umls/id/CN197525"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://purl.obolibrary.org/obo/NCIT_C155954"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://www.orpha.net/ORDO/Orphanet_104010"
+        } ]
+      }
+    }, {
+      "id" : "http://purl.obolibrary.org/obo/MONDO_0016545",
+      "lbl" : "leukoencephalopathy-palmoplantar keratoderma syndrome",
+      "type" : "CLASS",
+      "meta" : {
+        "definition" : {
+          "val" : "Leukoencephalopathy-palmoplantar keratoderma syndrome is a rare, genetic epidermal disease characterized by early childhood-onset of punctate palmoplantar keratoderma in association with adult-onset leukoencephalopathy manifested by progressive tetrapyramidal syndrome and cognitive deterioration.",
+          "xrefs" : [ "Orphanet:2386" ]
+        },
+        "subsets" : [ "http://purl.obolibrary.org/obo/mondo#gard_rare", "http://purl.obolibrary.org/obo/mondo#ordo_disease" ],
+        "synonyms" : [ {
+          "pred" : "hasRelatedSynonym",
+          "val" : "leukoencephalopathy palmoplantar keratoderma",
+          "xrefs" : [ "GARD:0003232" ]
+        } ],
+        "xrefs" : [ {
+          "val" : "GARD:0003232"
+        }, {
+          "val" : "Orphanet:2386"
+        }, {
+          "val" : "UMLS:CN201627"
+        } ],
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "val" : "https://rarediseases.info.nih.gov/diseases/3232/leukoencephalopathy-palmoplantar-keratoderma"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://linkedlifedata.com/resource/umls/id/CN201627"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://www.orpha.net/ORDO/Orphanet_2386"
+        } ]
+      }
+    }, {
+      "id" : "http://purl.obolibrary.org/obo/MONDO_0023121",
+      "lbl" : "familial partial paralysis",
+      "type" : "CLASS",
+      "meta" : {
+        "subsets" : [ "http://purl.obolibrary.org/obo/mondo#gard_rare" ],
+        "synonyms" : [ {
+          "pred" : "hasRelatedSynonym",
+          "val" : "partial paralysis, familial",
+          "xrefs" : [ "GARD:0008607" ]
+        } ],
+        "xrefs" : [ {
+          "val" : "GARD:0008607"
+        }, {
+          "val" : "GTR:AN0100894"
+        }, {
+          "val" : "MEDGEN:447610"
+        }, {
+          "val" : "UMLS:CN035928"
+        } ],
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+          "val" : "https://rarediseases.info.nih.gov/diseases/8607/familial-partial-paralysis"
+        }, {
+          "pred" : "http://www.w3.org/2004/02/skos/core#exactMatch",
+          "val" : "http://linkedlifedata.com/resource/umls/id/CN035928"
+        } ]
+      }
+    } ],
+    "edges" : [ {
+      "sub" : "http://purl.obolibrary.org/obo/MONDO_0007192",
+      "pred" : "is_a",
+      "obj" : "http://purl.obolibrary.org/obo/MONDO_0003847",
+      "meta" : {
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#source",
+          "val" : "OMIM:109660/inferred"
+        } ]
+      }
+    }, {
+      "sub" : "http://purl.obolibrary.org/obo/MONDO_0007402",
+      "pred" : "is_a",
+      "obj" : "http://purl.obolibrary.org/obo/MONDO_0003847",
+      "meta" : {
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#source",
+          "val" : "OMIM:123320/inferred"
+        } ]
+      }
+    }, {
+      "sub" : "http://purl.obolibrary.org/obo/MONDO_0007584",
+      "pred" : "is_a",
+      "obj" : "http://purl.obolibrary.org/obo/MONDO_0003847",
+      "meta" : {
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#source",
+          "val" : "OMIM:133690"
+        } ]
+      }
+    }, {
+      "sub" : "http://purl.obolibrary.org/obo/MONDO_0008496",
+      "pred" : "is_a",
+      "obj" : "http://purl.obolibrary.org/obo/MONDO_0003847",
+      "meta" : {
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#source",
+          "val" : "MESH:C566109/inferred"
+        } ]
+      }
+    }, {
+      "sub" : "http://purl.obolibrary.org/obo/MONDO_0009508",
+      "pred" : "is_a",
+      "obj" : "http://purl.obolibrary.org/obo/MONDO_0003847",
+      "meta" : {
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#source",
+          "val" : "MESH:C537549/inferred"
+        } ]
+      }
+    }, {
+      "sub" : "http://purl.obolibrary.org/obo/MONDO_0010174",
+      "pred" : "is_a",
+      "obj" : "http://purl.obolibrary.org/obo/MONDO_0003847",
+      "meta" : {
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#source",
+          "val" : "MESH:C536524/inferred"
+        }, {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#source",
+          "val" : "linkedlifedata"
+        }, {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#source",
+          "val" : "linkedlifedata/inferred"
+        } ]
+      }
+    }, {
+      "sub" : "http://purl.obolibrary.org/obo/MONDO_0011111",
+      "pred" : "is_a",
+      "obj" : "http://purl.obolibrary.org/obo/MONDO_0003847"
+    }, {
+      "sub" : "http://purl.obolibrary.org/obo/MONDO_0015185",
+      "pred" : "is_a",
+      "obj" : "http://purl.obolibrary.org/obo/MONDO_0018538",
+      "meta" : {
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#source",
+          "val" : "Orphanet:104010"
+        } ]
+      }
+    }, {
+      "sub" : "http://purl.obolibrary.org/obo/MONDO_0016545",
+      "pred" : "is_a",
+      "obj" : "http://purl.obolibrary.org/obo/MONDO_0006025",
+      "meta" : {
+        "basicPropertyValues" : [ {
+          "pred" : "http://www.geneontology.org/formats/oboInOwl#source",
+          "val" : "https://github.com/monarch-initiative/mondo/pull/2317"
+        } ]
+      }
+    }, {
+      "sub" : "http://purl.obolibrary.org/obo/MONDO_0023121",
+      "pred" : "is_a",
+      "obj" : "http://purl.obolibrary.org/obo/MONDO_0003847"
+    } ]
+  } ]
+}

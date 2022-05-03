@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 import org.monarchinitiative.l2ci.core.io.HPOParser;
+import org.monarchinitiative.l2ci.core.io.MapFileWriter;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
 import org.monarchinitiative.l2ci.core.pretestprob.PretestProbability;
 import org.monarchinitiative.l2ci.gui.MainApp;
@@ -33,6 +34,7 @@ import org.monarchinitiative.l2ci.gui.WidthAwareTextFields;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
+import org.monarchinitiative.phenol.ontology.data.Dbxref;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -238,6 +240,17 @@ public class MainController {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setContentText("Cannot show Mondo Stats. No active Ontology.");
             alert.showAndWait();
+        }
+    }
+
+    @FXML
+    public void saveMapOutputFile(ActionEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Map to File");
+        File file = fileChooser.showSaveDialog(MainApp.mainStage);
+        Map<TermId, Double> pretestMap = PretestProbability.getAdjustedDiseaseToPretestMap();
+        if (file != null) {
+            new MapFileWriter(pretestMap, file.getAbsolutePath());
         }
     }
 

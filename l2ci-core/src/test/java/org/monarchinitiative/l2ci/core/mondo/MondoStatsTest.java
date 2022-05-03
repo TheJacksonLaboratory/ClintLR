@@ -18,7 +18,7 @@ public class MondoStatsTest {
     @BeforeAll
     public static void setup() {
         ClassLoader classLoader = HPOParserTest.class.getClassLoader();
-        String mondoFilePath=classLoader.getResource("mondo.json").getFile();
+        String mondoFilePath=classLoader.getResource("mondo_toy.json").getFile();
         HPOParser parser = new HPOParser(mondoFilePath);
         assertNotNull(parser);
         Ontology ont = parser.getHPO();
@@ -37,36 +37,36 @@ public class MondoStatsTest {
     @Test
     public void testNTerms() {
         int nTerms = mondo.getNTerms();
-        assertEquals(nTerms, 25957, 1e0);
+        assertEquals(nTerms, 11, 1e0);
     }
 
     @Test
     public void testNAlternateTermIDs() {
         int nAlternateTermIDs = mondo.getNAlternateTermIDs();
-        assertEquals(nAlternateTermIDs, 2822, 1e0);
+        assertEquals(nAlternateTermIDs, 0, 1e0);
     }
 
     @Test
     public void testNNonObsoleteTerms() {
         int nNonObsoleteTerms = mondo.getNNonObsoleteTerms();
-        assertEquals(nNonObsoleteTerms, 25957, 1e0);
+        assertEquals(nNonObsoleteTerms, 11, 1e0);
     }
 
     @Test
     public void testNRelations() {
         int nRelations = mondo.getNRelations();
-        assertEquals(nRelations, 46377, 1e0);
+        assertEquals(nRelations, 13, 1e0);
     }
 
     @Test
     public void testNDefinitions() {
         int nDefinitions = mondo.getNDefinitions();
-        assertEquals(nDefinitions, 15507, 1e0);
+        assertEquals(nDefinitions, 3, 1e0);
     }
 
     @Test
     public void testNSynonyms() {
         int nSynonyms = mondo.getNSynonyms();
-        assertEquals(nSynonyms, 103074, 1e0);
+        assertEquals(nSynonyms, 18, 1e0);
     }
 }
