@@ -89,7 +89,7 @@
                               <Insets bottom="5.0" left="15.0" top="5.0" />
                           </VBox.margin>
                       </TextField>
-                      <Button minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#liricalButtonAction" styleClass="Button" stylesheets="@../css/style.css" text="Run LIRICAL" textOverrun="CLIP">
+                      <Button fx:id="liricalButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#liricalButtonAction" styleClass="Button" stylesheets="@../css/style.css" text="Run LIRICAL" textOverrun="CLIP">
                           <tooltip>
                               <Tooltip text="Run LIRICAL" />
                           </tooltip>
