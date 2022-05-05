@@ -1,5 +1,7 @@
 package org.monarchinitiative.l2ci.core.io;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +22,14 @@ public class MapFileWriter {
 
     private void write(Map<TermId, Double> map, String path) {
         File f = new File(path);
-        try (FileWriter writer = new FileWriter(path)) {
-            writer.write("Term ID\tPretest Probability\n");
+        try (FileWriter writer = new FileWriter(path);
+             CSVPrinter printer = CSVFormat.DEFAULT.print(writer)) {
+            printer.printRecord("Term ID", "Pretest Probability");
             Set<Map.Entry<TermId, Double>> entries = map.entrySet();
             for (Map.Entry e : entries) {
-                writer.write(String.join("\t", e.getKey().toString(), e.getValue().toString(), "\n"));
+                printer.print(e.getKey());
+                printer.print(e.getValue());
+                printer.println();
             }
             writer.flush();
         } catch (IOException ioe) {

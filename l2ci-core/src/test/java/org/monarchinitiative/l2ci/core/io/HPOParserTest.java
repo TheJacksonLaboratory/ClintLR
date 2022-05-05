@@ -12,7 +12,7 @@ public class HPOParserTest {
     @BeforeEach
     public void setup() {
         ClassLoader classLoader = HPOParserTest.class.getClassLoader();
-        hpoFilePath = classLoader.getResource("mondo.json").getFile();
+        hpoFilePath = classLoader.getResource("mondo_toy.json").getFile();
     }
 
     @Test
