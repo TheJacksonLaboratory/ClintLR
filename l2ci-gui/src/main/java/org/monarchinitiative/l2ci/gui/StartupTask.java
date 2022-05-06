@@ -3,13 +3,18 @@ package org.monarchinitiative.l2ci.gui;
 import javafx.concurrent.Task;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
+import org.monarchinitiative.lirical.configuration.Lirical;
+import org.monarchinitiative.lirical.configuration.LiricalBuilder;
+import org.monarchinitiative.phenol.annotations.io.hpo.DiseaseDatabase;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Initialization of the GUI resources is being done here. Information from {@link Properties} parsed from
@@ -32,7 +37,6 @@ public final class StartupTask extends Task<Void> {
     private final OptionalHpoResource optionalHpoResource;
 
     private final OptionalHpoaResource optionalHpoaResource;
-
 
     private final Properties pgProperties;
 
@@ -109,5 +113,21 @@ public final class StartupTask extends Task<Void> {
         }
         updateProgress(1, 1);
         return null;
+    }
+
+    public Lirical buildLirical() throws Exception {
+        LOGGER.info("Building LIRICAL");
+        String dataPath = String.join(File.separator, "l2ci-gui", "src", "main", "resources", "LIRICAL", "data");
+        Lirical lirical = LiricalBuilder.builder(Path.of(dataPath))
+//                .exomiserVariantDatabase(dataSection.exomiserDatabase)
+//                .genomeBuild(genomeBuildOptional.get())
+//                .backgroundVariantFrequency(dataSection.backgroundFrequencyFile)
+                .setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM))
+//                .genotypeLrProperties(genotypeLrProperties)
+//                .transcriptDatabase(runConfiguration.transcriptDb)
+//                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
+                .build();
+        LOGGER.info("Finished building LIRICAL");
+        return lirical;
     }
 }

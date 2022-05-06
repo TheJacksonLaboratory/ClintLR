@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
@@ -33,6 +34,7 @@ import org.monarchinitiative.l2ci.gui.StartupTask;
 import org.monarchinitiative.l2ci.gui.WidthAwareTextFields;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
+import org.monarchinitiative.lirical.configuration.Lirical;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.ontology.data.Dbxref;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
@@ -115,8 +117,11 @@ public class MainController {
     private Slider probSlider = new Slider();
     @FXML
     private TextField sliderTextField = new TextField();
+    @FXML
+    private Button liricalButton = new Button();
 
     private double preTestProb;
+    private Lirical lirical;
 
     public enum MessageType {
         INFO, WARNING, ERROR
@@ -158,6 +163,17 @@ public class MainController {
         mainController = this;
         logger.info("Initializing main controller");
         StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, pgProperties);
+        liricalButton.setDisable(true);
+        CompletableFuture.runAsync(() -> {
+            try {
+                lirical = task.buildLirical();
+                if (lirical != null) {
+                    liricalButton.setDisable(false);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
         publishMessage("Loading resources");
         ProgressIndicator pb = new ProgressIndicator();
         pb.setProgress(0);
@@ -522,6 +538,8 @@ public class MainController {
     public void liricalButtonAction(ActionEvent actionEvent) {
         System.out.println("Pretest Probability = " + preTestProb);
         makeSelectedDiseaseMap(preTestProb);
+        //to-do: run LIRICAL analysis
+        //lirical.analysisRunner().run();
     }
 
     /**
