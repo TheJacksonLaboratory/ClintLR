@@ -16,9 +16,7 @@ public class PretestProbability {
                               Double summand) {
 
 
-        for (var e: diseaseToPretestMap.entrySet()) {
-            TermId diseaseId = e.getKey();
-            double p = e.getValue();
+        for (TermId diseaseId : diseaseToBeAdjusted) {
             diseaseToPretestMap.merge(diseaseId, summand, Double::sum);
         }
         // Normalize the map

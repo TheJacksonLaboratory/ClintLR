@@ -3,6 +3,8 @@ package org.monarchinitiative.l2ci.cli;
 
 import org.monarchinitiative.l2ci.cli.cmd.DownloadCommand;
 import org.monarchinitiative.l2ci.cli.cmd.MondoStatsCommand;
+import org.monarchinitiative.l2ci.cli.cmd.PhenotypicSeriesCommand;
+import org.monarchinitiative.l2ci.core.mondo.PhenotypicSeries;
 import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
@@ -20,7 +22,8 @@ public class Main implements Callable<Integer> {
         }
         CommandLine cline = new CommandLine(new Main())
                 .addSubcommand("download", new DownloadCommand())
-                .addSubcommand("stats", new MondoStatsCommand());
+                .addSubcommand("stats", new MondoStatsCommand())
+                .addSubcommand("phenotype", new PhenotypicSeriesCommand());
         cline.setToggleBooleanFlags(false);
         int exitCode = cline.execute(args);
         System.exit(exitCode);

@@ -16,6 +16,7 @@ class OntologyTermWrapper {
     }
     @Override
     public String toString() {
+//        System.out.println("OntologyTermWrapper: " + term);
         return this.term.getName();
     }
 

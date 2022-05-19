@@ -3,7 +3,7 @@ package org.monarchinitiative.l2ci.gui;
 import javafx.concurrent.Task;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
-import org.monarchinitiative.lirical.configuration.Lirical;
+import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.configuration.LiricalBuilder;
 import org.monarchinitiative.phenol.annotations.io.hpo.DiseaseDatabase;
 import org.monarchinitiative.phenol.io.OntologyLoader;
@@ -115,18 +115,34 @@ public final class StartupTask extends Task<Void> {
         return null;
     }
 
-    public Lirical buildLirical() throws Exception {
+    public Lirical buildLirical(String dataPath) throws Exception {
+        Lirical lirical;
         LOGGER.info("Building LIRICAL");
-        String dataPath = String.join(File.separator, "l2ci-gui", "src", "main", "resources", "LIRICAL", "data");
-        Lirical lirical = LiricalBuilder.builder(Path.of(dataPath))
-//                .exomiserVariantDatabase(dataSection.exomiserDatabase)
+        LOGGER.info("LIRICAL data directory: {}", dataPath);
+        String exomiserVariant = pgProperties.getProperty("exomiser.variant.path");
+        if (exomiserVariant != null) {
+            LOGGER.info("Exomiser variant file: {}", exomiserVariant);
+            lirical = LiricalBuilder.builder(Path.of(dataPath))
+                    .exomiserVariantDatabase(Path.of(exomiserVariant))
 //                .genomeBuild(genomeBuildOptional.get())
 //                .backgroundVariantFrequency(dataSection.backgroundFrequencyFile)
-                .setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM))
+                    .setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM))
 //                .genotypeLrProperties(genotypeLrProperties)
 //                .transcriptDatabase(runConfiguration.transcriptDb)
 //                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
-                .build();
+                    .build();
+        } else {
+            LOGGER.info("Path to Exomiser variant file not set (see Edit menu). Building LIRICAL without Exomiser variant file.");
+            lirical = LiricalBuilder.builder(Path.of(dataPath))
+//                    .exomiserVariantDatabase(Path.of(exomiserVariant))
+//                .genomeBuild(genomeBuildOptional.get())
+//                .backgroundVariantFrequency(dataSection.backgroundFrequencyFile)
+                    .setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM))
+//                .genotypeLrProperties(genotypeLrProperties)
+//                .transcriptDatabase(runConfiguration.transcriptDb)
+//                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
+                    .build();
+        }
         LOGGER.info("Finished building LIRICAL");
         return lirical;
     }

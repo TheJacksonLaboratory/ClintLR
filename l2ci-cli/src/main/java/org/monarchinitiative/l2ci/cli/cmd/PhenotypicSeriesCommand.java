@@ -3,15 +3,16 @@ package org.monarchinitiative.l2ci.cli.cmd;
 
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
+import org.monarchinitiative.l2ci.core.mondo.PhenotypicSeries;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "stats", aliases = {"S"},
+@CommandLine.Command(name = "phenotype", aliases = {"P"},
         mixinStandardHelpOptions = true,
-        description = "Dump Mondo stats to shell")
-public class  MondoStatsCommand implements Callable<Integer> {
+        description = "Dump Phenotypic Series to shell")
+public class PhenotypicSeriesCommand implements Callable<Integer> {
 
     @CommandLine.Option(names = { "-m", "--mondo"},
             required = true,
@@ -25,8 +26,8 @@ public class  MondoStatsCommand implements Callable<Integer> {
         HPOParser parser = new HPOParser(mondoJsonPath);
         Ontology ont = parser.getHPO();
         if (ont != null) {
-            MondoStats mondo = new MondoStats(ont);
-            mondo.run();
+            PhenotypicSeries ps = new PhenotypicSeries(ont);
+            ps.run();
         }
         return null;
     }

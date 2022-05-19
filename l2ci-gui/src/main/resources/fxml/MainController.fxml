@@ -37,7 +37,9 @@
                      </Menu>
                      <Menu mnemonicParsing="false" text="Edit">
                         <items>
-                          <MenuItem mnemonicParsing="false" text="Delete" />
+                            <MenuItem onAction="#setLiricalDataDirectory" text="Set LIRICAL Data Directory" />
+                            <MenuItem onAction="#setExomiserVariantFile" text="Set Path to Exomiser Variant File" />
+                            <MenuItem mnemonicParsing="false" text="Delete" />
                         </items>
                      </Menu>
                      <Menu mnemonicParsing="false" text="Help">
