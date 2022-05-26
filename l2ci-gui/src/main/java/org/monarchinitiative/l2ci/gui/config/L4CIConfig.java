@@ -2,6 +2,7 @@ package org.monarchinitiative.l2ci.gui.config;
 
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
+import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,6 +27,9 @@ public class L4CIConfig {
 
     @Bean
     public OptionalHpoaResource optionalHpoaResource() { return new OptionalHpoaResource(); }
+
+    @Bean
+    public OptionalMondoResource optionalMondoResource() { return new OptionalMondoResource(); }
 
     @Bean
     public ExecutorService executorService() {

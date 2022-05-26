@@ -29,10 +29,12 @@
                  <menus>
                      <Menu mnemonicParsing="false" text="File">
                         <items>
-                          <MenuItem onAction="#loadFile" text="Load Mondo File" />
-                          <MenuItem onAction="#showMondoStats" text="Show Mondo Stats" />
-                          <MenuItem onAction="#saveMapOutputFile" text="Save Map to File"/>
-                          <MenuItem mnemonicParsing="false" onAction="#close" text="Close" />
+                            <MenuItem onAction="#downloadFile" text="Download Mondo JSON File" />
+                            <MenuItem onAction="#loadFile" text="Load Local Mondo JSON File" />
+                            <MenuItem onAction="#showMondoStats" text="Show Mondo Stats" />
+                            <MenuItem onAction="#saveMapOutputFile" text="Save Map to File"/>
+                            <MenuItem onAction="#showMapInterface" text="Show Map Interface"/>
+                            <MenuItem mnemonicParsing="false" onAction="#close" text="Close" />
                         </items>
                      </Menu>
                      <Menu mnemonicParsing="false" text="Edit">
@@ -107,7 +109,7 @@
                           </HBox.margin>
                       </Label>
                   </HBox>
-                  <TreeView fx:id="ontologyTreeView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                  <TreeView fx:id="ontologyTreeView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" stylesheets="@../css/style.css">
                       <VBox.margin>
                           <Insets left="5.0" right="5.0" top="5.0" />
                       </VBox.margin>
