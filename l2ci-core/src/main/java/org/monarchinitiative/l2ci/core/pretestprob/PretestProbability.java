@@ -9,9 +9,8 @@ import java.util.Set;
  * Class to adjust the pretest probability
  */
 public class PretestProbability {
-    private static Map<TermId, Double> adjustedDiseaseToPretestMap;
 
-    public PretestProbability(Map<TermId, Double> diseaseToPretestMap,
+    public static Map<TermId, Double> of(Map<TermId, Double> diseaseToPretestMap,
                               Set<TermId> diseaseToBeAdjusted,
                               Double summand) {
 
@@ -22,10 +21,7 @@ public class PretestProbability {
         // Normalize the map
         double mapSum = diseaseToPretestMap.values().stream().reduce(0.0, Double::sum);
         diseaseToPretestMap.forEach((key, value) -> diseaseToPretestMap.replace(key, value / mapSum));
-        adjustedDiseaseToPretestMap = Map.copyOf(diseaseToPretestMap);
+        return Map.copyOf(diseaseToPretestMap);
     }
 
-    public static Map<TermId, Double> getAdjustedDiseaseToPretestMap() {
-        return adjustedDiseaseToPretestMap;
-    }
 }

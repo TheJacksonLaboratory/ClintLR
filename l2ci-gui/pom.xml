@@ -67,6 +67,11 @@
             <artifactId>lirical-configuration</artifactId>
             <version>2.0.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.monarchinitiative.biodownload</groupId>
+            <artifactId>biodownload</artifactId>
+            <version>1.1.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

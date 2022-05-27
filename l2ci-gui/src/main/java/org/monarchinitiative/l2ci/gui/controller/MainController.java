@@ -9,8 +9,11 @@ import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.web.WebEngine;
@@ -29,16 +32,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
+import org.monarchinitiative.biodownload.BioDownloader;
+import org.monarchinitiative.biodownload.BioDownloaderBuilder;
+import org.monarchinitiative.biodownload.FileDownloadException;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.io.MapFileWriter;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
 import org.monarchinitiative.l2ci.core.pretestprob.PretestProbability;
-import org.monarchinitiative.l2ci.gui.MainApp;
-import org.monarchinitiative.l2ci.gui.PopUps;
-import org.monarchinitiative.l2ci.gui.StartupTask;
-import org.monarchinitiative.l2ci.gui.WidthAwareTextFields;
+import org.monarchinitiative.l2ci.gui.*;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
+import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
@@ -56,6 +60,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -85,6 +90,7 @@ public class MainController {
 
     private final OptionalHpoaResource optionalHpoaResource;
 
+    private final OptionalMondoResource optionalMondoResource;
     /**
      * Directory, where ontologies and HPO annotation files are being stored.
      */
@@ -132,8 +138,14 @@ public class MainController {
     @FXML
     private Button liricalButton = new Button();
 
-    private double preTestProb;
+    public static double preTestProb;
+
+    private Map<TermId, Double> pretestMap;
+    public MapDisplayInterface mapDisplay;
+    public static List<MapData> mapDataList;
     private Lirical lirical;
+
+    private File mondoJSONFile;
 
     public enum MessageType {
         INFO, WARNING, ERROR
@@ -157,24 +169,33 @@ public class MainController {
         }
     }
 
+    @Value("${mondo.json.url}")
+    private String mondoJsonUrl;
+
     @Autowired
     public MainController(OptionalHpoResource optionalHpoResource,
                           OptionalHpoaResource optionalHpoaResource,
+                          OptionalMondoResource optionalMondoResource,
                           @Qualifier("configProperties") Properties properties,
                           @Qualifier("appHomeDir") File l4ciDir,
                           ExecutorService executorService) {
         this.optionalHpoResource = optionalHpoResource;
         this.optionalHpoaResource = optionalHpoaResource;
+        this.optionalMondoResource = optionalMondoResource;
         this.pgProperties = properties;
         this.l4ciDir = l4ciDir;
         this.executor = executorService;
+    }
+
+    public static MainController getController() {
+        return mainController;
     }
 
     @FXML
     private void initialize() {
         mainController = this;
         logger.info("Initializing main controller");
-        StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, pgProperties);
+        StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
         liricalButton.setDisable(true);
         String liricalData = pgProperties.getProperty("lirical.data.path");
         if (liricalData == null) {
@@ -189,7 +210,7 @@ public class MainController {
         }
         CompletableFuture.runAsync(() -> {
             try {
-                lirical = task.buildLirical(liricalData);
+                lirical = task.buildLirical();
                 if (lirical != null) {
                     liricalButton.setDisable(false);
                 }
@@ -216,7 +237,7 @@ public class MainController {
         this.executor.submit(task);
         String ver = MainController.getVersion();
         copyrightLabel.setText("L4CI, v. " + ver + ", \u00A9 Monarch Initiative 2022");
-        probSlider.setMin(0);
+        probSlider.setMin(1);
         probSlider.setMax(10);
         probSlider.setValue(5);
         probSlider.setMajorTickUnit(2);
@@ -242,6 +263,7 @@ public class MainController {
 
         ChangeListener<? super Object> listener = (obs, oldval, newval) -> activateIfResourcesAvailable();
         optionalHpoResource.ontologyProperty().addListener(listener);
+        optionalMondoResource.ontologyProperty().addListener(listener);
         optionalHpoaResource.directAnnotMapProperty().addListener(listener);
         optionalHpoaResource.indirectAnnotMapProperty().addListener(listener);
         logger.info("Done initialization");
@@ -258,15 +280,28 @@ public class MainController {
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
             String mondoJsonPath = file.getAbsolutePath();
-            HPOParser parser = new HPOParser(mondoJsonPath);
-            ont = parser.getHPO();
-            if (ont != null) {
-                optionalHpoResource.setOntology(ont);
-                pgProperties.setProperty("mondo.json.path", mondoJsonPath);
-                logger.info("Loaded Ontology {} from file {}", ont.toString(), file.getAbsolutePath());
-                activateOntologyTree();
-            }
+            loadFile(mondoJsonPath);
         }
+    }
+
+    public void loadFile(String mondoPath) {
+        HPOParser parser = new HPOParser(mondoPath);
+        ont = parser.getHPO();
+        if (ont != null) {
+            optionalMondoResource.setOntology(ont);
+            pgProperties.setProperty("mondo.json.path", mondoPath);
+            logger.info("Loaded Ontology {} from file {}", ont.toString(), mondoPath);
+            activateOntologyTree();
+            publishMessage("Loaded Ontology from file " + mondoPath);
+        }
+    }
+
+    @FXML
+    public void downloadFile(Event e) throws FileDownloadException {
+        BioDownloaderBuilder builder = BioDownloader.builder(l4ciDir.toPath());
+        builder.mondoJson();
+        BioDownloader downloader = builder.build();
+        downloader.download();
     }
 
     @FXML
@@ -287,10 +322,20 @@ public class MainController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Map to File");
         File file = fileChooser.showSaveDialog(MainApp.mainStage);
-        Map<TermId, Double> pretestMap = PretestProbability.getAdjustedDiseaseToPretestMap();
-        if (file != null) {
+        pretestMap = makeSelectedDiseaseMap(preTestProb);
+        if (file != null && pretestMap != null) {
             new MapFileWriter(pretestMap, file.getAbsolutePath());
         }
+    }
+
+    @FXML
+    public void showMapInterface(ActionEvent event) {
+        makeSelectedDiseaseMap(preTestProb);
+        if (mapDisplay == null) {
+            mapDisplay = new MapDisplayInterface();
+        }
+        mapDisplay.launchMapInterface();
+        mapDisplay.updateTable();
     }
 
     @FXML
@@ -330,7 +375,7 @@ public class MainController {
     }
 
     private void activateIfResourcesAvailable() {
-        if (optionalHpoResource.getOntology() != null) { // hpo obo file is missing
+        if (optionalMondoResource.getOntology() != null) { // mondo JSON file is missing
             activateOntologyTree();
         } else {
             logger.error("Could not activate resource");
@@ -413,8 +458,10 @@ public class MainController {
             publishMessage("hpo json file is missing", MessageType.ERROR);
         } else if (optionalHpoaResource.getDirectAnnotMap() == null) {
             publishMessage("phenotype.hpoa file is missing", MessageType.ERROR);
+        } else if (optionalMondoResource.getOntology() == null) {
+            publishMessage("mondo json file is missing", MessageType.ERROR);
         } else {
-            logger.info("All three resources loaded");
+            logger.info("All four resources loaded");
             publishMessage("Ready to go", MessageType.INFO);
         }
     }
@@ -427,6 +474,7 @@ public class MainController {
      */
     private void initTree(Ontology ontology, Consumer<Term> addHook) {
         // populate the TreeView with top-level elements from ontology hierarchy
+        System.out.println(ontology);
         if (ontology == null) {
             ontologyTreeView.setRoot(null);
             return;
@@ -438,6 +486,26 @@ public class MainController {
         ontologyTreeView.setShowRoot(false);
         ontologyTreeView.setRoot(root);
 
+        ontologyTreeView.setCellFactory(tv -> new TreeCell<OntologyTermWrapper>() {
+
+            @Override
+            protected void updateItem(OntologyTermWrapper item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty || item != null) {
+                    setText(item.term.getName());
+                    if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
+                        setStyle("-fx-text-fill: firebrick;");
+                    } else if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
+                        setStyle("-fx-text-fill: red;");
+                    } else {
+                        setStyle("-fx-text-fill: black");
+                    }
+                }
+            }
+
+        });
+
+//        ontologyTreeView.
         ontologyTreeView.getSelectionModel().selectedItemProperty()
                 .addListener((observable, oldValue, newValue) -> {
                     OntologyTermWrapper w;
@@ -467,29 +535,43 @@ public class MainController {
 
     /** Function is called once all of the resources are found (hp obo, disease annotations, mondo). */
     public void activateOntologyTree() {
-        if (optionalHpoResource.getOntology() == null) {
-            logger.error("activateOntologyTree: HPO null");
+        if (optionalMondoResource.getOntology() == null) {
+            logger.error("activateOntologyTree: Mondo null");
         } else {
-            final Ontology hpo = optionalHpoResource.getOntology();
+            final Ontology mondo = optionalMondoResource.getOntology();
             Platform.runLater(()->{
-                initTree(hpo, k -> System.out.println("Consumed " + k));
+                initTree(mondo, k -> System.out.println("Consumed " + k));
                 WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
             });
         }
     }
 
-    private Map<TermId, Double> makeSelectedDiseaseMap(double adjProb) {
+    public Map<TermId, Double> makeSelectedDiseaseMap(double adjProb) {
         Map<TermId, Double> diseaseMap = new HashMap<>();
         Set<TermId> selectedTerms = new HashSet<>();
         Term selectedTerm = ontologyTreeView.getSelectionModel().getSelectedItem().getValue().term;
-        for (Term t : optionalHpoResource.getOntology().getTerms()) {
+        Ontology ontology = optionalMondoResource.getOntology();
+        for (Term t : ontology.getTerms()) {
             diseaseMap.put(t.id(), 1.0);
         }
         selectedTerms.add(selectedTerm.id());
-        Set<Term> descendents = getTermRelations(optionalHpoResource.getOntology(), selectedTerm, Relation.DESCENDENT);
+        Set<Term> descendents = getTermRelations(selectedTerm, Relation.DESCENDENT);
         descendents.forEach(t -> selectedTerms.add(t.id()));
-        PretestProbability pretestProbability = new PretestProbability (diseaseMap, selectedTerms, adjProb);
-        Map<TermId, Double> newMap = pretestProbability.getAdjustedDiseaseToPretestMap();
+        Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms, adjProb);
+        mapDataList = new ArrayList<>();
+        boolean addNonSelected = true;
+        for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
+            if (selectedTerms.contains(entry.getKey())) {
+                String name = ontology.getTermMap().get(entry.getKey()).getName();
+                MapData mapData = new MapData(name, entry.getKey(), entry.getValue());
+                mapDataList.add(mapData);
+            } else if (!selectedTerms.contains(entry.getKey()) && addNonSelected) {
+                String name = ontology.getTermMap().get(entry.getKey()).getName();
+                MapData mapData = new MapData(name, entry.getKey(), entry.getValue());
+                mapDataList.add(mapData);
+                addNonSelected = false;
+            }
+        }
         return newMap;
     }
 
@@ -545,7 +627,7 @@ public class MainController {
     public void goButtonAction() {
         TermId id = ontologyLabelsAndTermIdMap.get(autocompleteTextfield.getText());
         if (id == null) return; // button was clicked while field was hasTermsUniqueToOnlyOneDisease, no need to do anything
-        Ontology hpo = optionalHpoResource.getOntology();
+        Ontology hpo = optionalMondoResource.getOntology();
         if (hpo == null) {
             logger.error("goButtonAction: hpo is null");
             return;
@@ -659,7 +741,7 @@ public class MainController {
      */
     private void expandUntilTerm(Term term) {
         // logger.trace("expand until term " + term.toString());
-        Ontology ontology = optionalHpoResource.getOntology();
+        Ontology ontology = optionalMondoResource.getOntology();
         if (ontology == null) {
             logger.error("expandUntilTerm not possible because ontology was null");
             return;
@@ -668,11 +750,11 @@ public class MainController {
             // find root -> term path through the tree
             Stack<Term> termStack = new Stack<>();
             termStack.add(term);
-            Set<Term> parents = getTermRelations(ontology, term, Relation.PARENT);
+            Set<Term> parents = getTermRelations(term, Relation.PARENT);
             while (parents.size() != 0) {
                 Term parent = parents.iterator().next();
                 termStack.add(parent);
-                parents = getTermRelations(ontology, parent, Relation.PARENT);
+                parents = getTermRelations(parent, Relation.PARENT);
             }
 
             // expand tree nodes in top -> down direction
@@ -701,38 +783,14 @@ public class MainController {
     }
 
     /**
-     * Get the children of "term"
-     *
-     * @param term HPO Term of interest
-     * @return children of term (not including term itself).
-     */
-    private Set<Term> getTermChildren(Term term) {
-        Ontology  ontology = optionalHpoResource.getOntology();
-        if (ontology == null) {
-            logger.error("Ontology null");
-            PopUps.showInfoMessage("Error: Could not initialize Ontology", "ERROR");
-            return Set.of();
-        }
-        TermId parentTermId = term.id();
-        Set<TermId> childrenIds = getChildTerms(ontology, parentTermId, false);
-        Set<Term> kids = new HashSet<>();
-        childrenIds.forEach(tid -> {
-            Term ht = ontology.getTermMap().get(tid);
-            kids.add(ht);
-        });
-        return kids;
-    }
-
-    /**
      * Get the relations of "term"
      *
-     * @param ontology Mondo ontology
      * @param term Mondo Term of interest
      * @param relation Relation of interest (ancestor, descendent, child, parent)
      * @return relations of term (not including term itself).
      */
-    private Set<Term> getTermRelations(Ontology ontology, Term term, Relation relation) {
-//        Ontology ontology = optionalHpoResource.getOntology();
+    private Set<Term> getTermRelations(Term term, Relation relation) {
+        Ontology ontology = optionalMondoResource.getOntology();
         if (ontology == null) {
             logger.error("Ontology null");
             PopUps.showInfoMessage("Error: Could not initialize Ontology", "ERROR");
@@ -765,7 +823,7 @@ public class MainController {
     }
 
     private boolean existsPathFromRoot(Term term) {
-        Ontology ontology = optionalHpoResource.getOntology();
+        Ontology ontology = optionalMondoResource.getOntology();
         if (ontology == null) {
             logger.error("Ontology null");
             PopUps.showInfoMessage("Error: Could not initialize Ontology", "ERROR");
@@ -796,7 +854,7 @@ public class MainController {
          */
         @Override
         public boolean isLeaf() {
-            return getTermChildren(getValue().term).size() == 0;
+            return getTermRelations(getValue().term, Relation.CHILD).size() == 0;
         }
 
 
@@ -809,9 +867,10 @@ public class MainController {
             if (childrenList == null) {
                 // logger.debug(String.format("Getting children for term %s", getValue().term.getName()));
                 childrenList = FXCollections.observableArrayList();
-                Set<Term> children = getTermChildren(getValue().term);
+                Set<Term> children = getTermRelations(getValue().term, Relation.CHILD);
+                Comparator<Term> compByChildrenSize = (term1, term2) -> getTermRelations(term2, Relation.CHILD).size() - getTermRelations(term1, Relation.CHILD).size();
                 children.stream()
-                        .sorted(Comparator.comparing(Term::getName))
+                        .sorted(compByChildrenSize.thenComparing(Term::getName))
                         .map(term -> new OntologyTermTreeItem(new OntologyTermWrapper(term)))
                         .forEach(childrenList::add);
                 super.getChildren().setAll(childrenList);

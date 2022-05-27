@@ -10,9 +10,7 @@ import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -31,8 +29,8 @@ public class MondoOmimTest {
 
     @Test
     public void testOMIM() {
-        List<TermId> omimIDs = new ArrayList<>();
-        mondo.getTerms().forEach(t -> t.getXrefs().stream().filter(r -> r.getName().contains("OMIM")).map(r -> t.id()).forEach(omimIDs::add));
+        Set<TermId> omimIDs = new HashSet<>();
+        mondo.getTerms().forEach(t -> t.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).map(r -> t.id()).forEach(omimIDs::add));
         System.out.println("OMIM IDs = " + omimIDs);
         assertEquals(omimIDs.size(), 7, 1e0);
     }
@@ -40,11 +38,11 @@ public class MondoOmimTest {
     //function to get Mondo Id and return set of OMIM ids
     @Test
     public void testOmimSingle() {
-        List<TermId> omimIDs = new ArrayList<>();
-        TermId mondoTerm = mondo.getTermMap().get("MONDO:0700120").id();
-        mondo.getTerms().forEach(t -> t.getXrefs().stream().filter(r -> r.getName().contains("OMIM")).map(r -> t.id()).forEach(omimIDs::add));
-        System.out.println("OMIM IDs for Mondo Term " + mondoTerm + " = " + omimIDs);
-        assertEquals(omimIDs.size(), 12, 1e0);
+        Set<String> omimIDs = new HashSet<>();
+        Term mondoTerm = mondo.getTermMap().entrySet().stream().filter(e -> e.getKey().toString().equals("MONDO:0010174")).toList().get(0).getValue();
+        mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).map(r -> r.getName()).forEach(omimIDs::add);
+        System.out.println("OMIM IDs for Mondo Term " + mondoTerm.id() + " = " + omimIDs);
+        assertEquals(omimIDs.size(), 1, 1e0);
     }
 
 
