@@ -3,7 +3,6 @@ package org.monarchinitiative.l2ci.core.mondo;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
-import org.monarchinitiative.l2ci.core.io.HPOParserTest;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 
 import java.util.Map;
@@ -17,7 +16,7 @@ public class MondoStatsTest {
 
     @BeforeAll
     public static void setup() {
-        ClassLoader classLoader = HPOParserTest.class.getClassLoader();
+        ClassLoader classLoader = MondoStatsTest.class.getClassLoader();
         String mondoFilePath=classLoader.getResource("mondo_toy.json").getFile();
         HPOParser parser = new HPOParser(mondoFilePath);
         assertNotNull(parser);
