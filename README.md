@@ -12,4 +12,22 @@ mvn archetype:generate \
 
 L4CI reads the Mondo ontology as a JSON file. The mondo in OWL format can be converted to a JSON file using obographs by typing the following into the Terminal:
 
-```obographs convert mondo.owl -f json```
+```$ obographs convert mondo.owl -f json```
+
+## Installing the LIRICAL dependency
+
+Clone the LIRICAL project from GitHub, then checkout and package the *modularize* branch.
+
+```
+$ git clone https://github.com/TheJacksonLaboratory/LIRICAL.git
+$ cd LIRICAL
+$ git checkout modularize
+$ /.mvnw clean package -Prelease
+```
+
+To complete setup, download the LIRICAL resources and compile.
+
+```
+$ java -jar lirical-cli/target/lirical-cli-2.0.0-SNAPSHOT.jar download
+$ /.mvnw clean compile
+```
