@@ -103,7 +103,7 @@
                       </Button>
                   </HBox>
                   <HBox>
-                      <Label minWidth="300.0" styleClass="smallfontlabel" stylesheets="@../css/style.css">
+                      <Label fx:id = "treeLabel" minWidth="300.0" styleClass="smallfontlabel" stylesheets="@../css/style.css">
                           <HBox.margin>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                           </HBox.margin>

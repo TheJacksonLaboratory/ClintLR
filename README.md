@@ -22,7 +22,7 @@ Clone the LIRICAL project from GitHub, then checkout and package the *modularize
 $ git clone https://github.com/TheJacksonLaboratory/LIRICAL.git
 $ cd LIRICAL
 $ git checkout modularize
-$ /.mvnw clean package -Prelease
+$ ./mvnw --projects lirical-cli,lirical-benchmark --also-make --batch-mode install -P release
 ```
 
 To complete setup, download the LIRICAL resources and compile.
