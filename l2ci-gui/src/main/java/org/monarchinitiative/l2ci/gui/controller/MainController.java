@@ -521,6 +521,7 @@ public class MainController {
                     }
                     TreeItem<OntologyTermWrapper> item = new OntologyTermTreeItem(w);
                     updateDescription(item);
+                    makeSelectedDiseaseMap(preTestProb);
                     if (mapDisplay != null) {
                         mapDisplay.updateTable();
                     }
