@@ -2,7 +2,6 @@ package org.monarchinitiative.l2ci.gui.controller;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -11,14 +10,12 @@ import javafx.stage.Stage;
 import org.monarchinitiative.l2ci.gui.MapData;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MapDisplayInterface {
 
     GridPane display = new GridPane();
     Stage mapStage = new Stage();
-    List<MapData> mapDataList = new ArrayList<>();
 
     TableView tableView = new TableView();
 
@@ -53,22 +50,22 @@ public class MapDisplayInterface {
         probColumn.setCellValueFactory(new PropertyValueFactory<>("Probability"));
         sliderColumn.setCellValueFactory(new PropertyValueFactory<>("SliderValue"));
 
-        probColumn.setCellFactory(tc -> new TableCell<Double, Double>() {
+        probColumn.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(Double value, boolean empty) {
-                super.updateItem(value, empty) ;
+                super.updateItem(value, empty);
                 if (!empty) {
-                    setText(String.format("%.4f", value));
+                    setText(String.format("%6.2e", value));
                 } else {
                     setText(null);
                 }
             }
         });
 
-        sliderColumn.setCellFactory(tc -> new TableCell<Double, Double>() {
+        sliderColumn.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(Double value, boolean empty) {
-                super.updateItem(value, empty) ;
+                super.updateItem(value, empty);
                 if (!empty) {
                     setText(String.format("%.2f", value));
                 } else {
