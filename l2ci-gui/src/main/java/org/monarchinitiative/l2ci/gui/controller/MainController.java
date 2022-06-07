@@ -8,7 +8,11 @@ import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.JavaFXBuilderFactory;
 import javafx.geometry.Insets;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -19,9 +23,11 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -51,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -330,6 +337,27 @@ public class MainController {
         mapDisplay.updateTable();
     }
 
+
+    @FXML
+    void showResourcesInterface(ActionEvent event) {
+        try {
+            ResourcesController controller = new ResourcesController(optionalHpoResource, optionalHpoaResource,
+                    optionalMondoResource, pgProperties, l4ciDir, executor);
+            Parent parent = FXMLLoader.load(ResourcesController.class.getResource("/fxml/ResourcesView.fxml"),
+                    null, new JavaFXBuilderFactory(), clazz -> controller);
+            Stage stage = new Stage();
+            stage.setTitle("Initialize L4CI resources");
+            stage.initOwner(ontologyTreeView.getScene().getWindow());
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setResizable(false);
+            stage.setScene(new Scene(parent));
+            stage.showAndWait();
+        } catch (IOException e) {
+            logger.warn("Unable to display dialog for setting resources", e);
+            PopUps.showException("Initialize L4CI resources", "Error: Unable to display dialog for setting resources", e);
+        }
+    }
+
     @FXML
     private void close(ActionEvent e) {
         logger.trace("Closing down");
@@ -355,6 +383,10 @@ public class MainController {
 
     @FXML
     public void setExomiserVariantFile(Event e) {
+        setExomiserVariantFile();
+    }
+
+    public void setExomiserVariantFile() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Set Exomiser Variant File");
         Stage stage = MainApp.mainStage;

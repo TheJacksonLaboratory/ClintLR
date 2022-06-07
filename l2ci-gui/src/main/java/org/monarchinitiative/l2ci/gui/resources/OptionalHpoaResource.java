@@ -20,6 +20,11 @@ import java.util.stream.Stream;
 public class OptionalHpoaResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(OptionalHpoaResource.class);
     private final BooleanBinding hpoaResourceIsMissing;
+
+    /**
+     * Use this name to save PHENOTYPE.hpoa file on the local filesystem.
+     */
+    public static final String DEFAULT_HPOA_FILE_NAME = "PHENOTYPE.hpoa";
     public final static String HPOA_PATH_PROPERTY = "hpoa/path";
     private final ObjectProperty<Map<TermId, List<HpoDisease>>> indirectAnnotMap =
             new SimpleObjectProperty<>(this, "indirectAnnotMap", null);

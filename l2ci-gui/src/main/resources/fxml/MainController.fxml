@@ -29,6 +29,7 @@
                  <menus>
                      <Menu mnemonicParsing="false" text="File">
                         <items>
+                            <MenuItem onAction="#showResourcesInterface" text="Show Resources"/>
                             <MenuItem onAction="#downloadFile" text="Download Mondo JSON File" />
                             <MenuItem onAction="#loadFile" text="Load Local Mondo JSON File" />
                             <MenuItem onAction="#showMondoStats" text="Show Mondo Stats" />
