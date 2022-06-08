@@ -1,5 +1,6 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -7,19 +8,17 @@ import javafx.scene.control.ProgressIndicator;
 import org.monarchinitiative.biodownload.BioDownloader;
 import org.monarchinitiative.biodownload.BioDownloaderBuilder;
 import org.monarchinitiative.biodownload.FileDownloadException;
-import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.gui.PopUps;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
-import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
@@ -32,6 +31,8 @@ import java.util.concurrent.ExecutorService;
  */
 public final class ResourcesController {
 
+    private final MainController mainController = MainController.getController();
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourcesController.class);
 
     private final OptionalHpoResource optionalHpoResource;
@@ -43,7 +44,7 @@ public final class ResourcesController {
 
     private final Properties pgProperties;
 
-    private final File appHomeDir;
+    private final String dataDir = "data";
 
     private final ExecutorService executorService;
 
@@ -77,13 +78,11 @@ public final class ResourcesController {
 
     @Autowired
     ResourcesController(OptionalHpoResource hpoResource, OptionalHpoaResource hpoaResource,
-                        OptionalMondoResource mondoResource, Properties properties, @Qualifier("appHomeDir") File appHomeDir,
-                        ExecutorService executorService) {
+                        OptionalMondoResource mondoResource, Properties properties, ExecutorService executorService) {
         this.optionalHpoResource = hpoResource;
         this.optionalHpoaResource = hpoaResource;
         this.optionalMondoResource = mondoResource;
         this.pgProperties = properties;
-        this.appHomeDir = appHomeDir;
         this.executorService = executorService;
         initialize();
     }
@@ -133,6 +132,59 @@ public final class ResourcesController {
         }
     }
 
+
+
+    /**
+     * Open DirChooser and ask user to provide a directory where the local hp.json file is located.
+     */
+    @FXML
+    void setHPOFileButtonAction(Event e) {
+        setFileButtonAction(e, "HPO", OptionalHpoResource.HP_JSON_PATH_PROPERTY, hpJsonLabel);
+    }
+
+    /**
+     * Open DirChooser and ask user to provide a directory where the local phenotype.hpoa file is located.
+     */
+    @FXML
+    void setHPOAFileButtonAction(Event e) {
+        setFileButtonAction(e, "HPOA", OptionalHpoaResource.HPOA_PATH_PROPERTY, hpoaLabel);
+    }
+
+    /**
+     * Open DirChooser and ask user to provide a directory where the local Mondo.json file is located.
+     */
+    @FXML
+    void setMondoFileButtonAction(Event e) {
+        setFileButtonAction(e, "MONDO", OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, mondoLabel);
+    }
+
+    void setFileButtonAction(Event e, String type, String pathProperty, Label label) {
+        String filepath = pgProperties.getProperty(pathProperty);
+        if (filepath == null) {
+            loadFile(e, type, pathProperty);
+        } else {
+            boolean response = PopUps.getBooleanFromUser("Overwrite " + type + " File with Local File?",
+                    "Current " + type + " File: " + filepath,
+                    "Set Local " + type + " file");
+            if (response) {
+                loadFile(e, type, pathProperty);
+            }
+        }
+        label.setText(pgProperties.getProperty(pathProperty));
+    }
+
+    void loadFile(Event e, String type, String pathProperty) {
+        try {
+            switch (type) {
+                case "HPO" -> mainController.loadHPOFile(e);
+                case "HPOA" -> mainController.loadHPOAFile(e);
+                case "MONDO" -> mainController.loadMondoFile(e);
+            }
+        } catch (Exception ex) {
+            LOGGER.warn("Error occurred during opening the file '{}'", pgProperties.getProperty(pathProperty), ex);
+        }
+    }
+
     /**
      * Open DirChooser and ask user to provide a directory where the LIRCAL data directory is located.
      */
@@ -140,7 +192,7 @@ public final class ResourcesController {
     void setLiricalDataDirButtonAction() {
         String liricalDataPath = pgProperties.getProperty("lirical.data.path");
         if (liricalDataPath == null) {
-            MainController.getController().setLiricalDataDirectory();
+            mainController.setLiricalDataDirectory();
         } else {
             liricalDataDirLabel.setText(liricalDataPath);
         }
@@ -153,14 +205,14 @@ public final class ResourcesController {
     void setExomiserVariantFileButtonAction() {
         String exomiserFilePath = pgProperties.getProperty("exomiser.variant.path");
         if (exomiserFilePath == null) {
-            MainController.getController().setExomiserVariantFile();
+            mainController.setExomiserVariantFile();
         } else {
             exomiserFileLabel.setText(exomiserFilePath);
         }
     }
 
-    public void downloadFile(String type) throws FileDownloadException {
-        BioDownloaderBuilder builder = BioDownloader.builder(appHomeDir.toPath());
+    public void downloadFile(String path, String type) throws FileDownloadException {
+        BioDownloaderBuilder builder = BioDownloader.builder(Path.of(path));
         switch (type) {
             case "HPO" -> builder.hpoJson();
             case "HPOA" -> builder.hpDiseaseAnnotations();
@@ -176,34 +228,7 @@ public final class ResourcesController {
      */
     @FXML
     void downloadHPOFileButtonAction() {
-        File target = new File(appHomeDir, OptionalHpoResource.DEFAULT_HPO_FILE_NAME);
-        if (target.isFile()) {
-            boolean response = PopUps.getBooleanFromUser("Overwrite?", "HPO file already exists at the target " +
-                    "location", "Download " +
-                    "HPO JSON file");
-            if (!response) {
-                try {
-                    final Ontology ontology = OntologyLoader.loadOntology(target);
-                    optionalHpoResource.setOntology(ontology);
-                    hpJsonLabel.setText(target.getAbsolutePath());
-                    pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, target.getAbsolutePath());
-                    downloadHPOAButton.setDisable(false);
-                } catch (Exception ex) {
-                    LOGGER.warn("Error occurred during opening the ontology file '{}'", target, ex);
-                }
-                return;
-            }
-        }
-        try {
-            downloadFile("HPO");
-            final Ontology ontology = OntologyLoader.loadOntology(target);
-            optionalHpoResource.setOntology(ontology);
-            hpJsonLabel.setText(target.getAbsolutePath());
-            pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, target.getAbsolutePath());
-            downloadHPOAButton.setDisable(false);
-        } catch (Exception ex) {
-            LOGGER.warn("Error occurred during opening the ontology file '{}'", target, ex);
-        }
+        downloadFileButtonAction("HPO", OptionalHpoResource.HP_JSON_PATH_PROPERTY);
     }
 
     /**
@@ -211,30 +236,7 @@ public final class ResourcesController {
      */
     @FXML
     void downloadHPOAFileButtonAction() {
-        File target = new File(appHomeDir, OptionalHpoaResource.DEFAULT_HPOA_FILE_NAME);
-        if (target.isFile()) {
-            boolean response = PopUps.getBooleanFromUser("Overwrite?", "HPOA file already exists at the target " +
-                    "location", "Download " +
-                    "HPOA file");
-            if (!response) {
-                try {
-                    optionalHpoaResource.setAnnotationResources(target.getAbsolutePath(), optionalHpoResource.getOntology());
-                    hpoaLabel.setText(target.getAbsolutePath());
-                    pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, target.getAbsolutePath());
-                } catch (Exception ex) {
-                    LOGGER.warn("Error occurred during opening the ontology file '{}'", target, ex);
-                }
-                return;
-            }
-        }
-        try {
-            downloadFile("HPOA");
-            optionalHpoaResource.setAnnotationResources(target.getAbsolutePath(), optionalHpoResource.getOntology());
-            hpoaLabel.setText(target.getAbsolutePath());
-            pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, target.getAbsolutePath());
-        } catch (Exception ex) {
-            LOGGER.warn("Error occurred during opening the ontology file '{}'", target, ex);
-        }
+        downloadFileButtonAction("HPOA", OptionalHpoaResource.HPOA_PATH_PROPERTY);
     }
 
 
@@ -243,36 +245,56 @@ public final class ResourcesController {
      */
     @FXML
     void downloadMondoFileButtonAction() {
-        File target = new File(appHomeDir, OptionalMondoResource.DEFAULT_MONDO_FILE_NAME);
+        downloadFileButtonAction("MONDO", OptionalMondoResource.MONDO_JSON_PATH_PROPERTY);
+    }
+
+    void downloadFileButtonAction(String type, String pathProperty) {
+        String homeDir = new File(".").getAbsolutePath();
+        String path = String.join(File.separator, homeDir.substring(0, homeDir.length() - 2), dataDir);
+        File target = new File(path, pathProperty);
         if (target.isFile()) {
-            boolean response = PopUps.getBooleanFromUser("Overwrite?", "Mondo file already exists at the target " +
-                    "location", "Download " +
-                    "Mondo JSON file");
+            boolean response = PopUps.getBooleanFromUser("Overwrite?",
+                    type + " file already exists at " + target.getAbsolutePath(),
+                    "Download " + type + " file");
             if (!response) {
-                try {
-                    String path = target.getAbsolutePath();
-                    HPOParser parser = new HPOParser(path);
-                    final Ontology ontology = parser.getHPO();
-                    optionalMondoResource.setOntology(ontology);
-                    mondoLabel.setText(path);
-                    pgProperties.setProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, target.getAbsolutePath());
-                } catch (Exception ex) {
-                    LOGGER.warn("Error occurred during opening the ontology file '{}'", target, ex);
-                }
+                setResource(type, target, true);
                 return;
             }
         }
         try {
-            downloadFile("MONDO");
-            String path = target.getAbsolutePath();
-            //FIXME: HPOParser fails trying to parse the downloaded Mondo file.
-//            HPOParser parser = new HPOParser(path);
-//            final Ontology ontology = parser.getHPO();
-//            optionalMondoResource.setOntology(ontology);
-            mondoLabel.setText(path);
-//            pgProperties.setProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, target.getAbsolutePath());
+            downloadFile(path, type);
+            setResource(type, target, false); //FIXME HPO Parser fails parsing downloaded mondo.json file
         } catch (Exception ex) {
-            LOGGER.warn("Error occurred during opening the ontology file '{}'", target, ex);
+            LOGGER.warn("Error occurred downloading the file '{}'", target, ex);
+        }
+    }
+
+    void setResource(String type, File target, boolean load) {
+        try {
+            switch (type) {
+                case "HPO" -> {
+                    if (load) {
+                        mainController.loadHPOFile(target);
+                    }
+                    hpJsonLabel.setText(target.getAbsolutePath());
+                    downloadHPOAButton.setDisable(false);
+                }
+                case "HPOA" -> {
+                    if (load) {
+                        mainController.loadHPOAFile(target.getAbsolutePath());
+                    }
+                    hpoaLabel.setText(target.getAbsolutePath());
+                }
+                case "MONDO" -> {
+                    String filepath = target.getAbsolutePath();
+                    if (load) {
+                        mainController.loadMondoFile(filepath);
+                    }
+                    mondoLabel.setText(filepath);
+                }
+            }
+        } catch (Exception ex) {
+            LOGGER.warn("Error occurred during opening the file '{}'", target, ex);
         }
     }
 

@@ -49,6 +49,7 @@ import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
 import org.monarchinitiative.lirical.core.model.GenesAndGenotypes;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
+import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -57,7 +58,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -271,7 +271,7 @@ public class MainController {
     }
 
     @FXML
-    public void loadFile(Event e) {
+    public void loadMondoFile(Event e) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Import Local Mondo JSON File");
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Mondo JSON File", "*.json"));
@@ -279,11 +279,11 @@ public class MainController {
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
             String mondoJsonPath = file.getAbsolutePath();
-            loadFile(mondoJsonPath);
+            loadMondoFile(mondoJsonPath);
         }
     }
 
-    public void loadFile(String mondoPath) {
+    public void loadMondoFile(String mondoPath) {
         HPOParser parser = new HPOParser(mondoPath);
         ont = parser.getHPO();
         if (ont != null) {
@@ -295,8 +295,48 @@ public class MainController {
         }
     }
 
+    public void loadHPOFile(Event e) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Import Local HPO JSON File");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("HPO JSON File", "*.json"));
+        Stage stage = MainApp.mainStage;
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            String hpoJsonPath = file.getAbsolutePath();
+            loadHPOFile(new File(hpoJsonPath));
+        }
+    }
+
+    void loadHPOFile(File file) {
+        System.out.println(file.getAbsolutePath());
+        final Ontology ontology = OntologyLoader.loadOntology(file);
+        optionalHpoResource.setOntology(ontology);
+        pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, file.getAbsolutePath());
+    }
+
+    public void loadHPOAFile(Event e) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Import Local phenotype.hpoa File");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("HPOA File", "*.hpoa"));
+        Stage stage = MainApp.mainStage;
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            String hpoaPath = file.getAbsolutePath();
+            loadHPOAFile(hpoaPath);
+        }
+    }
+
+    void loadHPOAFile(String filePath) {
+        if (optionalHpoResource.getOntology() != null ) {
+            optionalHpoaResource.setAnnotationResources(filePath, optionalHpoResource.getOntology());
+            pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, filePath);
+        } else {
+            PopUps.showInfoMessage("Cannot load phenotype.hpoa file. HPO ontology is null.", "Error loading HPOA");
+        }
+    }
+
     @FXML
-    public void downloadFile(Event e) throws FileDownloadException {
+    public void downloadMondoFile(Event e) throws FileDownloadException {
         BioDownloaderBuilder builder = BioDownloader.builder(l4ciDir.toPath());
         builder.mondoJson();
         BioDownloader downloader = builder.build();
@@ -342,7 +382,7 @@ public class MainController {
     void showResourcesInterface(ActionEvent event) {
         try {
             ResourcesController controller = new ResourcesController(optionalHpoResource, optionalHpoaResource,
-                    optionalMondoResource, pgProperties, l4ciDir, executor);
+                    optionalMondoResource, pgProperties, executor);
             Parent parent = FXMLLoader.load(ResourcesController.class.getResource("/fxml/ResourcesView.fxml"),
                     null, new JavaFXBuilderFactory(), clazz -> controller);
             Stage stage = new Stage();

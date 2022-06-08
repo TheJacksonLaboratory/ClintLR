@@ -51,6 +51,11 @@
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                     </GridPane.margin>
                 </Label>
+                <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setHPOFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="4">
+                    <GridPane.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </GridPane.margin>
+                </Button>
                 <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#downloadHPOFileButtonAction" text="Download" GridPane.columnIndex="4" GridPane.rowIndex="4">
                     <GridPane.margin>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -74,6 +79,11 @@
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                     </GridPane.margin>
                 </Label>
+                <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setHPOAFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="5">
+                    <GridPane.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </GridPane.margin>
+                </Button>
                 <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" fx:id="downloadHPOAButton" onAction="#downloadHPOAFileButtonAction" text="Download" GridPane.columnIndex="4" GridPane.rowIndex="5">
                     <GridPane.margin>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -97,6 +107,11 @@
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                     </GridPane.margin>
                 </Label>
+                <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setMondoFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="6">
+                    <GridPane.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </GridPane.margin>
+                </Button>
                 <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#downloadMondoFileButtonAction" text="Download" GridPane.columnIndex="4" GridPane.rowIndex="6">
                     <GridPane.margin>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

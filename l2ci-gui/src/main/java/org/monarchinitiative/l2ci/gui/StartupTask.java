@@ -73,7 +73,6 @@ public final class StartupTask extends Task<Void> {
          */
         String hpoJsonPath = pgProperties.getProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY);
         String hpoAnnotPath = pgProperties.getProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY);
-        String liricalDataPath = pgProperties.getProperty("lirical.data.path");
         String mondoJsonPath = pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY);
         updateProgress(0.02, 1);
         if (mondoJsonPath != null) {
@@ -99,20 +98,6 @@ public final class StartupTask extends Task<Void> {
             LOGGER.info(msg);
             optionalMondoResource.setOntology(null);
         }
-        if (hpoJsonPath == null) {
-            if (liricalDataPath != null) {
-                String msg = "Path to hp.json file not set. Using file in LIRICAL data directory";
-                updateMessage(msg);
-                LOGGER.info(msg);
-                hpoJsonPath = String.join(File.separator, liricalDataPath, "hp.json");
-                pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, hpoJsonPath);
-            } else {
-                String msg = "Need to set path to hp.json file (See edit menu)";
-                updateMessage(msg);
-                LOGGER.info(msg);
-                optionalHpoResource.setOntology(null);
-            }
-        }
         if (hpoJsonPath != null) {
             final File hpJsonFile = new File(hpoJsonPath);
             updateProgress(0.03, 1);
@@ -129,20 +114,11 @@ public final class StartupTask extends Task<Void> {
             } else {
                 optionalHpoResource.setOntology(null);
             }
-        }
-        if (hpoAnnotPath == null) {
-            if (liricalDataPath != null) {
-                String msg = "Path to phenotype.hpoa file not set. Using file in LIRICAL data directory";
-                updateMessage(msg);
-                LOGGER.info(msg);
-                hpoAnnotPath = String.join(File.separator, liricalDataPath, "phenotype.hpoa");
-                pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, hpoAnnotPath);
-            } else {
-                String msg = "Need to set path to hp.json file (See edit menu)";
-                updateMessage(msg);
-                LOGGER.info(msg);
-                optionalHpoResource.setOntology(null);
-            }
+        } else {
+            String msg = "Need to set path to hp.json file (See File -> Show Resources menu)";
+            updateMessage(msg);
+            LOGGER.info(msg);
+            optionalHpoResource.setOntology(null);
         }
         if (hpoAnnotPath != null) {
             String msg = String.format("Loading phenotype.hpoa from file '%s'", hpoAnnotPath);
@@ -164,7 +140,10 @@ public final class StartupTask extends Task<Void> {
                 LOGGER.error("Cannot load phenotype.hpoa File was null");
             }
         } else {
-            LOGGER.error("Cannot load phenotype.hpoa File path not found");
+            String msg = "Need to set path to phenotype.hpoa file (See File -> Show Resources menu)";
+            updateMessage(msg);
+            LOGGER.info(msg);
+            optionalHpoResource.setOntology(null);
         }
         updateProgress(1, 1);
         return null;
@@ -178,29 +157,20 @@ public final class StartupTask extends Task<Void> {
             LOGGER.info("LIRICAL data directory: {}", dataPath);
             Path liricalDataPath = Path.of(dataPath);
             String exomiserVariant = pgProperties.getProperty("exomiser.variant.path");
+            LiricalBuilder liricalBuilder = LiricalBuilder.builder(liricalDataPath);
+            liricalBuilder.setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM));
             if (exomiserVariant != null) {
                 LOGGER.info("Exomiser variant file: {}", exomiserVariant);
-                lirical = LiricalBuilder.builder(liricalDataPath)
-                        .exomiserVariantDatabase(Path.of(exomiserVariant))
-//                .genomeBuild(genomeBuildOptional.get())
-//                .backgroundVariantFrequency(dataSection.backgroundFrequencyFile)
-                        .setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM))
-//                .genotypeLrProperties(genotypeLrProperties)
-//                .transcriptDatabase(runConfiguration.transcriptDb)
-//                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
-                        .build();
+                liricalBuilder.exomiserVariantDatabase(Path.of(exomiserVariant));
             } else {
                 LOGGER.info("Path to Exomiser variant file not set (see Edit menu). Building LIRICAL without Exomiser variant file.");
-                lirical = LiricalBuilder.builder(liricalDataPath)
-//                    .exomiserVariantDatabase(Path.of(exomiserVariant))
+            }
 //                .genomeBuild(genomeBuildOptional.get())
 //                .backgroundVariantFrequency(dataSection.backgroundFrequencyFile)
-                        .setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM))
 //                .genotypeLrProperties(genotypeLrProperties)
 //                .transcriptDatabase(runConfiguration.transcriptDb)
 //                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
-                        .build();
-            }
+            lirical = liricalBuilder.build();
             LOGGER.info("Finished building LIRICAL");
         } else {
             LOGGER.error("No LIRICAL data directory set (see Edit Menu). Aborting building LIRICAL.");
