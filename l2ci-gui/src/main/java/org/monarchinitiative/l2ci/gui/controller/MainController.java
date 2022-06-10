@@ -26,8 +26,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +37,7 @@ import java.util.function.Consumer;
 import org.monarchinitiative.biodownload.BioDownloader;
 import org.monarchinitiative.biodownload.BioDownloaderBuilder;
 import org.monarchinitiative.biodownload.FileDownloadException;
+import org.monarchinitiative.l2ci.core.io.Download;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.io.MapFileWriter;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
@@ -58,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -69,6 +72,8 @@ import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.*;
 @Component
 public class MainController {
 
+    @Autowired
+    private ApplicationContext applicationContext;
     private static MainController mainController;
     private Ontology ont;
 
@@ -79,15 +84,15 @@ public class MainController {
      * Application-specific properties (not the System properties!) defined in the 'application.properties' file that
      * resides in the classpath.
      */
-    private final Properties pgProperties;
+    public final Properties pgProperties;
 
-    private final ExecutorService executor;
+    public final ExecutorService executor;
 
-    private final OptionalHpoResource optionalHpoResource;
+    public final OptionalHpoResource optionalHpoResource;
 
-    private final OptionalHpoaResource optionalHpoaResource;
+    public final OptionalHpoaResource optionalHpoaResource;
 
-    private final OptionalMondoResource optionalMondoResource;
+    public final OptionalMondoResource optionalMondoResource;
     /**
      * Directory, where ontologies and HPO annotation files are being stored.
      */
@@ -146,6 +151,12 @@ public class MainController {
 
     private File mondoJSONFile;
 
+    private Image redIcon;
+
+    private Image redArrowIcon;
+
+    private Image blackArrowIcon;
+
     public enum MessageType {
         INFO, WARNING, ERROR
     }
@@ -191,7 +202,7 @@ public class MainController {
     }
 
     @FXML
-    private void initialize() {
+    private void initialize() throws IOException {
         mainController = this;
         logger.info("Initializing main controller");
         StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
@@ -260,6 +271,40 @@ public class MainController {
             }
         });
 
+        InputStream redStream = getClass().getResourceAsStream("/icons/red_circle.png");
+        InputStream redArrowStream = getClass().getResourceAsStream("/icons/red_circle_up_arrow.png");
+        InputStream blackArrowStream = getClass().getResourceAsStream("/icons/black_circle_up_arrow.png");
+        redIcon = new Image(Objects.requireNonNull(redStream));
+        redArrowIcon = new Image(Objects.requireNonNull(redArrowStream));
+        blackArrowIcon = new Image(Objects.requireNonNull(blackArrowStream));
+        redStream.close();
+        redArrowStream.close();
+        blackArrowStream.close();
+
+        String downloadPath = pgProperties.getProperty("download.path");
+        if (downloadPath == null) {
+            String appDir = new File(".").getAbsolutePath();
+            String path = String.join(File.separator, appDir.substring(0, appDir.length() - 2), "data");
+            pgProperties.setProperty("download.path", path);
+            downloadPath = pgProperties.getProperty("download.path");
+        }
+
+        if (pgProperties.getProperty("obographs.jar.path") == null) {
+            String homeDir = System.getProperty("user.home");
+            FileSearch fileSearch = new FileSearch();
+            Files.walkFileTree(Path.of(homeDir), fileSearch);
+            List<Path> files = fileSearch.getFileList();
+            if (!files.isEmpty()) {
+                String jarPath = files.get(0).toString();
+                pgProperties.setProperty("obographs.jar.path", jarPath);
+            } else {
+                logger.info("Cannot find obographs to convert mondo.owl to mondo.json.");
+            }
+        }
+        logger.info("obographs jar located at " + pgProperties.getProperty("obographs.jar.path"));
+
+
+
         ChangeListener<? super Object> listener = (obs, oldval, newval) -> activateIfResourcesAvailable();
         optionalHpoResource.ontologyProperty().addListener(listener);
         optionalMondoResource.ontologyProperty().addListener(listener);
@@ -268,6 +313,31 @@ public class MainController {
         logger.info("Done initialization");
         checkAll();
         logger.info("done activate");
+    }
+
+    private static final class FileSearch extends SimpleFileVisitor<Path> {
+        List<Path> fileList = new ArrayList();
+
+        @Override
+        public FileVisitResult visitFileFailed(Path path, IOException exc) throws IOException {
+            if (exc instanceof FileSystemException) {
+                return FileVisitResult.SKIP_SUBTREE;
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            PathMatcher pm = FileSystems.getDefault().getPathMatcher("glob:obographs-cli-0.3.0.jar");
+            if (pm.matches(file.getFileName())) {
+                fileList.add(file);
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        public List<Path> getFileList() {
+            return fileList;
+        }
     }
 
     @FXML
@@ -337,10 +407,42 @@ public class MainController {
 
     @FXML
     public void downloadMondoFile(Event e) throws FileDownloadException {
-        BioDownloaderBuilder builder = BioDownloader.builder(l4ciDir.toPath());
-        builder.mondoJson();
-        BioDownloader downloader = builder.build();
-        downloader.download();
+        downloadMondoFile(pgProperties.getProperty("download.path"));
+    }
+
+    public void downloadMondoFile(String path) throws FileDownloadException {
+        try {
+            BioDownloaderBuilder builder = BioDownloader.builder(Path.of(pgProperties.getProperty("download.path")));
+            builder.mondoOwl();
+            BioDownloader downloader = builder.build();
+            downloader.download();
+            File owl = new File(path, "mondo.owl");
+            if (pgProperties.getProperty("obographs.jar.path") != null) {
+                String jarPath = pgProperties.getProperty("obographs.jar.path");
+                String[] command = {"java",  "-jar", jarPath, "convert", "-f", "json", owl.getAbsolutePath()};
+                logger.info("Converting mondo.owl to readable mondo.json file using obographs.");
+                logger.info(String.join(" ", command));
+                convertOboToJson(command);
+                loadMondoFile(new File(path, "mondo.json").getAbsolutePath());
+            } else {
+                PopUps.showInfoMessage("Cannot find obographs-cli-0.3.0.jar to convert mondo.owl to readable mondo.json file.", "Can't convert Mondo.");
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    void convertOboToJson(String[] args) throws Exception {
+        ProcessBuilder builder = new ProcessBuilder(args);
+        builder.redirectErrorStream(true);
+        Process p = builder.start();
+        BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String line;
+        while (true) {
+            line = r.readLine();
+            if (line == null) { break; }
+            System.out.println(line);
+        }
     }
 
     @FXML
@@ -569,11 +671,11 @@ public class MainController {
                 if (!empty || item != null) {
                     setText(item.term.getName());
                     if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
-                        ImageView omimIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/red_circle.png"))));
-                        ImageView omimSelectedIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/red_circle_up_arrow.png"))));
+                        ImageView omimIcon = new ImageView(redIcon);
+                        ImageView omimSelectedIcon = new ImageView(redArrowIcon);
                         updateTreeIcons(item, omimIcon, omimSelectedIcon);
                     } else if (item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
-                        ImageView selectedIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/black_circle_up_arrow.png"))));
+                        ImageView selectedIcon = new ImageView(blackArrowIcon);
                         updateTreeIcons(item, null, selectedIcon);
                     }
                 }

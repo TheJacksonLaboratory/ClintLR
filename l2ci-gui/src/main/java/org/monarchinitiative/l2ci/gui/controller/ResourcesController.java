@@ -1,5 +1,7 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -15,7 +17,6 @@ import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -43,8 +44,6 @@ public final class ResourcesController {
 
 
     private final Properties pgProperties;
-
-    private final String dataDir = "data";
 
     private final ExecutorService executorService;
 
@@ -212,14 +211,23 @@ public final class ResourcesController {
     }
 
     public void downloadFile(String path, String type) throws FileDownloadException {
-        BioDownloaderBuilder builder = BioDownloader.builder(Path.of(path));
         switch (type) {
-            case "HPO" -> builder.hpoJson();
-            case "HPOA" -> builder.hpDiseaseAnnotations();
-            case "MONDO" -> builder.mondoJson();
+            case "HPO":
+                BioDownloaderBuilder builder = BioDownloader.builder(Path.of(path));
+                builder.hpoJson();
+                BioDownloader downloader = builder.build();
+                downloader.download();
+                break;
+            case "HPOA":
+                builder = BioDownloader.builder(Path.of(path));
+                builder.hpDiseaseAnnotations();
+                downloader = builder.build();
+                downloader.download();
+                break;
+            case "MONDO":
+                mainController.downloadMondoFile(pgProperties.getProperty("download.path"));
+                break;
         }
-        BioDownloader downloader = builder.build();
-        downloader.download();
     }
 
 
@@ -248,50 +256,61 @@ public final class ResourcesController {
         downloadFileButtonAction("MONDO", OptionalMondoResource.MONDO_JSON_PATH_PROPERTY);
     }
 
+    public class DownloadTask extends Task<Void> {
+
+        private final String path;
+
+        private final String type;
+
+        public DownloadTask(String path, String type) {
+            this.path = path;
+            this.type = type;
+        }
+        @Override
+        protected Void call() throws Exception {
+            downloadFile(path, type);
+            return null;
+        }
+    }
+
     void downloadFileButtonAction(String type, String pathProperty) {
-        String homeDir = new File(".").getAbsolutePath();
-        String path = String.join(File.separator, homeDir.substring(0, homeDir.length() - 2), dataDir);
-        File target = new File(path, pathProperty);
+        String path = pgProperties.getProperty("download.path");
+        File target = new File(path, pathProperty.replace(".path", "").replace("hpoa/path", "phenotype.hpoa"));
         if (target.isFile()) {
             boolean response = PopUps.getBooleanFromUser("Overwrite?",
                     type + " file already exists at " + target.getAbsolutePath(),
                     "Download " + type + " file");
             if (!response) {
-                setResource(type, target, true);
+                setResource(type, target);
                 return;
             }
         }
         try {
-            downloadFile(path, type);
-            setResource(type, target, false); //FIXME HPO Parser fails parsing downloaded mondo.json file
+            DownloadTask task = new DownloadTask(path, type);
+            task.setOnSucceeded(e -> setResource(type, target));
+            mainController.executor.submit(task);
         } catch (Exception ex) {
             LOGGER.warn("Error occurred downloading the file '{}'", target, ex);
         }
     }
 
-    void setResource(String type, File target, boolean load) {
+    void setResource(String type, File target) {
         try {
             switch (type) {
-                case "HPO" -> {
-                    if (load) {
-                        mainController.loadHPOFile(target);
-                    }
+                case "HPO":
+                    mainController.loadHPOFile(target);
                     hpJsonLabel.setText(target.getAbsolutePath());
                     downloadHPOAButton.setDisable(false);
-                }
-                case "HPOA" -> {
-                    if (load) {
-                        mainController.loadHPOAFile(target.getAbsolutePath());
-                    }
+                    break;
+                case "HPOA":
+                    mainController.loadHPOAFile(target.getAbsolutePath());
                     hpoaLabel.setText(target.getAbsolutePath());
-                }
-                case "MONDO" -> {
+                    break;
+                case "MONDO":
                     String filepath = target.getAbsolutePath();
-                    if (load) {
-                        mainController.loadMondoFile(filepath);
-                    }
+                    mainController.loadMondoFile(filepath);
                     mondoLabel.setText(filepath);
-                }
+                    break;
             }
         } catch (Exception ex) {
             LOGGER.warn("Error occurred during opening the file '{}'", target, ex);

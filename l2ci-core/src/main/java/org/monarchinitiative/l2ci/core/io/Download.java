@@ -17,36 +17,36 @@ public class Download {
 
     boolean overwrite;
 
+    BioDownloaderBuilder builder;
+
     public Download(String path, boolean overwrite) {
         this.path = path;
         this.overwrite = overwrite;
+        this.builder = BioDownloader.builder(Path.of(path));
     }
 
-    void downloadFile(String path, String filename, String type) {
+    void addToBuilder(String path, String filename, String type) {
         String filePath = String.join(File.separator, path, filename);
-        try {
-            File target = new File(filePath);
-            if (target.isFile()) {
-                if (!overwrite) {
-                    logger.info(filePath + " was not overwritten.");
-                    return;
-                }
+        File target = new File(filePath);
+        if (target.isFile()) {
+            if (!overwrite) {
+                logger.info(filePath + " was not overwritten.");
+                return;
             }
-            BioDownloaderBuilder builder = BioDownloader.builder(Path.of(path));
-            switch (type) {
-                case "HPO" -> builder.hpoJson();
-                case "HPOA" -> builder.hpDiseaseAnnotations();
-                case "MONDO" -> builder.mondoJson();
-            }
-            BioDownloader downloader = builder.build();
-            downloader.download();
-        } catch (FileDownloadException e) {
-            throw new RuntimeException(e);
+        }
+        switch (type) {
+            case "HPO" -> builder.hpoJson();
+            case "HPOA" -> builder.hpDiseaseAnnotations();
+            case "MONDO" -> builder.mondoJson();
         }
     }
 
     public void run() throws FileDownloadException {
-        downloadFile(path, "HP.json", "HPO");
-        downloadFile(path, "PHENOTYPE.hpoa", "HPOA");
+        addToBuilder(path, "HP.json", "HPO");
+        addToBuilder(path, "PHENOTYPE.hpoa", "HPOA");
+        if (overwrite) {
+            BioDownloader downloader = builder.build();
+            downloader.download();
+        }
     }
 }

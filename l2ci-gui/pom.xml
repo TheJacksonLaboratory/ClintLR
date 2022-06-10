@@ -70,7 +70,6 @@
         <dependency>
             <groupId>org.monarchinitiative.biodownload</groupId>
             <artifactId>biodownload</artifactId>
-            <version>1.1.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
