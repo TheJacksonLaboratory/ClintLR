@@ -11,7 +11,8 @@ public class LIRICALTest {
     @Test
     public void testRun() throws Exception {
 //        Path exomiserVariants = Path.of(String.join(File.separator, "", "Users", "beckwm", "Exomiser", "2109_hg38", "2109_hg38", "2109_hg38_variants.mv.db"));
-        Lirical lirical = LiricalBuilder.builder(Path.of(String.join(File.separator, "src", "main", "resources", "LIRICAL", "data")))
+        String homeDir = new File(".").getAbsolutePath();
+        Lirical lirical = LiricalBuilder.builder(Path.of(String.join(File.separator, homeDir.substring(0, homeDir.indexOf("Projects/") + 8), "LIRICAL", "data")))
 //                .exomiserVariantDatabase(exomiserVariants)
                 .setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM))
                 .build();

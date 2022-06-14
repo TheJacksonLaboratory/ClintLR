@@ -286,7 +286,6 @@ public class MainController {
             String appDir = new File(".").getAbsolutePath();
             String path = String.join(File.separator, appDir.substring(0, appDir.length() - 2), "data");
             pgProperties.setProperty("download.path", path);
-            downloadPath = pgProperties.getProperty("download.path");
         }
 
         if (pgProperties.getProperty("obographs.jar.path") == null) {
@@ -328,7 +327,7 @@ public class MainController {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            PathMatcher pm = FileSystems.getDefault().getPathMatcher("glob:obographs-cli-0.3.0.jar");
+            PathMatcher pm = FileSystems.getDefault().getPathMatcher("glob:obographs-cli-*.jar");
             if (pm.matches(file.getFileName())) {
                 fileList.add(file);
             }
@@ -410,22 +409,22 @@ public class MainController {
         downloadMondoFile(pgProperties.getProperty("download.path"));
     }
 
-    public void downloadMondoFile(String path) throws FileDownloadException {
+    public void downloadMondoFile(String path) {
         try {
             BioDownloaderBuilder builder = BioDownloader.builder(Path.of(pgProperties.getProperty("download.path")));
             builder.mondoOwl();
             BioDownloader downloader = builder.build();
             downloader.download();
             File owl = new File(path, "mondo.owl");
-            if (pgProperties.getProperty("obographs.jar.path") != null) {
-                String jarPath = pgProperties.getProperty("obographs.jar.path");
+            String jarPath = pgProperties.getProperty("obographs.jar.path");
+            if (jarPath != null && new File(jarPath).isFile()) {
                 String[] command = {"java",  "-jar", jarPath, "convert", "-f", "json", owl.getAbsolutePath()};
                 logger.info("Converting mondo.owl to readable mondo.json file using obographs.");
                 logger.info(String.join(" ", command));
                 convertOboToJson(command);
                 loadMondoFile(new File(path, "mondo.json").getAbsolutePath());
             } else {
-                PopUps.showInfoMessage("Cannot find obographs-cli-0.3.0.jar to convert mondo.owl to readable mondo.json file.", "Can't convert Mondo.");
+                logger.info("Cannot find obographs-cli jar file to convert mondo.owl to readable mondo.json file.");
             }
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -443,6 +442,7 @@ public class MainController {
             if (line == null) { break; }
             System.out.println(line);
         }
+        r.close();
     }
 
     @FXML
@@ -485,7 +485,7 @@ public class MainController {
         try {
             ResourcesController controller = new ResourcesController(optionalHpoResource, optionalHpoaResource,
                     optionalMondoResource, pgProperties, executor);
-            Parent parent = FXMLLoader.load(ResourcesController.class.getResource("/fxml/ResourcesView.fxml"),
+            Parent parent = FXMLLoader.load(Objects.requireNonNull(ResourcesController.class.getResource("/fxml/ResourcesView.fxml")),
                     null, new JavaFXBuilderFactory(), clazz -> controller);
             Stage stage = new Stage();
             stage.setTitle("Initialize L4CI resources");
@@ -627,7 +627,7 @@ public class MainController {
         } else if (optionalMondoResource.getOntology() == null) {
             publishMessage("mondo json file is missing", MessageType.ERROR);
         } else {
-            logger.info("All four resources loaded");
+            logger.info("All resources loaded");
             publishMessage("Ready to go", MessageType.INFO);
         }
     }
@@ -667,15 +667,15 @@ public class MainController {
 
             @Override
             protected void updateItem(OntologyTermWrapper item, boolean empty) {
+                ImageView omimIcon = new ImageView(redIcon);
+                ImageView omimSelectedIcon = new ImageView(redArrowIcon);
+                ImageView selectedIcon = new ImageView(blackArrowIcon);
                 super.updateItem(item, empty);
                 if (!empty || item != null) {
                     setText(item.term.getName());
                     if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
-                        ImageView omimIcon = new ImageView(redIcon);
-                        ImageView omimSelectedIcon = new ImageView(redArrowIcon);
                         updateTreeIcons(item, omimIcon, omimSelectedIcon);
                     } else if (item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
-                        ImageView selectedIcon = new ImageView(blackArrowIcon);
                         updateTreeIcons(item, null, selectedIcon);
                     }
                 }

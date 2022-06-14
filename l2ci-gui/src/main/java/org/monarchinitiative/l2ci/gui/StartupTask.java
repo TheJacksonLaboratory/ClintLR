@@ -159,11 +159,11 @@ public final class StartupTask extends Task<Void> {
             String exomiserVariant = pgProperties.getProperty("exomiser.variant.path");
             LiricalBuilder liricalBuilder = LiricalBuilder.builder(liricalDataPath);
             liricalBuilder.setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM));
-            if (exomiserVariant != null) {
+            if (exomiserVariant != null && new File(exomiserVariant).isFile()) {
                 LOGGER.info("Exomiser variant file: {}", exomiserVariant);
                 liricalBuilder.exomiserVariantDatabase(Path.of(exomiserVariant));
             } else {
-                LOGGER.info("Path to Exomiser variant file not set (see Edit menu). Building LIRICAL without Exomiser variant file.");
+                LOGGER.info("Path to Exomiser variant file not set (see Edit menu or File -> Show Resources menu). Building LIRICAL without Exomiser variant file.");
             }
 //                .genomeBuild(genomeBuildOptional.get())
 //                .backgroundVariantFrequency(dataSection.backgroundFrequencyFile)

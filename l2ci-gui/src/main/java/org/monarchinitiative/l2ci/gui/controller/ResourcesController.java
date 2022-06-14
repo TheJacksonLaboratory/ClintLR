@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
@@ -98,37 +99,29 @@ public final class ResourcesController {
         String liricalDataPath = pgProperties.getProperty("lirical.data.path");
         String exomiserPath = pgProperties.getProperty("exomiser.variant.path");
         downloadHPOAButton.setDisable(optionalHpoResource.getOntology() == null);
-        if (hpPath != null) {
+        if (hpPath != null && new File(hpPath).isFile()) {
             hpJsonLabel.setText(hpPath);
             hpoProgressIndicator.setProgress(1);
         } else {
             hpJsonLabel.setText("unset");
             hpoProgressIndicator.setProgress(0);
         }
-        if (hpoaPath != null) {
+        if (hpoaPath != null && new File(hpoaPath).isFile()) {
             hpoaLabel.setText(hpoaPath);
             hpoaProgressIndicator.setProgress(1);
         } else {
             hpoaLabel.setText("unset");
             hpoaProgressIndicator.setProgress(0);
         }
-        if (mondoPath != null) {
+        if (mondoPath != null && new File(mondoPath).isFile()) {
             mondoLabel.setText(mondoPath);
             mondoProgressIndicator.setProgress(1);
         } else {
             mondoLabel.setText("unset");
             mondoProgressIndicator.setProgress(0);
         }
-        if (liricalDataPath != null) {
-            liricalDataDirLabel.setText(liricalDataPath);
-        } else {
-            liricalDataDirLabel.setText("unset");
-        }
-        if (exomiserPath != null) {
-            exomiserFileLabel.setText(exomiserPath);
-        } else {
-            exomiserFileLabel.setText("unset");
-        }
+        liricalDataDirLabel.setText(Objects.requireNonNullElse(liricalDataPath, "unset"));
+        exomiserFileLabel.setText(Objects.requireNonNullElse(exomiserPath, "unset"));
     }
 
 
