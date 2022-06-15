@@ -25,7 +25,7 @@ public class HPOParser {
         System.out.println(path);
         System.out.println(f);
         if (!f.exists()) {
-            LOGGER.error(String.format("Unable to find HPO file at %s", path));
+            LOGGER.error(String.format("Unable to find file at %s", path));
             return;
         }
         CurieUtil newCurie = CurieUtilBuilder.withDefaultsAnd(Map.of("HGNC", "http://identifiers.org/hgnc/"));

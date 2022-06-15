@@ -291,18 +291,23 @@ public final class ResourcesController {
         try {
             switch (type) {
                 case "HPO":
+                    String hpoPath = target.getAbsolutePath();
                     mainController.loadHPOFile(target);
-                    hpJsonLabel.setText(target.getAbsolutePath());
+                    hpJsonLabel.setText(hpoPath);
                     downloadHPOAButton.setDisable(false);
+                    pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, hpoPath);
                     break;
                 case "HPOA":
-                    mainController.loadHPOAFile(target.getAbsolutePath());
-                    hpoaLabel.setText(target.getAbsolutePath());
+                    String hpoaPath = target.getAbsolutePath();
+                    mainController.loadHPOAFile(hpoaPath);
+                    hpoaLabel.setText(hpoaPath);
+                    pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, hpoaPath);
                     break;
                 case "MONDO":
                     String filepath = target.getAbsolutePath();
                     mainController.loadMondoFile(filepath);
                     mondoLabel.setText(filepath);
+                    pgProperties.setProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, filepath);
                     break;
             }
         } catch (Exception ex) {

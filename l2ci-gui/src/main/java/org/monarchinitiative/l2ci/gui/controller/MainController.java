@@ -209,14 +209,9 @@ public class MainController {
         liricalButton.setDisable(true);
         String liricalData = pgProperties.getProperty("lirical.data.path");
         if (liricalData == null) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setContentText("No LIRICAL data directory set. Click OK to set LIRICAL data directory.");
-            alert.showAndWait();
-            if (alert.getResult().equals(ButtonType.OK)) {
-                setLiricalDataDirectory();
-            } else if (alert.getResult().equals(ButtonType.CANCEL)) {
-                return;
-            }
+            String homeDir = new File(".").getAbsolutePath();
+            liricalData = String.join(File.separator, homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "LIRICAL", "data");
+            pgProperties.setProperty("lirical.data.path", liricalData);
         }
         CompletableFuture.runAsync(() -> {
             try {
@@ -289,16 +284,9 @@ public class MainController {
         }
 
         if (pgProperties.getProperty("obographs.jar.path") == null) {
-            String homeDir = System.getProperty("user.home");
-            FileSearch fileSearch = new FileSearch();
-            Files.walkFileTree(Path.of(homeDir), fileSearch);
-            List<Path> files = fileSearch.getFileList();
-            if (!files.isEmpty()) {
-                String jarPath = files.get(0).toString();
-                pgProperties.setProperty("obographs.jar.path", jarPath);
-            } else {
-                logger.info("Cannot find obographs to convert mondo.owl to mondo.json.");
-            }
+            ClassLoader classLoader = MainController.class.getClassLoader();
+            String obographsPath = classLoader.getResource("obographs-cli-0.3.0.jar").getFile();
+            pgProperties.setProperty("obographs.jar.path", obographsPath);
         }
         logger.info("obographs jar located at " + pgProperties.getProperty("obographs.jar.path"));
 
@@ -314,30 +302,6 @@ public class MainController {
         logger.info("done activate");
     }
 
-    private static final class FileSearch extends SimpleFileVisitor<Path> {
-        List<Path> fileList = new ArrayList();
-
-        @Override
-        public FileVisitResult visitFileFailed(Path path, IOException exc) throws IOException {
-            if (exc instanceof FileSystemException) {
-                return FileVisitResult.SKIP_SUBTREE;
-            }
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            PathMatcher pm = FileSystems.getDefault().getPathMatcher("glob:obographs-cli-*.jar");
-            if (pm.matches(file.getFileName())) {
-                fileList.add(file);
-            }
-            return FileVisitResult.CONTINUE;
-        }
-
-        public List<Path> getFileList() {
-            return fileList;
-        }
-    }
 
     @FXML
     public void loadMondoFile(Event e) {
@@ -358,6 +322,7 @@ public class MainController {
         if (ont != null) {
             optionalMondoResource.setOntology(ont);
             pgProperties.setProperty("mondo.json.path", mondoPath);
+            pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, mondoPath);
             logger.info("Loaded Ontology {} from file {}", ont.toString(), mondoPath);
             activateOntologyTree();
             publishMessage("Loaded Ontology from file " + mondoPath);
