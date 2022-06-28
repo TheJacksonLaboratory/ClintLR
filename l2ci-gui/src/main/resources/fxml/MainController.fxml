@@ -30,8 +30,10 @@
                      <Menu mnemonicParsing="false" text="File">
                         <items>
                             <MenuItem onAction="#showResourcesInterface" text="Show Resources"/>
+                            <!--
                             <MenuItem onAction="#downloadMondoFile" text="Download Mondo JSON File" />
                             <MenuItem onAction="#loadMondoFile" text="Load Local Mondo JSON File" />
+                            -->
                             <MenuItem onAction="#showMondoStats" text="Show Mondo Stats" />
                             <MenuItem onAction="#saveMapOutputFile" text="Save Map to File"/>
                             <MenuItem onAction="#showMapInterface" text="Show Map Interface"/>
@@ -40,8 +42,10 @@
                      </Menu>
                      <Menu mnemonicParsing="false" text="Edit">
                         <items>
+                            <!--
                             <MenuItem onAction="#setLiricalDataDirectory" text="Set LIRICAL Data Directory" />
                             <MenuItem onAction="#setExomiserVariantFile" text="Set Path to Exomiser Variant File" />
+                            -->
                             <MenuItem mnemonicParsing="false" text="Delete" />
                         </items>
                      </Menu>
@@ -78,6 +82,26 @@
                           </HBox.margin>
                       </Button>
                   </HBox>
+                  <Label styleClass="bluelabel" stylesheets="@../css/style.css" text="Browse OMIM Terms">
+                      <VBox.margin>
+                          <Insets bottom="5.0" left="15.0" top="5.0" />
+                      </VBox.margin>
+                  </Label>
+                  <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
+                      <TextField fx:id="autocompleteOmimTextfield" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="320.0" promptText="autocomplete OMIM term...">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                          </HBox.margin>
+                      </TextField>
+                      <Button fx:id="omimButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#omimButtonAction" styleClass="Button" stylesheets="@../css/style.css" text="Go" textOverrun="CLIP">
+                          <tooltip>
+                              <Tooltip text="tell me what to do" />
+                          </tooltip>
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
+                          </HBox.margin>
+                      </Button>
+                  </HBox>
                   <Label styleClass="bluelabel" stylesheets="@../css/style.css" text="Pretest Probability">
                       <VBox.margin>
                           <Insets bottom="5.0" left="15.0" top="5.0" />
@@ -104,7 +128,22 @@
                       </Button>
                   </HBox>
                   <HBox>
-                      <Label fx:id = "treeLabel" minWidth="300.0" styleClass="smallfontlabel" stylesheets="@../css/style.css">
+                      <Button fx:id="phenopacketButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#phenopacketButtonAction" styleClass="Button" stylesheets="@../css/style.css" text="Load Phenopacket" textOverrun="CLIP">
+                          <tooltip>
+                              <Tooltip text="Load Phenopacket" />
+                          </tooltip>
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
+                          </HBox.margin>
+                      </Button>
+                      <Label fx:id = "phenopacketLabel" minWidth="300.0" stylesheets="@../css/style.css">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                          </HBox.margin>
+                      </Label>
+                  </HBox>
+                  <HBox>
+                      <Label fx:id = "treeLabel" minWidth="300.0" stylesheets="@../css/style.css">
                           <HBox.margin>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                           </HBox.margin>

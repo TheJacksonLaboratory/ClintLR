@@ -2,19 +2,18 @@ package org.monarchinitiative.l2ci.gui;
 
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
-import java.util.List;
-import java.util.Map;
-
 public class MapData {
 
     String diseaseName;
-    TermId termId;
+    TermId mondoId;
+    TermId omimId;
     Double diseaseProb;
     Double sliderValue;
 
-    public MapData(String name, TermId id, Double probability, Double sliderVal) {
+    public MapData(String name, TermId mondoId, TermId omimId, Double probability, Double sliderVal) {
         this.diseaseName = name;
-        this.termId = id;
+        this.mondoId = mondoId;
+        this.omimId = omimId;
         this.diseaseProb = probability;
         this.sliderValue = sliderVal;
     }
@@ -23,8 +22,12 @@ public class MapData {
         return diseaseName;
     }
 
-    public TermId getTermId() {
-        return termId;
+    public TermId getMondoId() {
+        return mondoId;
+    }
+
+    public TermId getOmimId() {
+        return omimId;
     }
 
     public Double getProbability() {

@@ -19,7 +19,8 @@ public class MapDisplayInterface {
 
     TableView tableView = new TableView();
 
-    public void launchMapInterface() {
+    public void initMapInterface() {
+        display.getChildren().clear();
         display.add(tableView, 0, 1);
 
         tableView.prefHeightProperty().bind(display.heightProperty());
@@ -28,6 +29,9 @@ public class MapDisplayInterface {
         mapStage.setScene(new Scene(display, 600, 300));
         mapStage.setResizable(true);
         mapStage.setTitle("Probability Map");
+    }
+
+    public void show() {
         mapStage.show();
     }
 
@@ -40,12 +44,14 @@ public class MapDisplayInterface {
         }
         tableView.itemsProperty().setValue(data);
 
-        TableColumn<TermId, String> idColumn = new TableColumn("TermId");
+        TableColumn<TermId, String> mondoIdColumn = new TableColumn("MondoId");
+        TableColumn<TermId, String> omimIdColumn = new TableColumn("OmimId");
         TableColumn<String, String> nameColumn = new TableColumn("Name");
         TableColumn<Double, Double> probColumn = new TableColumn("Probability");
         TableColumn<Double, Double> sliderColumn = new TableColumn<>("SliderValue");
 
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("TermId"));
+        mondoIdColumn.setCellValueFactory(new PropertyValueFactory<>("MondoId"));
+        omimIdColumn.setCellValueFactory(new PropertyValueFactory<>("OmimId"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("Name"));
         probColumn.setCellValueFactory(new PropertyValueFactory<>("Probability"));
         sliderColumn.setCellValueFactory(new PropertyValueFactory<>("SliderValue"));
@@ -75,7 +81,7 @@ public class MapDisplayInterface {
         });
 
         tableView.getColumns().clear();
-        tableView.getColumns().addAll(idColumn, nameColumn, sliderColumn, probColumn);
+        tableView.getColumns().addAll(mondoIdColumn, omimIdColumn, nameColumn, sliderColumn, probColumn);
     }
 
 }

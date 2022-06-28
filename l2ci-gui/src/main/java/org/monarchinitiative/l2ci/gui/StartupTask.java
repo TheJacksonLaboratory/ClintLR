@@ -160,8 +160,8 @@ public final class StartupTask extends Task<Void> {
             LiricalBuilder liricalBuilder = LiricalBuilder.builder(liricalDataPath);
             liricalBuilder.setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM));
             if (exomiserVariant != null && new File(exomiserVariant).isFile()) {
-                LOGGER.info("Exomiser variant file: {}", exomiserVariant);
-                liricalBuilder.exomiserVariantDatabase(Path.of(exomiserVariant));
+//                LOGGER.info("Exomiser variant file: {}", exomiserVariant);
+//                liricalBuilder.exomiserVariantDatabase(Path.of(exomiserVariant));
             } else {
                 LOGGER.info("Path to Exomiser variant file not set (see Edit menu or File -> Show Resources menu). Building LIRICAL without Exomiser variant file.");
             }

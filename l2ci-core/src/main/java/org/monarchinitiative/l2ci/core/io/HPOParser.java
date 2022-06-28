@@ -16,7 +16,7 @@ public class HPOParser {
     private Ontology hpo = null;
 
     public HPOParser(String hpoPath) {
-        LOGGER.trace(String.format("Initializing HPO obo parser for %s", hpoPath));
+        LOGGER.trace(String.format("Initializing parser for %s", hpoPath));
         parse(hpoPath);
     }
 

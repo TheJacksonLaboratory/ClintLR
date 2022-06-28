@@ -34,6 +34,11 @@ class HpoHtmlPageGenerator {
         String diseaseTable = getDiseaseTableHTML(annotatedDiseases, termID);
         List<SimpleXref> pmids=term.getPmidXrefs();
         List<Dbxref> xrefs = term.getXrefs();
+        for (Dbxref xref : xrefs) {
+            if (xref.getName().contains("OMIM")) {
+                termID += " (" + xref.getName() + ")";
+            }
+        }
         String pmidList;
         if (pmids.isEmpty())
             pmidList="-";

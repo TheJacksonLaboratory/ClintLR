@@ -28,16 +28,15 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.monarchinitiative.biodownload.BioDownloader;
 import org.monarchinitiative.biodownload.BioDownloaderBuilder;
 import org.monarchinitiative.biodownload.FileDownloadException;
-import org.monarchinitiative.l2ci.core.io.Download;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.io.MapFileWriter;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
@@ -49,9 +48,20 @@ import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
+import org.monarchinitiative.lirical.core.io.VariantParser;
+import org.monarchinitiative.lirical.core.io.VariantParserFactory;
+import org.monarchinitiative.lirical.core.model.Gene2Genotype;
 import org.monarchinitiative.lirical.core.model.GenesAndGenotypes;
+import org.monarchinitiative.lirical.core.model.LiricalVariant;
+import org.monarchinitiative.lirical.core.model.TranscriptAnnotation;
+import org.monarchinitiative.lirical.core.service.HpoTermSanitizer;
+import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
+import org.monarchinitiative.lirical.io.analysis.PhenopacketImporter;
+import org.monarchinitiative.lirical.io.analysis.PhenopacketImporters;
+import org.monarchinitiative.phenol.annotations.formats.GeneIdentifier;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.io.OntologyLoader;
+import org.monarchinitiative.phenol.ontology.data.Dbxref;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -107,6 +117,8 @@ public class MainController {
     public HBox statusHBox;
     @FXML
     private TextField autocompleteTextfield;
+    @FXML
+    private TextField autocompleteOmimTextfield;
 
     /**
      * The term that is currently selected in the Browser window.
@@ -114,9 +126,10 @@ public class MainController {
     private Term selectedTerm = null;
 
     /**
-     * Key: a term name such as "Myocardial infarction"; value: the corresponding HPO id as a {@link TermId}.
+     * Key: a term name such as "Myocardial infarction"; value: the corresponding Mondo id as a {@link TermId}.
      */
     private final Map<String, TermId> ontologyLabelsAndTermIdMap = new HashMap<>();
+    private final Map<String, TermId> omimLabelsAndMondoTermIdMap = new HashMap<>();
     /**
      * WebView for displaying details of the Term that is selected in the {@link #ontologyTreeView}.
      */
@@ -142,6 +155,8 @@ public class MainController {
     @FXML
     private Label treeLabel = new Label();
 
+    private Map<TermId, TermId> omimToMondoMap = new HashMap<>();
+
     public static double preTestProb;
 
     private Map<TermId, Double> pretestMap;
@@ -149,11 +164,14 @@ public class MainController {
     public static List<MapData> mapDataList;
     private Lirical lirical;
 
-    private File mondoJSONFile;
+    @FXML
+    private Label phenopacketLabel;
 
     private Image redIcon;
 
     private Image redArrowIcon;
+
+    private Image blackIcon;
 
     private Image blackArrowIcon;
 
@@ -232,6 +250,8 @@ public class MainController {
         window.show();
         window.toFront();
         task.setOnSucceeded(e -> {
+            makeOmimMap();
+            WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
             publishMessage("Successfully loaded files");
             window.close();
         });
@@ -268,12 +288,15 @@ public class MainController {
 
         InputStream redStream = getClass().getResourceAsStream("/icons/red_circle.png");
         InputStream redArrowStream = getClass().getResourceAsStream("/icons/red_circle_up_arrow.png");
+        InputStream blackStream = getClass().getResourceAsStream("/icons/black_circle.png");
         InputStream blackArrowStream = getClass().getResourceAsStream("/icons/black_circle_up_arrow.png");
         redIcon = new Image(Objects.requireNonNull(redStream));
         redArrowIcon = new Image(Objects.requireNonNull(redArrowStream));
+        blackIcon = new Image(Objects.requireNonNull(blackStream));
         blackArrowIcon = new Image(Objects.requireNonNull(blackArrowStream));
         redStream.close();
         redArrowStream.close();
+        blackStream.close();
         blackArrowStream.close();
 
         String downloadPath = pgProperties.getProperty("download.path");
@@ -386,7 +409,7 @@ public class MainController {
                 String[] command = {"java",  "-jar", jarPath, "convert", "-f", "json", owl.getAbsolutePath()};
                 logger.info("Converting mondo.owl to readable mondo.json file using obographs.");
                 logger.info(String.join(" ", command));
-                convertOboToJson(command);
+                executeCommand(command);
                 loadMondoFile(new File(path, "mondo.json").getAbsolutePath());
             } else {
                 logger.info("Cannot find obographs-cli jar file to convert mondo.owl to readable mondo.json file.");
@@ -396,7 +419,7 @@ public class MainController {
         }
     }
 
-    void convertOboToJson(String[] args) throws Exception {
+    void executeCommand(String[] args) throws Exception {
         ProcessBuilder builder = new ProcessBuilder(args);
         builder.redirectErrorStream(true);
         Process p = builder.start();
@@ -439,8 +462,9 @@ public class MainController {
         makeSelectedDiseaseMap(preTestProb);
         if (mapDisplay == null) {
             mapDisplay = new MapDisplayInterface();
+            mapDisplay.initMapInterface();
         }
-        mapDisplay.launchMapInterface();
+        mapDisplay.show();
         mapDisplay.updateTable();
     }
 
@@ -623,7 +647,7 @@ public class MainController {
                 setGraphic(icon1);
                 if (mapDataList != null) {
                     for (MapData mapData : mapDataList) {
-                        if (mapData.getTermId().equals(item.term.id()) && mapData.getSliderValue() > 1.0) {
+                        if (mapData.getMondoId().equals(item.term.id()) && mapData.getSliderValue() > 1.0) {
                             setGraphic(icon2);
                         }
                     }
@@ -632,16 +656,21 @@ public class MainController {
 
             @Override
             protected void updateItem(OntologyTermWrapper item, boolean empty) {
-                ImageView omimIcon = new ImageView(redIcon);
-                ImageView omimSelectedIcon = new ImageView(redArrowIcon);
+                ImageView omimPSIcon = new ImageView(redIcon);
+                ImageView omimPSSelectedIcon = new ImageView(redArrowIcon);
+                ImageView omimIcon = new ImageView(blackIcon);
                 ImageView selectedIcon = new ImageView(blackArrowIcon);
                 super.updateItem(item, empty);
                 if (!empty || item != null) {
                     setText(item.term.getName());
                     if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
-                        updateTreeIcons(item, omimIcon, omimSelectedIcon);
+                        updateTreeIcons(item, omimPSIcon, omimPSSelectedIcon);
                     } else if (item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
-                        updateTreeIcons(item, null, selectedIcon);
+                        if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
+                            updateTreeIcons(item, omimIcon, selectedIcon);
+                        } else {
+                            updateTreeIcons(item, null, null);
+                        }
                     }
                 }
             }
@@ -694,30 +723,63 @@ public class MainController {
         }
     }
 
+    private void makeOmimMap() {
+        Ontology ontology = optionalMondoResource.getOntology();
+        for (Term mondoTerm : ontology.getTerms()) {
+            for (Dbxref ref : mondoTerm.getXrefs()) {
+                String refName = ref.getName();
+                if (refName.contains("OMIM:")) {
+                    Term omimTerm = Term.of(refName, refName);
+                    omimToMondoMap.put(omimTerm.id(), mondoTerm.id());
+                    omimLabelsAndMondoTermIdMap.put(omimTerm.id().toString(), mondoTerm.id());
+                    break;
+                }
+            }
+        }
+    }
+
     public Map<TermId, Double> makeSelectedDiseaseMap(double adjProb) {
         Map<TermId, Double> diseaseMap = new HashMap<>();
         Ontology ontology = optionalMondoResource.getOntology();
-        for (Term t : ontology.getTerms()) {
-            diseaseMap.put(t.id(), 1.0);
+        for (TermId omimId : omimToMondoMap.keySet()) {
+            diseaseMap.put(omimId, 1.0);
         }
         Set<TermId> selectedTerms = new HashSet<>();
-        TreeItem<OntologyTermWrapper> selectedItem = ontologyTreeView.getSelectionModel().getSelectedItem();
         mapDataList = new ArrayList<>();
-        if (selectedItem != null) {
-            Term selectedTerm = selectedItem.getValue().term;
-            selectedTerms.add(selectedTerm.id());
-            Set<Term> descendents = getTermRelations(selectedTerm, Relation.DESCENDENT);
-            descendents.forEach(t -> selectedTerms.add(t.id()));
+//        TreeItem<OntologyTermWrapper> selectedItem = ontologyTreeView.getSelectionModel().getSelectedItem();
+        if (selectedTerm != null) {
+            Term selectedMondoTerm = selectedTerm; //selectedItem.getValue().term;
+            for (Map.Entry<TermId, TermId> omimEntry : omimToMondoMap.entrySet()) {
+                TermId omimID = omimEntry.getKey();
+                TermId mondoID = omimEntry.getValue();
+                if (mondoID.equals(selectedMondoTerm.id()) && omimID != null) {
+                    selectedTerms.add(omimID);
+                    Set<Term> descendents = getTermRelations(selectedMondoTerm, Relation.DESCENDENT);
+                    for (Term descendent : descendents) {
+                        for (Map.Entry<TermId, TermId> omimEntry2 : omimToMondoMap.entrySet()) {
+                            TermId omimID2 = omimEntry2.getKey();
+                            TermId mondoID2 = omimEntry2.getValue();
+                            if (mondoID2.equals(descendent.id())) {
+                                selectedTerms.add(omimID2);
+                            }
+                        }
+                    }
+//                descendents.forEach(t -> selectedTerms.add(mondoTerm.id()));
+                }
+            }
             Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms, adjProb);
             boolean addNonSelected = true;
             for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
-                if (selectedTerms.contains(entry.getKey())) {
-                    String name = ontology.getTermMap().get(entry.getKey()).getName();
-                    MapData mapData = new MapData(name, entry.getKey(), entry.getValue(), adjProb);
+                TermId omimID = entry.getKey();
+                if (selectedTerms.contains(omimID)) {
+                    TermId mondoID = omimToMondoMap.get(omimID);
+                    String name = ontology.getTermMap().get(mondoID).getName();
+                    MapData mapData = new MapData(name, mondoID, omimID, entry.getValue(), adjProb);
                     mapDataList.add(mapData);
-                } else if (!selectedTerms.contains(entry.getKey()) && addNonSelected) {
-                    String name = ontology.getTermMap().get(entry.getKey()).getName();
-                    MapData mapData = new MapData(name, entry.getKey(), entry.getValue(), 1.0);
+                } else if (!selectedTerms.contains(omimID) && addNonSelected) {
+                    TermId mondoID = omimToMondoMap.get(omimID);
+                    String name = ontology.getTermMap().get(mondoID).getName();
+                    MapData mapData = new MapData(name, mondoID, omimID, entry.getValue(), 1.0);
                     mapDataList.add(mapData);
                     addNonSelected = false;
                 }
@@ -725,11 +787,11 @@ public class MainController {
             return newMap;
         } else {
             TermId id = diseaseMap.keySet().iterator().next();
-            String name = ontology.getTermMap().get(id).getName();
-            mapDataList.add(new MapData(name, id, diseaseMap.get(id), 1.0));
+            TermId mondoID = omimToMondoMap.get(id);
+            String name = ontology.getTermMap().get(mondoID).getName();
+            mapDataList.add(new MapData(name, mondoID, id, diseaseMap.get(id), 1.0));
             return diseaseMap;
         }
-
     }
 
     /**
@@ -783,19 +845,41 @@ public class MainController {
     @FXML
     public void goButtonAction() {
         TermId id = ontologyLabelsAndTermIdMap.get(autocompleteTextfield.getText());
+        goToTerm(id);
+        autocompleteTextfield.clear();
+    }
+
+    @FXML
+    public void omimButtonAction() {
+        TermId id = omimLabelsAndMondoTermIdMap.get(autocompleteOmimTextfield.getText());
+        goToTerm(id);
+        autocompleteOmimTextfield.clear();
+    }
+
+    public void goToTerm(TermId id) {
         if (id == null) return; // button was clicked while field was hasTermsUniqueToOnlyOneDisease, no need to do anything
-        Ontology hpo = optionalMondoResource.getOntology();
-        if (hpo == null) {
-            logger.error("goButtonAction: hpo is null");
+        Ontology mondo = optionalMondoResource.getOntology();
+        if (mondo == null) {
+            logger.error("goButtonAction: mondo is null");
             return;
         }
-        Term term = hpo.getTermMap().get(id);
+        Term term = mondo.getTermMap().get(id);
+        System.out.println(id + ": " + term);
         if (term == null) {
-            logger.error("Could not retrieve HPO term from {}", id.getValue());
+            logger.error("Could not retrieve Mondo term from {}", id.getValue());
             return;
         }
         expandUntilTerm(term);
-        autocompleteTextfield.clear();
+    }
+
+    public void phenopacketButtonAction() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose Phenopacket File");
+        Stage stage = MainApp.mainStage;
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            phenopacketLabel.setText(file.getAbsolutePath());
+        }
     }
 
     private void updateLimits(Slider slider, double min, double max) {
@@ -833,65 +917,114 @@ public class MainController {
     }
 
     @FXML
-    public void liricalButtonAction(ActionEvent actionEvent) throws LiricalParseException {
+    public void liricalButtonAction(ActionEvent actionEvent) throws Exception {
         System.out.println("Pretest Probability = " + preTestProb);
-        Map<TermId, Double> preTestMap = makeSelectedDiseaseMap(preTestProb);
-        AnalysisData analysisData = prepareAnalysisData(lirical, preTestMap);
-        AnalysisOptions analysisOptions = AnalysisOptions.of(false, PretestDiseaseProbability.of(preTestMap));
-        LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
-        AnalysisResults results = analysisRunner.run(analysisData, analysisOptions);
-        System.out.println(results);
+        if (selectedTerm != null) {
+            Map<TermId, Double> preTestMap = makeSelectedDiseaseMap(preTestProb);
+            AnalysisData analysisData = prepareAnalysisData(lirical, preTestMap);
+            AnalysisOptions analysisOptions = AnalysisOptions.of(false, PretestDiseaseProbability.of(preTestMap));
+            LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
+            AnalysisResults results = analysisRunner.run(analysisData, analysisOptions);
+            System.out.println(results.resultsWithDescendingPostTestProbability().toList().subList(0,4));
+        } else {
+            logger.info("Unable to run analysis: no term selected.");
+            PopUps.showInfoMessage("Error: No term selected.", "ERROR");
+        }
     }
 
-    protected AnalysisData prepareAnalysisData(Lirical lirical, Map<TermId, Double> pretestMap) throws LiricalParseException {
-//        LOGGER.info("Reading phenopacket from {}.", phenopacketPath.toAbsolutePath());
-//
-//        PhenopacketData data = null;
-//        try (InputStream is = Files.newInputStream(phenopacketPath)) {
-//            PhenopacketImporter v2 = PhenopacketImporters.v2();
-//            data = v2.read(is);
-//            LOGGER.info("Success!");
-//        } catch (IOException e) {
-//            LOGGER.info("Unable to parse as v2 phenopacket, trying v1.");
-//        }
-//
-//        if (data == null) {
-//            try (InputStream is = Files.newInputStream(phenopacketPath)) {
-//                PhenopacketImporter v1 = PhenopacketImporters.v1();
-//                data = v1.read(is);
-//            } catch (IOException e) {
-//                LOGGER.info("Unable to parser as v1 phenopacket.");
-//                throw new LiricalParseException("Unable to parse phenopacket from " + phenopacketPath.toAbsolutePath());
-//            }
-//        }
-//
-//        HpoTermSanitizer sanitizer = new HpoTermSanitizer(lirical.phenotypeService().hpo());
-//        List<TermId> presentTerms = data.getHpoTerms().map(sanitizer::replaceIfObsolete).flatMap(Optional::stream).toList();
-//        List<TermId> excludedTerms = data.getNegatedHpoTerms().map(sanitizer::replaceIfObsolete).flatMap(Optional::stream).toList();
-//
-//        // Read VCF file.
-//        GenesAndGenotypes genes;
-//        // Path to VCF set via CLI has priority.
-//        Path vcfPath = this.vcfPath != null
-//                ? this.vcfPath
-//                : data.getVcfPath().orElse(null);
-//        String sampleId = data.getSampleId();
-//        if (vcfPath == null) {
-//            genes = GenesAndGenotypes.empty();
-//        } else {
-//            genes = readVariantsFromVcfFile(sampleId, vcfPath, lirical.variantParserFactory());
-//        }
-//        return AnalysisData.of(sampleId,
-//                data.getAge().orElse(null),
-//                data.getSex().orElse(null),
-//                presentTerms,
-//                excludedTerms,
-//                genes);
-        String sampleId = "1";
-        List<TermId> presentTerms = pretestMap.keySet().stream().toList();
-        List<TermId> excludedTerms = new ArrayList<>();
-        GenesAndGenotypes genes = GenesAndGenotypes.empty();
-        return AnalysisData.of(sampleId, null, null, presentTerms, excludedTerms, genes);
+    protected AnalysisData prepareAnalysisData(Lirical lirical, Map<TermId, Double> pretestMap) throws Exception {
+        String phenopacketFile = phenopacketLabel.getText();
+        if (new File(phenopacketFile).isFile()) {
+            Path phenopacketPath = Path.of(phenopacketFile);
+            logger.info("Reading phenopacket from {}.", phenopacketPath.toAbsolutePath());
+
+            PhenopacketData data = null;
+            try (InputStream is = Files.newInputStream(phenopacketPath)) {
+                PhenopacketImporter v2 = PhenopacketImporters.v2();
+                data = v2.read(is);
+                logger.info("Success!");
+            } catch (Exception e) {
+                logger.info("Unable to parse as v2 phenopacket, trying v1.");
+            }
+
+            if (data == null) {
+                try (InputStream is = Files.newInputStream(phenopacketPath)) {
+                    PhenopacketImporter v1 = PhenopacketImporters.v1();
+                    data = v1.read(is);
+                } catch (IOException e) {
+                    logger.info("Unable to parse as v1 phenopacket.");
+                    throw new LiricalParseException("Unable to parse phenopacket from " + phenopacketPath.toAbsolutePath());
+                }
+            }
+
+            HpoTermSanitizer sanitizer = new HpoTermSanitizer(lirical.phenotypeService().hpo());
+            List<TermId> presentTerms = data.getHpoTerms().map(sanitizer::replaceIfObsolete).flatMap(Optional::stream).toList();
+            List<TermId> excludedTerms = data.getNegatedHpoTerms().map(sanitizer::replaceIfObsolete).flatMap(Optional::stream).toList();
+
+            // Read VCF file.
+            GenesAndGenotypes genes = GenesAndGenotypes.empty();
+            Path vcfPath = data.getVcfPath().orElse(null);
+            String sampleId = data.getSampleId();
+            if (vcfPath != null && lirical.variantParserFactory().isPresent()) {
+                genes = readVariantsFromVcfFile(sampleId, vcfPath, lirical.variantParserFactory().get());
+            }
+//            System.out.println(String.join(", ", sampleId, data.getAge().orElse(null).toString(), data.getSex().orElse(null).toString(),
+//                    presentTerms.toString(), excludedTerms.toString(), genes.toString()));
+            return AnalysisData.of(sampleId, data.getAge().orElse(null), data.getSex().orElse(null), presentTerms, excludedTerms, genes);
+        } else {
+            logger.info("Unable to run analysis: no phenopacket present.");
+            PopUps.showInfoMessage("Error: Unable to run analysis: no phenopacket present.", "ERROR");
+            throw new LiricalParseException("No phenopacket present.");
+        }
+    }
+
+    protected static GenesAndGenotypes readVariantsFromVcfFile(String sampleId,
+                                                               Path vcfPath,
+                                                               VariantParserFactory parserFactory) throws LiricalParseException {
+        if (parserFactory == null) {
+            logger.warn("Cannot process the provided VCF file {}, resources are not set.", vcfPath.toAbsolutePath());
+            return GenesAndGenotypes.empty();
+        }
+        try (VariantParser variantParser = parserFactory.forPath(vcfPath)) {
+            // Ensure the VCF file contains the sample
+            if (!variantParser.sampleNames().contains(sampleId))
+                throw new LiricalParseException("The sample " + sampleId + " is not present in VCF at '" + vcfPath.toAbsolutePath() + '\'');
+            logger.debug("Found sample {} in the VCF file at {}", sampleId, vcfPath.toAbsolutePath());
+
+            // Read variants
+            logger.info("Reading variants from {}", vcfPath.toAbsolutePath());
+            AtomicInteger counter = new AtomicInteger();
+            List<LiricalVariant> variants = variantParser.variantStream()
+                    .peek(logProgress(counter))
+                    .toList();
+            logger.info("Read {} variants", variants.size());
+
+            // Group variants by Entrez ID.
+            Map<GeneIdentifier, List<LiricalVariant>> gene2Genotype = new HashMap<>();
+            for (LiricalVariant variant : variants) {
+                variant.annotations().stream()
+                        .map(TranscriptAnnotation::getGeneId)
+                        .distinct()
+                        .forEach(geneId -> gene2Genotype.computeIfAbsent(geneId, e -> new LinkedList<>()).add(variant));
+            }
+
+            // Collect the variants into Gene2Genotype container
+            List<Gene2Genotype> g2g = gene2Genotype.entrySet().stream()
+                    .map(e -> Gene2Genotype.of(e.getKey(), e.getValue()))
+                    .toList();
+
+            return GenesAndGenotypes.of(g2g);
+        } catch (Exception e) {
+            throw new LiricalParseException(e);
+        }
+    }
+
+    private static Consumer<LiricalVariant> logProgress(AtomicInteger counter) {
+        return v -> {
+            int current = counter.incrementAndGet();
+            if (current % 5000 == 0)
+                logger.info("Read {} variants", current);
+        };
     }
 
     /**
