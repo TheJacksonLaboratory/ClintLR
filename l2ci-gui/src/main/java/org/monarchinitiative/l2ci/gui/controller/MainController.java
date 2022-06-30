@@ -752,8 +752,10 @@ public class MainController {
         for (TermId omimId : omimToMondoMap.keySet()) {
             diseaseMap.put(omimId, 1.0);
         }
-        for (TermId termId : optionalHpoaResource.getId2diseaseModelMap().keySet()) {
-            diseaseMap.put(termId, 1.0);
+        if (optionalHpoaResource != null) {
+            for (TermId termId : optionalHpoaResource.getId2diseaseModelMap().keySet()) {
+                diseaseMap.put(termId, 1.0);
+            }
         }
         Set<TermId> selectedTerms = new HashSet<>();
         mapDataList = new ArrayList<>();
