@@ -725,14 +725,18 @@ public class MainController {
 
     private void makeOmimMap() {
         Ontology ontology = optionalMondoResource.getOntology();
-        for (Term mondoTerm : ontology.getTerms()) {
-            for (Dbxref ref : mondoTerm.getXrefs()) {
-                String refName = ref.getName();
-                if (refName.contains("OMIM:")) {
-                    Term omimTerm = Term.of(refName, refName);
-                    omimToMondoMap.put(omimTerm.id(), mondoTerm.id());
-                    omimLabelsAndMondoTermIdMap.put(omimTerm.id().toString(), mondoTerm.id());
-                    break;
+        if (ontology == null) {
+            logger.error("makeOmimMap: ontology is null.");
+        } else {
+            for (Term mondoTerm : ontology.getTerms()) {
+                for (Dbxref ref : mondoTerm.getXrefs()) {
+                    String refName = ref.getName();
+                    if (refName.contains("OMIM:")) {
+                        Term omimTerm = Term.of(refName, refName);
+                        omimToMondoMap.put(omimTerm.id(), mondoTerm.id());
+                        omimLabelsAndMondoTermIdMap.put(omimTerm.id().toString(), mondoTerm.id());
+                        break;
+                    }
                 }
             }
         }
@@ -741,8 +745,15 @@ public class MainController {
     public Map<TermId, Double> makeSelectedDiseaseMap(double adjProb) {
         Map<TermId, Double> diseaseMap = new HashMap<>();
         Ontology ontology = optionalMondoResource.getOntology();
+        if (ontology == null) {
+            logger.error("makeSelectedDiseaseMap: ontology is null.");
+            return diseaseMap;
+        }
         for (TermId omimId : omimToMondoMap.keySet()) {
             diseaseMap.put(omimId, 1.0);
+        }
+        for (TermId termId : optionalHpoaResource.getId2diseaseModelMap().keySet()) {
+            diseaseMap.put(termId, 1.0);
         }
         Set<TermId> selectedTerms = new HashSet<>();
         mapDataList = new ArrayList<>();
@@ -778,7 +789,12 @@ public class MainController {
                     mapDataList.add(mapData);
                 } else if (!selectedTerms.contains(omimID) && addNonSelected) {
                     TermId mondoID = omimToMondoMap.get(omimID);
-                    String name = ontology.getTermMap().get(mondoID).getName();
+                    String name;
+                    if (mondoID != null) {
+                        name = ontology.getTermMap().get(mondoID).getName();
+                    } else {
+                        name = optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
+                    }
                     MapData mapData = new MapData(name, mondoID, omimID, entry.getValue(), 1.0);
                     mapDataList.add(mapData);
                     addNonSelected = false;
@@ -788,7 +804,12 @@ public class MainController {
         } else {
             TermId id = diseaseMap.keySet().iterator().next();
             TermId mondoID = omimToMondoMap.get(id);
-            String name = ontology.getTermMap().get(mondoID).getName();
+            String name;
+            if (mondoID != null) {
+                name = ontology.getTermMap().get(mondoID).getName();
+            } else {
+                name = optionalHpoaResource.getId2diseaseModelMap().get(id).diseaseName();
+            }
             mapDataList.add(new MapData(name, mondoID, id, diseaseMap.get(id), 1.0));
             return diseaseMap;
         }

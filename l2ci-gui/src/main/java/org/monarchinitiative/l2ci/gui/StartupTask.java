@@ -8,7 +8,13 @@ import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.configuration.LiricalBuilder;
+import org.monarchinitiative.lirical.core.service.PhenotypeService;
+import org.monarchinitiative.phenol.annotations.formats.hpo.HpoAssociationData;
+import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDiseases;
 import org.monarchinitiative.phenol.annotations.io.hpo.DiseaseDatabase;
+import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoader;
+import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoaderOptions;
+import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoaders;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.slf4j.Logger;
@@ -160,8 +166,8 @@ public final class StartupTask extends Task<Void> {
             LiricalBuilder liricalBuilder = LiricalBuilder.builder(liricalDataPath);
             liricalBuilder.setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM));
             if (exomiserVariant != null && new File(exomiserVariant).isFile()) {
-//                LOGGER.info("Exomiser variant file: {}", exomiserVariant);
-//                liricalBuilder.exomiserVariantDatabase(Path.of(exomiserVariant));
+                LOGGER.info("Exomiser variant file: {}", exomiserVariant);
+                liricalBuilder.exomiserVariantDatabase(Path.of(exomiserVariant));
             } else {
                 LOGGER.info("Path to Exomiser variant file not set (see Edit menu or File -> Show Resources menu). Building LIRICAL without Exomiser variant file.");
             }
