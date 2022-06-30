@@ -864,7 +864,6 @@ public class MainController {
             return;
         }
         Term term = mondo.getTermMap().get(id);
-        System.out.println(id + ": " + term);
         if (term == null) {
             logger.error("Could not retrieve Mondo term from {}", id.getValue());
             return;
@@ -921,7 +920,7 @@ public class MainController {
         System.out.println("Pretest Probability = " + preTestProb);
         if (selectedTerm != null) {
             Map<TermId, Double> preTestMap = makeSelectedDiseaseMap(preTestProb);
-            AnalysisData analysisData = prepareAnalysisData(lirical, preTestMap);
+            AnalysisData analysisData = prepareAnalysisData(lirical);
             AnalysisOptions analysisOptions = AnalysisOptions.of(false, PretestDiseaseProbability.of(preTestMap));
             LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
             AnalysisResults results = analysisRunner.run(analysisData, analysisOptions);
@@ -932,7 +931,7 @@ public class MainController {
         }
     }
 
-    protected AnalysisData prepareAnalysisData(Lirical lirical, Map<TermId, Double> pretestMap) throws Exception {
+    protected AnalysisData prepareAnalysisData(Lirical lirical) throws Exception {
         String phenopacketFile = phenopacketLabel.getText();
         if (new File(phenopacketFile).isFile()) {
             Path phenopacketPath = Path.of(phenopacketFile);
