@@ -15,7 +15,7 @@
         <dependency>
             <groupId>org.monarchinitiative.l2ci</groupId>
             <artifactId>l2ci-core</artifactId>
-            <version>0.0.1</version>
+            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
