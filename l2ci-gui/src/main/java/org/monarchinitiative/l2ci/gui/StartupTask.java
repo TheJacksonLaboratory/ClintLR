@@ -81,78 +81,70 @@ public final class StartupTask extends Task<Void> {
         String hpoAnnotPath = pgProperties.getProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY);
         String mondoJsonPath = pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY);
         updateProgress(0.02, 1);
-        if (mondoJsonPath != null) {
-            final File mondoJsonFile = new File(mondoJsonPath);
-            updateProgress(0.03, 1);
-            if (mondoJsonFile.isFile()) {
-                String msg = String.format("Loading Mondo from file '%s'", mondoJsonFile.getAbsoluteFile());
+        String[] paths = {mondoJsonPath, hpoJsonPath, hpoAnnotPath};
+        String[] types = {"Mondo", "HPO", "phenotype.hpoa"};
+        for (int i = 0; i < paths.length; i++) {
+            String path = paths[i];
+            String type = types[i];
+            if (path != null) {
+                File file = new File(path);
+                if (file.isFile()) {
+                    String msg = String.format("Loading " + type + " from file '%s'", file.getAbsoluteFile());
+                    updateMessage(msg);
+                    LOGGER.info(msg);
+                    switch (type) {
+                        case "Mondo":
+                            HPOParser parser = new HPOParser(mondoJsonPath);
+                            Ontology ontology = parser.getHPO();
+                            setOntology(type, ontology, "");
+                            LOGGER.info("Loaded " + type + " ontology");
+                            break;
+                        case "HPO":
+                            ontology = OntologyLoader.loadOntology(file);
+                            optionalHpoResource.setOntology(ontology);
+                            LOGGER.info("Loaded " + type + " ontology");
+                            break;
+                        case "phenotype.hpoa":
+                            if (optionalHpoResource.getOntology() == null) {
+                                LOGGER.error("Cannot load phenotype.hpoa because HP ontology not loaded");
+                                return null;
+                            }
+                            setOntology(type, optionalHpoResource.getOntology(), path);
+                            LOGGER.info("Loaded annotation maps");
+                            break;
+                        }
+                    updateProgress((i+1)/paths.length, 1);
+                    updateMessage(type + " loaded");
+                } else {
+                    setOntology(type, null, "");
+                }
+            } else {
+                String msg = "Need to set path to " + type + " file (See File -> Show Resources menu)";
                 updateMessage(msg);
                 LOGGER.info(msg);
-                HPOParser parser = new HPOParser(mondoJsonPath);
-                final Ontology ontology = parser.getHPO();
-                updateProgress(0.25, 1);
-                optionalMondoResource.setOntology(ontology);
-                updateProgress(0.30, 1);
-                updateMessage("Mondo loaded");
-                LOGGER.info("Loaded Mondo ontology");
-            } else {
-                optionalMondoResource.setOntology(null);
+                setOntology(type, null, "");
             }
-        } else {
-            String msg = "Need to load mondo.json file (See File menu)";
-            updateMessage(msg);
-            LOGGER.info(msg);
-            optionalMondoResource.setOntology(null);
-        }
-        if (hpoJsonPath != null) {
-            final File hpJsonFile = new File(hpoJsonPath);
-            updateProgress(0.03, 1);
-            if (hpJsonFile.isFile()) {
-                String msg = String.format("Loading HPO from file '%s'", hpJsonFile.getAbsoluteFile());
-                updateMessage(msg);
-                LOGGER.info(msg);
-                final Ontology ontology = OntologyLoader.loadOntology(hpJsonFile);
-                updateProgress(0.25, 1);
-                optionalHpoResource.setOntology(ontology);
-                updateProgress(0.30, 1);
-                updateMessage("HPO loaded");
-                LOGGER.info("Loaded HPO ontology");
-            } else {
-                optionalHpoResource.setOntology(null);
-            }
-        } else {
-            String msg = "Need to set path to hp.json file (See File -> Show Resources menu)";
-            updateMessage(msg);
-            LOGGER.info(msg);
-            optionalHpoResource.setOntology(null);
-        }
-        if (hpoAnnotPath != null) {
-            String msg = String.format("Loading phenotype.hpoa from file '%s'", hpoAnnotPath);
-            updateMessage(msg);
-            LOGGER.info(msg);
-            final File hpoAnnotFile = new File(hpoAnnotPath);
-            updateProgress(0.71, 1);
-            if (optionalHpoResource.getOntology() == null) {
-                LOGGER.error("Cannot load phenotype.hpoa because HP ontology not loaded");
-                return null;
-            }
-            if (hpoAnnotFile.isFile()) {
-                updateProgress(0.78, 1);
-                this.optionalHpoaResource.setAnnotationResources(hpoAnnotPath, optionalHpoResource.getOntology());
-                updateProgress(0.95, 1);
-                LOGGER.info("Loaded annotation maps");
-            } else {
-                optionalHpoaResource.initializeWithEmptyMaps();
-                LOGGER.error("Cannot load phenotype.hpoa File was null");
-            }
-        } else {
-            String msg = "Need to set path to phenotype.hpoa file (See File -> Show Resources menu)";
-            updateMessage(msg);
-            LOGGER.info(msg);
-            optionalHpoResource.setOntology(null);
         }
         updateProgress(1, 1);
         return null;
+    }
+
+    void setOntology(String type, Ontology ont, String path) {
+        switch (type) {
+            case "Mondo":
+                optionalMondoResource.setOntology(ont);
+                break;
+            case "HPO":
+                optionalHpoResource.setOntology(ont);
+                break;
+            case "phenotype.hpoa":
+                if (ont != null) {
+                    optionalHpoaResource.setAnnotationResources(path, ont);
+                } else {
+                    optionalHpoaResource.initializeWithEmptyMaps();
+                }
+                break;
+        }
     }
 
     public Lirical buildLirical() throws Exception {

@@ -99,26 +99,17 @@ public final class ResourcesController {
         String liricalDataPath = pgProperties.getProperty("lirical.data.path");
         String exomiserPath = pgProperties.getProperty("exomiser.variant.path");
         downloadHPOAButton.setDisable(optionalHpoResource.getOntology() == null);
-        if (hpPath != null && new File(hpPath).isFile()) {
-            hpJsonLabel.setText(hpPath);
-            hpoProgressIndicator.setProgress(1);
-        } else {
-            hpJsonLabel.setText("unset");
-            hpoProgressIndicator.setProgress(0);
-        }
-        if (hpoaPath != null && new File(hpoaPath).isFile()) {
-            hpoaLabel.setText(hpoaPath);
-            hpoaProgressIndicator.setProgress(1);
-        } else {
-            hpoaLabel.setText("unset");
-            hpoaProgressIndicator.setProgress(0);
-        }
-        if (mondoPath != null && new File(mondoPath).isFile()) {
-            mondoLabel.setText(mondoPath);
-            mondoProgressIndicator.setProgress(1);
-        } else {
-            mondoLabel.setText("unset");
-            mondoProgressIndicator.setProgress(0);
+        String[] paths = {hpPath, hpoaPath, mondoPath};
+        Label[] labels = {hpJsonLabel, hpoaLabel, mondoLabel};
+        ProgressIndicator[] indicators = {hpoProgressIndicator, hpoaProgressIndicator, mondoProgressIndicator};
+        for (int i = 0; i < paths.length; i++) {
+            if (paths[i] != null && new File(paths[i]).isFile()) {
+                labels[i].setText(paths[i]);
+                indicators[i].setProgress(1);
+            } else {
+                labels[i].setText("unset");
+                indicators[i].setProgress(0);
+            }
         }
         liricalDataDirLabel.setText(Objects.requireNonNullElse(liricalDataPath, "unset"));
         exomiserFileLabel.setText(Objects.requireNonNullElse(exomiserPath, "unset"));
@@ -289,25 +280,23 @@ public final class ResourcesController {
 
     void setResource(String type, File target) {
         try {
+            String filePath = target.getAbsolutePath();
             switch (type) {
                 case "HPO":
-                    String hpoPath = target.getAbsolutePath();
                     mainController.loadHPOFile(target);
-                    hpJsonLabel.setText(hpoPath);
+                    hpJsonLabel.setText(filePath);
                     downloadHPOAButton.setDisable(false);
-                    pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, hpoPath);
+                    pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, filePath);
                     break;
                 case "HPOA":
-                    String hpoaPath = target.getAbsolutePath();
-                    mainController.loadHPOAFile(hpoaPath);
-                    hpoaLabel.setText(hpoaPath);
-                    pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, hpoaPath);
+                    mainController.loadHPOAFile(filePath);
+                    hpoaLabel.setText(filePath);
+                    pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, filePath);
                     break;
                 case "MONDO":
-                    String filepath = target.getAbsolutePath();
-                    mainController.loadMondoFile(filepath);
-                    mondoLabel.setText(filepath);
-                    pgProperties.setProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, filepath);
+                    mainController.loadMondoFile(filePath);
+                    mondoLabel.setText(filePath);
+                    pgProperties.setProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, filePath);
                     break;
             }
         } catch (Exception ex) {

@@ -399,7 +399,7 @@ public class MainController {
 
     public void downloadMondoFile(String path) {
         try {
-            BioDownloaderBuilder builder = BioDownloader.builder(Path.of(pgProperties.getProperty("download.path")));
+            BioDownloaderBuilder builder = BioDownloader.builder(Path.of(path));
             builder.mondoOwl();
             BioDownloader downloader = builder.build();
             downloader.download();
@@ -791,10 +791,10 @@ public class MainController {
                     mapDataList.add(mapData);
                 } else if (!selectedTerms.contains(omimID) && addNonSelected) {
                     TermId mondoID = omimToMondoMap.get(omimID);
-                    String name;
+                    String name = "";
                     if (mondoID != null) {
                         name = ontology.getTermMap().get(mondoID).getName();
-                    } else {
+                    } else if (optionalHpoaResource != null) {
                         name = optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
                     }
                     MapData mapData = new MapData(name, mondoID, omimID, entry.getValue(), 1.0);
@@ -806,10 +806,10 @@ public class MainController {
         } else {
             TermId id = diseaseMap.keySet().iterator().next();
             TermId mondoID = omimToMondoMap.get(id);
-            String name;
+            String name = "";
             if (mondoID != null) {
                 name = ontology.getTermMap().get(mondoID).getName();
-            } else {
+            } else if (optionalHpoaResource != null){
                 name = optionalHpoaResource.getId2diseaseModelMap().get(id).diseaseName();
             }
             mapDataList.add(new MapData(name, mondoID, id, diseaseMap.get(id), 1.0));
