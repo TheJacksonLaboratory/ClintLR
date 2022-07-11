@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.monarchinitiative.l2ci.gui.MapData;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -27,6 +28,8 @@ public class MapDisplayInterface {
         tableView.prefWidthProperty().bind(display.widthProperty());
 
         mapStage.setScene(new Scene(display, 600, 300));
+        mapStage.initOwner(MainController.getController().statusHBox.getScene().getWindow());
+        mapStage.initModality(Modality.NONE);
         mapStage.setResizable(true);
         mapStage.setTitle("Probability Map");
     }

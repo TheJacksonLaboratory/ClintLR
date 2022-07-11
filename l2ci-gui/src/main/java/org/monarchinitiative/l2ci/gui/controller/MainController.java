@@ -155,7 +155,7 @@ public class MainController {
     @FXML
     private Label treeLabel = new Label();
 
-    private Map<TermId, TermId> omimToMondoMap = new HashMap<>();
+    private Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
 
     public static double preTestProb;
 
@@ -647,7 +647,7 @@ public class MainController {
                 setGraphic(icon1);
                 if (mapDataList != null) {
                     for (MapData mapData : mapDataList) {
-                        if (mapData.getMondoId().equals(item.term.id()) && mapData.getSliderValue() > 1.0) {
+                        if (mapData != null && mapData.getMondoId().equals(item.term.id()) && mapData.getSliderValue() > 1.0) {
                             setGraphic(icon2);
                         }
                     }
@@ -689,6 +689,7 @@ public class MainController {
                     }
                     TreeItem<OntologyTermWrapper> item = new OntologyTermTreeItem(w);
                     updateDescription(item);
+                    selectedTerm = item.getValue().term;
                     makeSelectedDiseaseMap(preTestProb);
                     if (mapDisplay != null) {
                         mapDisplay.updateTable();
@@ -733,7 +734,13 @@ public class MainController {
                     String refName = ref.getName();
                     if (refName.contains("OMIM:")) {
                         Term omimTerm = Term.of(refName, refName);
-                        omimToMondoMap.put(omimTerm.id(), mondoTerm.id());
+                        TermId omimID = omimTerm.id();
+                        if (!omimToMondoMap.containsKey(omimID)) {
+                            omimToMondoMap.put(omimID, new ArrayList<>());
+                        }
+                        List<TermId> termList = omimToMondoMap.get(omimID);
+                        termList.add(mondoTerm.id());
+                        omimToMondoMap.put(omimID, termList);
                         omimLabelsAndMondoTermIdMap.put(omimTerm.id().toString(), mondoTerm.id());
                         break;
                     }
@@ -757,62 +764,65 @@ public class MainController {
                 diseaseMap.put(termId, 1.0);
             }
         }
-        Set<TermId> selectedTerms = new HashSet<>();
+        HashMap<TermId, TermId> selectedTerms = new HashMap<>();
         mapDataList = new ArrayList<>();
+        String name = "";
 //        TreeItem<OntologyTermWrapper> selectedItem = ontologyTreeView.getSelectionModel().getSelectedItem();
         if (selectedTerm != null) {
             Term selectedMondoTerm = selectedTerm; //selectedItem.getValue().term;
-            for (Map.Entry<TermId, TermId> omimEntry : omimToMondoMap.entrySet()) {
-                TermId omimID = omimEntry.getKey();
-                TermId mondoID = omimEntry.getValue();
-                if (mondoID.equals(selectedMondoTerm.id()) && omimID != null) {
-                    selectedTerms.add(omimID);
-                    Set<Term> descendents = getTermRelations(selectedMondoTerm, Relation.DESCENDENT);
-                    for (Term descendent : descendents) {
-                        for (Map.Entry<TermId, TermId> omimEntry2 : omimToMondoMap.entrySet()) {
-                            TermId omimID2 = omimEntry2.getKey();
-                            TermId mondoID2 = omimEntry2.getValue();
-                            if (mondoID2.equals(descendent.id())) {
-                                selectedTerms.add(omimID2);
-                            }
+            omimToMondoMap.forEach((omimID, mondoIDs) -> {
+                for (TermId mondoID : mondoIDs) {
+                    if (mondoID.equals(selectedMondoTerm.id()) && omimID != null) {
+                        selectedTerms.put(omimID, mondoID);
+                        Set<Term> descendents = getTermRelations(selectedMondoTerm, Relation.DESCENDENT);
+                        for (Term descendent : descendents) {
+                            omimToMondoMap.forEach((omimID2, mondoIDs2) -> {
+                                for (TermId mondoID2 : mondoIDs2) {
+                                    if (mondoID2.equals(descendent.id())) {
+                                        selectedTerms.put(omimID2, mondoID2);
+                                    }
+                                }
+                            });
                         }
-                    }
 //                descendents.forEach(t -> selectedTerms.add(mondoTerm.id()));
+                    }
                 }
-            }
-            Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms, adjProb);
+            });
+            Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb);
             boolean addNonSelected = true;
             for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
                 TermId omimID = entry.getKey();
-                if (selectedTerms.contains(omimID)) {
-                    TermId mondoID = omimToMondoMap.get(omimID);
-                    String name = ontology.getTermMap().get(mondoID).getName();
+                if (selectedTerms.containsKey(omimID)) {
+                    TermId mondoID = selectedTerms.get(omimID);
+                    name = ontology.getTermMap().get(mondoID).getName();
                     MapData mapData = new MapData(name, mondoID, omimID, entry.getValue(), adjProb);
                     mapDataList.add(mapData);
-                } else if (!selectedTerms.contains(omimID) && addNonSelected) {
-                    TermId mondoID = omimToMondoMap.get(omimID);
-                    String name = "";
-                    if (mondoID != null) {
-                        name = ontology.getTermMap().get(mondoID).getName();
-                    } else if (optionalHpoaResource != null) {
-                        name = optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
+                } else if (!selectedTerms.containsKey(omimID) && addNonSelected) {
+                    if (omimToMondoMap.get(omimID) != null) {
+                        TermId mondoID = omimToMondoMap.get(omimID).get(0);
+                        if (mondoID != null) {
+                            name = ontology.getTermMap().get(mondoID).getName();
+                        } else if (optionalHpoaResource != null) {
+                            name = optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
+                        }
+                        MapData mapData = new MapData(name, mondoID, omimID, entry.getValue(), 1.0);
+                        mapDataList.add(mapData);
+                        addNonSelected = false;
                     }
-                    MapData mapData = new MapData(name, mondoID, omimID, entry.getValue(), 1.0);
-                    mapDataList.add(mapData);
-                    addNonSelected = false;
                 }
             }
             return newMap;
         } else {
             TermId id = diseaseMap.keySet().iterator().next();
-            TermId mondoID = omimToMondoMap.get(id);
-            String name = "";
-            if (mondoID != null) {
-                name = ontology.getTermMap().get(mondoID).getName();
-            } else if (optionalHpoaResource != null){
-                name = optionalHpoaResource.getId2diseaseModelMap().get(id).diseaseName();
+            if (omimToMondoMap.get(id) != null) {
+                TermId mondoID = omimToMondoMap.get(id).get(0);
+                if (mondoID != null) {
+                    name = ontology.getTermMap().get(mondoID).getName();
+                } else if (optionalHpoaResource != null){
+                    name = optionalHpoaResource.getId2diseaseModelMap().get(id).diseaseName();
+                }
+                mapDataList.add(new MapData(name, mondoID, id, diseaseMap.get(id), 1.0));
             }
-            mapDataList.add(new MapData(name, mondoID, id, diseaseMap.get(id), 1.0));
             return diseaseMap;
         }
     }
