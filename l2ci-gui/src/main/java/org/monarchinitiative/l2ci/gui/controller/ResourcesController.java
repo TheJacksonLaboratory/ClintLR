@@ -1,12 +1,11 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
-import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import org.monarchinitiative.biodownload.BioDownloader;
 import org.monarchinitiative.biodownload.BioDownloaderBuilder;
 import org.monarchinitiative.biodownload.FileDownloadException;
@@ -20,8 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -73,7 +71,28 @@ public final class ResourcesController {
     private Label exomiserFileLabel = new Label();
 
     @FXML
+    private Label bkgFreqFileLabel = new Label();
+
+    @FXML
     private Button downloadHPOAButton = new Button();
+
+    @FXML
+    private ChoiceBox genomeBuildChoiceBox = new ChoiceBox<>();
+
+    @FXML
+    private ChoiceBox transcriptDBChoiceBox = new ChoiceBox<>();
+
+    @FXML
+    private TextField alleleFreqTextField = new TextField();
+
+    @FXML
+    private TextField pathogenicityTextField = new TextField();
+
+    @FXML
+    private TextField variantBkgFreqTextField = new TextField();
+
+    @FXML
+    private ChoiceBox strictChoiceBox = new ChoiceBox();
 
 
     @Autowired
@@ -98,6 +117,7 @@ public final class ResourcesController {
         String mondoPath = pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY);
         String liricalDataPath = pgProperties.getProperty("lirical.data.path");
         String exomiserPath = pgProperties.getProperty("exomiser.variant.path");
+        String bkgFreqPath = pgProperties.getProperty("background.frequency.path");
         downloadHPOAButton.setDisable(optionalHpoResource.getOntology() == null);
         String[] paths = {hpPath, hpoaPath, mondoPath};
         Label[] labels = {hpJsonLabel, hpoaLabel, mondoLabel};
@@ -113,6 +133,43 @@ public final class ResourcesController {
         }
         liricalDataDirLabel.setText(Objects.requireNonNullElse(liricalDataPath, "unset"));
         exomiserFileLabel.setText(Objects.requireNonNullElse(exomiserPath, "unset"));
+        bkgFreqFileLabel.setText(Objects.requireNonNullElse(bkgFreqPath, "unset"));
+        HashMap<ChoiceBox, String> choiceBoxHashMap = new HashMap<>();
+        choiceBoxHashMap.put(genomeBuildChoiceBox, "genome.build");
+        choiceBoxHashMap.put(transcriptDBChoiceBox, "transcript.database");
+        choiceBoxHashMap.put(strictChoiceBox, "strict");
+        choiceBoxHashMap.forEach((choiceBox, propName) -> {
+            String property = pgProperties.getProperty(propName);
+            List<String> choices = new ArrayList<>();
+            if (propName.contains("genome")) {
+                choices = Arrays.asList("hg19", "hg38");
+            } else if (propName.contains("transcript")) {
+                choices = Arrays.asList("refSeq", "UCSC");
+            } else if (propName.contains("strict")) {
+                choices = Arrays.asList("true", "false");
+            }
+            choiceBox.getItems().addAll(choices);
+            choiceBox.setValue(property);
+            choiceBox.valueProperty().addListener(x -> {
+                pgProperties.setProperty(propName, choiceBox.getValue().toString());
+                LOGGER.info(propName + ": " + pgProperties.getProperty(propName));
+            });
+        });
+        HashMap<TextField, String> textFieldHashMap = new HashMap<>();
+        textFieldHashMap.put(pathogenicityTextField, "pathogenicity.threshold");
+        textFieldHashMap.put(variantBkgFreqTextField, "default.variant.background.frequency");
+        textFieldHashMap.put(alleleFreqTextField, "default.allele.frequency");
+        textFieldHashMap.forEach((textField, propName) -> {
+            String property = pgProperties.getProperty(propName);
+            textField.setText(property);
+            textField.setOnKeyPressed(e -> {
+                if (e.getCode() != KeyCode.ENTER) {
+                    return;
+                }
+                pgProperties.setProperty(propName, textField.textProperty().get());
+                LOGGER.info(propName + ": " + pgProperties.getProperty(propName));
+            });
+        });
     }
 
 
@@ -182,7 +239,7 @@ public final class ResourcesController {
     }
 
     /**
-     * Open DirChooser and ask user to provide a directory where the Exomiser variant file is located.
+     * Open DirChooser and ask user to provide a path to the Exomiser variant file.
      */
     @FXML
     void setExomiserVariantFileButtonAction() {
@@ -191,6 +248,19 @@ public final class ResourcesController {
             mainController.setExomiserVariantFile();
         } else {
             exomiserFileLabel.setText(exomiserFilePath);
+        }
+    }
+
+    /**
+     * Open DirChooser and ask user to provide a path to the Background Frequency file.
+     */
+    @FXML
+    void setBackgroundFrequencyFileButtonAction() {
+        String bkgFreqFilePath = pgProperties.getProperty("background.frequency.path");
+        if (bkgFreqFilePath == null) {
+            mainController.setBackgroundFrequencyFile();
+        } else {
+            bkgFreqFileLabel.setText(bkgFreqFilePath);
         }
     }
 
@@ -259,7 +329,7 @@ public final class ResourcesController {
 
     void downloadFileButtonAction(String type, String pathProperty) {
         String path = pgProperties.getProperty("download.path");
-        File target = new File(path, pathProperty.replace(".path", "").replace("hpoa/path", "phenotype.hpoa"));
+        File target = new File(path, pathProperty.replace(".path", "").replace("hpoa/path", "LIRICAL/data/phenotype.hpoa"));
         if (target.isFile()) {
             boolean response = PopUps.getBooleanFromUser("Overwrite?",
                     type + " file already exists at " + target.getAbsolutePath(),

@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.monarchinitiative.biodownload.BioDownloader;
 import org.monarchinitiative.biodownload.BioDownloaderBuilder;
 import org.monarchinitiative.biodownload.FileDownloadException;
@@ -225,12 +226,14 @@ public class MainController {
         logger.info("Initializing main controller");
         StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
         liricalButton.setDisable(true);
-        String liricalData = pgProperties.getProperty("lirical.data.path");
-        if (liricalData == null) {
-            String homeDir = new File(".").getAbsolutePath();
-            liricalData = String.join(File.separator, homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "LIRICAL", "data");
-            pgProperties.setProperty("lirical.data.path", liricalData);
-        }
+        initializeProperty("lirical.data.path", new String[]{"LIRICAL", "data"});
+        initializeProperty("genome.build", new String[]{"hg38"});
+        initializeProperty("pathogenicity.threshold", new String[]{"0.8"});
+        initializeProperty("default.variant.background.frequency", new String[]{"0.1"});
+        initializeProperty("strict", new String[]{"false"});
+        initializeProperty("background.frequency.path", new String[]{"LIRICAL", "background", "background-hg38.tsv"});
+        initializeProperty("default.allele.frequency", new String[]{"1E-5"});
+        initializeProperty("transcript.database", new String[]{"refSeq"});
         CompletableFuture.runAsync(() -> {
             try {
                 lirical = task.buildLirical();
@@ -323,6 +326,20 @@ public class MainController {
         logger.info("Done initialization");
         checkAll();
         logger.info("done activate");
+    }
+
+    private void initializeProperty(String name, String[] defaultValues) {
+        String property = pgProperties.getProperty(name);
+        if (property == null && defaultValues.length > 0) {
+            if (name.endsWith(".path")) {
+                String homeDir = new File(".").getAbsolutePath();
+                String[] dir = {homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources"};
+                property = String.join(File.separator, (String[]) ArrayUtils.addAll(dir, defaultValues));
+            } else {
+                property = defaultValues[0];
+            }
+            pgProperties.setProperty(name, property);
+        }
     }
 
 
@@ -526,6 +543,18 @@ public class MainController {
             String exomiserVariantPath = file.getAbsolutePath();
             pgProperties.setProperty("exomiser.variant.path", exomiserVariantPath);
             logger.info("Exomiser Variant File path set to {}", file.getAbsolutePath());
+        }
+    }
+
+    public void setBackgroundFrequencyFile() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Set Background Frequency File");
+        Stage stage = MainApp.mainStage;
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            String bkgFreqPath = file.getAbsolutePath();
+            pgProperties.setProperty("background.frequency.path", bkgFreqPath);
+            logger.info("Background Frequency File path set to {}", file.getAbsolutePath());
         }
     }
 
@@ -769,17 +798,18 @@ public class MainController {
         String name = "";
 //        TreeItem<OntologyTermWrapper> selectedItem = ontologyTreeView.getSelectionModel().getSelectedItem();
         if (selectedTerm != null) {
-            Term selectedMondoTerm = selectedTerm; //selectedItem.getValue().term;
+//            Term selectedMondoTerm = selectedTerm; //selectedItem.getValue().term;
             omimToMondoMap.forEach((omimID, mondoIDs) -> {
                 for (TermId mondoID : mondoIDs) {
-                    if (mondoID.equals(selectedMondoTerm.id()) && omimID != null) {
+                    if (mondoID.equals(selectedTerm.id()) && omimID != null) {
                         selectedTerms.put(omimID, mondoID);
-                        Set<Term> descendents = getTermRelations(selectedMondoTerm, Relation.DESCENDENT);
+                        Set<Term> descendents = getTermRelations(selectedTerm, Relation.DESCENDENT);
                         for (Term descendent : descendents) {
                             omimToMondoMap.forEach((omimID2, mondoIDs2) -> {
                                 for (TermId mondoID2 : mondoIDs2) {
                                     if (mondoID2.equals(descendent.id())) {
                                         selectedTerms.put(omimID2, mondoID2);
+                                        break;
                                     }
                                 }
                             });
@@ -794,37 +824,34 @@ public class MainController {
                 TermId omimID = entry.getKey();
                 if (selectedTerms.containsKey(omimID)) {
                     TermId mondoID = selectedTerms.get(omimID);
-                    name = ontology.getTermMap().get(mondoID).getName();
-                    MapData mapData = new MapData(name, mondoID, omimID, entry.getValue(), adjProb);
-                    mapDataList.add(mapData);
+                    addToMapData(ontology, mondoID, omimID, entry.getValue(), adjProb);
                 } else if (!selectedTerms.containsKey(omimID) && addNonSelected) {
                     if (omimToMondoMap.get(omimID) != null) {
                         TermId mondoID = omimToMondoMap.get(omimID).get(0);
-                        if (mondoID != null) {
-                            name = ontology.getTermMap().get(mondoID).getName();
-                        } else if (optionalHpoaResource != null) {
-                            name = optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
-                        }
-                        MapData mapData = new MapData(name, mondoID, omimID, entry.getValue(), 1.0);
-                        mapDataList.add(mapData);
+                        addToMapData(ontology, mondoID, omimID, entry.getValue(), 1.0);
                         addNonSelected = false;
                     }
                 }
             }
             return newMap;
         } else {
-            TermId id = diseaseMap.keySet().iterator().next();
-            if (omimToMondoMap.get(id) != null) {
-                TermId mondoID = omimToMondoMap.get(id).get(0);
-                if (mondoID != null) {
-                    name = ontology.getTermMap().get(mondoID).getName();
-                } else if (optionalHpoaResource != null){
-                    name = optionalHpoaResource.getId2diseaseModelMap().get(id).diseaseName();
-                }
-                mapDataList.add(new MapData(name, mondoID, id, diseaseMap.get(id), 1.0));
+            TermId omimId = diseaseMap.keySet().iterator().next();
+            if (omimToMondoMap.get(omimId) != null) {
+                TermId mondoID = omimToMondoMap.get(omimId).get(0);
+                addToMapData(ontology, mondoID, omimId, diseaseMap.get(omimId), 1.0);
             }
             return diseaseMap;
         }
+    }
+
+    private void addToMapData(Ontology ontology, TermId mondoID, TermId omimID, Double probValue, Double sliderValue) {
+        String name = "";
+        if (mondoID != null) {
+            name = ontology.getTermMap().get(mondoID).getName();
+        } else if (optionalHpoaResource != null){
+            name = optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
+        }
+        mapDataList.add(new MapData(name, mondoID, omimID, probValue, sliderValue));
     }
 
     /**

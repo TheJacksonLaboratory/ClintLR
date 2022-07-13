@@ -1,20 +1,17 @@
 package org.monarchinitiative.l2ci.gui;
 
-import com.google.common.base.Optional;
 import javafx.concurrent.Task;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
+import org.monarchinitiative.lirical.configuration.GenotypeLrProperties;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.configuration.LiricalBuilder;
-import org.monarchinitiative.lirical.core.service.PhenotypeService;
-import org.monarchinitiative.phenol.annotations.formats.hpo.HpoAssociationData;
-import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDiseases;
+import org.monarchinitiative.lirical.core.model.GenomeBuild;
+import org.monarchinitiative.lirical.core.service.TranscriptDatabase;
+import org.monarchinitiative.lirical.io.LiricalDataException;
 import org.monarchinitiative.phenol.annotations.io.hpo.DiseaseDatabase;
-import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoader;
-import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoaderOptions;
-import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoaders;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.slf4j.Logger;
@@ -22,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
@@ -82,7 +80,7 @@ public final class StartupTask extends Task<Void> {
         String mondoJsonPath = pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY);
         updateProgress(0.02, 1);
         String[] paths = {mondoJsonPath, hpoJsonPath, hpoAnnotPath};
-        String[] types = {"Mondo", "HPO", "phenotype.hpoa"};
+        String[] types = {"Mondo", "HPO", "LIRICAL/data/phenotype.hpoa"};
         for (int i = 0; i < paths.length; i++) {
             String path = paths[i];
             String type = types[i];
@@ -104,7 +102,7 @@ public final class StartupTask extends Task<Void> {
                             optionalHpoResource.setOntology(ontology);
                             LOGGER.info("Loaded " + type + " ontology");
                             break;
-                        case "phenotype.hpoa":
+                        case "LIRICAL/data/phenotype.hpoa":
                             if (optionalHpoResource.getOntology() == null) {
                                 LOGGER.error("Cannot load phenotype.hpoa because HP ontology not loaded");
                                 return null;
@@ -137,7 +135,7 @@ public final class StartupTask extends Task<Void> {
             case "HPO":
                 optionalHpoResource.setOntology(ont);
                 break;
-            case "phenotype.hpoa":
+            case "LIRICAL/data/phenotype.hpoa":
                 if (ont != null) {
                     optionalHpoaResource.setAnnotationResources(path, ont);
                 } else {
@@ -155,26 +153,77 @@ public final class StartupTask extends Task<Void> {
             LOGGER.info("LIRICAL data directory: {}", dataPath);
             Path liricalDataPath = Path.of(dataPath);
             String exomiserVariant = pgProperties.getProperty("exomiser.variant.path");
+            String backgroundFrequency = pgProperties.getProperty("background.frequency.path");
+            GenomeBuild genomeBuild = getGenomeBuild();
             LiricalBuilder liricalBuilder = LiricalBuilder.builder(liricalDataPath);
             liricalBuilder.setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM));
-            if (exomiserVariant != null && new File(exomiserVariant).isFile()) {
-                LOGGER.info("Exomiser variant file: {}", exomiserVariant);
-                liricalBuilder.exomiserVariantDatabase(Path.of(exomiserVariant));
+            if (genomeBuild != null) {
+                LOGGER.info("Genome Build: " + genomeBuild);
+                liricalBuilder.genomeBuild(genomeBuild);
             } else {
-                LOGGER.info("Path to Exomiser variant file not set (see Edit menu or File -> Show Resources menu). Building LIRICAL without Exomiser variant file.");
+                LOGGER.info("No Genome Build specified (see File -> Show Resources menu).");
             }
-//                .genomeBuild(genomeBuildOptional.get())
-//                .backgroundVariantFrequency(dataSection.backgroundFrequencyFile)
-//                .genotypeLrProperties(genotypeLrProperties)
-//                .transcriptDatabase(runConfiguration.transcriptDb)
-//                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
+            addToBuilder(liricalBuilder, backgroundFrequency, "Background frequency");
+            addToBuilder(liricalBuilder, exomiserVariant, "Exomiser variant");
+            float pathogenicityThreshold = Float.parseFloat(pgProperties.getProperty("pathogenicity.threshold"));
+            double defaultVariantBackgroundFrequency = Double.parseDouble(pgProperties.getProperty("default.variant.background.frequency"));
+            boolean strict = Boolean.parseBoolean(pgProperties.getProperty("strict"));
+            GenotypeLrProperties genotypeLrProperties = new GenotypeLrProperties(pathogenicityThreshold, defaultVariantBackgroundFrequency, strict);
+            LOGGER.info("Genotype Properties: " + genotypeLrProperties);
+            liricalBuilder.genotypeLrProperties(genotypeLrProperties);
+            float defaultAlleleFrequency = Float.parseFloat(pgProperties.getProperty("default.allele.frequency"));
+            LOGGER.info("Default Allele Frequency: " + defaultAlleleFrequency);
+            liricalBuilder.defaultVariantAlleleFrequency(defaultAlleleFrequency);
+            TranscriptDatabase transcriptDatabase = getTranscriptDB();
+            if (transcriptDatabase != null) {
+                LOGGER.info("Transcript Database: " + transcriptDatabase);
+                liricalBuilder.transcriptDatabase(transcriptDatabase);
+            } else {
+                LOGGER.info("No Transcript Database specified (see File -> Show Resources menu)");
+            }
             lirical = liricalBuilder.build();
             LOGGER.info("Finished building LIRICAL");
         } else {
-            LOGGER.error("No LIRICAL data directory set (see Edit Menu). Aborting building LIRICAL.");
+            LOGGER.error("No LIRICAL data directory set (see File -> Show Resources Menu). Aborting building LIRICAL.");
             lirical = null;
         }
 
         return lirical;
+    }
+
+    GenomeBuild getGenomeBuild() {
+        String genome = pgProperties.getProperty("genome.build");
+        GenomeBuild genomeBuild = null;
+        if (genome.equals("hg19")) {
+            genomeBuild = GenomeBuild.HG19;
+        } else if (genome.equals("hg38")) {
+            genomeBuild = GenomeBuild.HG38;
+        }
+        return genomeBuild;
+    }
+
+    TranscriptDatabase getTranscriptDB() {
+        String transcript = pgProperties.getProperty("transcript.database");
+        TranscriptDatabase transcriptDB = null;
+        if (transcript.equals("refSeq")) {
+            transcriptDB = TranscriptDatabase.REFSEQ;
+        } else if (transcript.equals("UCSC")) {
+            transcriptDB = TranscriptDatabase.UCSC;
+        }
+        return transcriptDB;
+    }
+
+    void addToBuilder(LiricalBuilder builder, String pathName, String fileName) {
+        if (pathName != null && new File(pathName).isFile()) {
+            Path path = Path.of(pathName);
+            LOGGER.info(fileName + " file: {}", pathName);
+            if (fileName.contains("Exomiser")) {
+                builder.exomiserVariantDatabase(path);
+            } else if (fileName.contains("Background")) {
+                builder.backgroundVariantFrequency(path);
+            }
+        } else {
+            LOGGER.info("Path to " + fileName + " file not set (see File -> Show Resources menu).");
+        }
     }
 }
