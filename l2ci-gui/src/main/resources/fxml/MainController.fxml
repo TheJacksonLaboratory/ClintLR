@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
@@ -20,7 +21,6 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.web.WebView?>
 
-<?import javafx.scene.control.Slider?>
 <BorderPane prefHeight="1000.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.MainController">
      <top>
         <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
@@ -29,14 +29,14 @@
                  <menus>
                      <Menu mnemonicParsing="false" text="File">
                         <items>
-                            <MenuItem onAction="#showResourcesInterface" text="Show Resources"/>
+                            <MenuItem onAction="#showResourcesInterface" text="Show Resources" />
                             <!--
                             <MenuItem onAction="#downloadMondoFile" text="Download Mondo JSON File" />
                             <MenuItem onAction="#loadMondoFile" text="Load Local Mondo JSON File" />
                             -->
                             <MenuItem onAction="#showMondoStats" text="Show Mondo Stats" />
-                            <MenuItem onAction="#saveMapOutputFile" text="Save Map to File"/>
-                            <MenuItem onAction="#showMapInterface" text="Show Map Interface"/>
+                            <MenuItem onAction="#saveMapOutputFile" text="Save Map to File" />
+                            <MenuItem onAction="#showMapInterface" text="Show Map Interface" />
                             <MenuItem mnemonicParsing="false" onAction="#close" text="Close" />
                         </items>
                      </Menu>
@@ -118,14 +118,6 @@
                               <Insets bottom="5.0" left="15.0" top="5.0" />
                           </VBox.margin>
                       </TextField>
-                      <Button fx:id="liricalButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#liricalButtonAction" styleClass="Button" stylesheets="@../css/style.css" text="Run LIRICAL" textOverrun="CLIP">
-                          <tooltip>
-                              <Tooltip text="Run LIRICAL" />
-                          </tooltip>
-                          <HBox.margin>
-                              <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
-                          </HBox.margin>
-                      </Button>
                   </HBox>
                   <HBox>
                       <Button fx:id="phenopacketButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#phenopacketButtonAction" styleClass="Button" stylesheets="@../css/style.css" text="Load Phenopacket" textOverrun="CLIP">
@@ -136,20 +128,45 @@
                               <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
                           </HBox.margin>
                       </Button>
-                      <Label fx:id = "phenopacketLabel" minWidth="300.0" stylesheets="@../css/style.css">
+                      <Label fx:id="phenopacketLabel" minWidth="300.0" stylesheets="@../css/style.css">
                           <HBox.margin>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                           </HBox.margin>
                       </Label>
+                  </HBox>
+                  <Label styleClass="bluelabel" stylesheets="@../css/style.css" text="LIRICAL Results File">
+                      <VBox.margin>
+                          <Insets bottom="5.0" left="15.0" top="5.0" />
+                      </VBox.margin>
+                  </Label>
+                  <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
+                      <TextField fx:id="outputFileTextField" prefWidth="100.0">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                          </HBox.margin>
+                      </TextField>
+                      <Label fx:id="outputFileTypeLabel" stylesheets="@../css/style.css">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                          </HBox.margin>
+                      </Label>
+                      <Button fx:id="liricalButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#liricalButtonAction" styleClass="Button" stylesheets="@../css/style.css" text="Run LIRICAL" textOverrun="CLIP">
+                          <tooltip>
+                              <Tooltip text="Run LIRICAL" />
+                          </tooltip>
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
+                          </HBox.margin>
+                      </Button>
                   </HBox>
                   <HBox>
-                      <Label fx:id = "treeLabel" minWidth="300.0" stylesheets="@../css/style.css">
+                      <Label fx:id="treeLabel" minWidth="300.0" stylesheets="@../css/style.css">
                           <HBox.margin>
                               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                           </HBox.margin>
                       </Label>
                   </HBox>
-                  <TreeView fx:id="ontologyTreeView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" stylesheets="@../css/style.css">
+                  <TreeView fx:id="ontologyTreeView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" stylesheets="@../css/style.css" VBox.vgrow="ALWAYS">
                       <VBox.margin>
                           <Insets left="5.0" right="5.0" top="5.0" />
                       </VBox.margin>
@@ -192,4 +209,3 @@
           </StackPane>
       </bottom>
 </BorderPane>
-

@@ -1,4 +1,4 @@
-package org.monarchinitiative.l2ci.gui;
+package org.monarchinitiative.l2ci.core.pretestprob;
 
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
@@ -10,12 +10,15 @@ public class MapData {
     Double diseaseProb;
     Double sliderValue;
 
-    public MapData(String name, TermId mondoId, TermId omimId, Double probability, Double sliderVal) {
+    boolean isFixed;
+
+    public MapData(String name, TermId mondoId, TermId omimId, Double probability, Double sliderVal, boolean fixed) {
         this.diseaseName = name;
         this.mondoId = mondoId;
         this.omimId = omimId;
         this.diseaseProb = probability;
         this.sliderValue = sliderVal;
+        this.isFixed = fixed;
     }
 
     public String getName() {
@@ -37,4 +40,10 @@ public class MapData {
     public Double getSliderValue() {
         return sliderValue;
     }
+
+    public boolean isFixed() {
+        return isFixed;
+    }
+
+    public void setFixed(boolean fixed) { this.isFixed = fixed;}
 }

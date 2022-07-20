@@ -14,6 +14,9 @@ import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -26,18 +29,24 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.awt.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.monarchinitiative.biodownload.BioDownloader;
 import org.monarchinitiative.biodownload.BioDownloaderBuilder;
-import org.monarchinitiative.biodownload.FileDownloadException;
+import org.monarchinitiative.l2ci.core.pretestprob.MapData;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.io.MapFileWriter;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
@@ -51,10 +60,8 @@ import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
 import org.monarchinitiative.lirical.core.io.VariantParser;
 import org.monarchinitiative.lirical.core.io.VariantParserFactory;
-import org.monarchinitiative.lirical.core.model.Gene2Genotype;
-import org.monarchinitiative.lirical.core.model.GenesAndGenotypes;
-import org.monarchinitiative.lirical.core.model.LiricalVariant;
-import org.monarchinitiative.lirical.core.model.TranscriptAnnotation;
+import org.monarchinitiative.lirical.core.model.*;
+import org.monarchinitiative.lirical.core.output.*;
 import org.monarchinitiative.lirical.core.service.HpoTermSanitizer;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImporter;
@@ -155,14 +162,19 @@ public class MainController {
     private Button liricalButton = new Button();
     @FXML
     private Label treeLabel = new Label();
+    @FXML
+    private TextField outputFileTextField = new TextField();
+    @FXML
+    private Label outputFileTypeLabel = new Label();
 
-    private Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
 
-    public static double preTestProb;
+    private final Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
+
+    public static double sliderValue;
 
     private Map<TermId, Double> pretestMap;
     public MapDisplayInterface mapDisplay;
-    public static List<MapData> mapDataList;
+    public static List<MapData> mapDataList = new ArrayList<>();
     private Lirical lirical;
 
     @FXML
@@ -234,6 +246,16 @@ public class MainController {
         initializeProperty("background.frequency.path", new String[]{"LIRICAL", "background", "background-hg38.tsv"});
         initializeProperty("default.allele.frequency", new String[]{"1E-5"});
         initializeProperty("transcript.database", new String[]{"refSeq"});
+        String homeDir = System.getProperty("user.home");
+        String dir = String.join(File.separator, homeDir, "LIRICAL", "results");
+        pgProperties.setProperty("lirical.results.path", dir);
+        initializeProperty("lirical.version", new String[]{"2.0.0-RC1"});
+        initializeProperty("lr.threshold", new String[]{"-1"});
+        initializeProperty("min.diagnosis.count", new String[]{"-1"});
+        initializeProperty("output.formats", new String[]{"html"});
+        initializeProperty("display.all.variants", new String[]{"false"});
+        outputFileTextField.setText("lirical");
+        outputFileTypeLabel.setText("." + pgProperties.getProperty("output.formats"));
         CompletableFuture.runAsync(() -> {
             try {
                 lirical = task.buildLirical();
@@ -271,7 +293,7 @@ public class MainController {
         probSlider.setMajorTickUnit(2);
         probSlider.setShowTickLabels(true);
         probSlider.setShowTickMarks(true);
-        preTestProb = probSlider.getValue();
+        sliderValue = probSlider.getValue();
         probSlider.valueProperty().addListener(e -> sliderAction());
         sliderTextField.setText(String.valueOf(probSlider.getValue()));
         sliderTextField.setOnKeyReleased(event ->  {
@@ -409,11 +431,6 @@ public class MainController {
         }
     }
 
-    @FXML
-    public void downloadMondoFile(Event e) throws FileDownloadException {
-        downloadMondoFile(pgProperties.getProperty("download.path"));
-    }
-
     public void downloadMondoFile(String path) {
         try {
             BioDownloaderBuilder builder = BioDownloader.builder(Path.of(path));
@@ -468,7 +485,7 @@ public class MainController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Map to File");
         File file = fileChooser.showSaveDialog(MainApp.mainStage);
-        pretestMap = makeSelectedDiseaseMap(preTestProb);
+        pretestMap = makeSelectedDiseaseMap(sliderValue);
         if (file != null && pretestMap != null) {
             new MapFileWriter(pretestMap, file.getAbsolutePath());
         }
@@ -476,7 +493,7 @@ public class MainController {
 
     @FXML
     public void showMapInterface(ActionEvent event) {
-        makeSelectedDiseaseMap(preTestProb);
+        makeSelectedDiseaseMap(sliderValue);
         if (mapDisplay == null) {
             mapDisplay = new MapDisplayInterface();
             mapDisplay.initMapInterface();
@@ -510,11 +527,6 @@ public class MainController {
     private void close(ActionEvent e) {
         logger.trace("Closing down");
         Platform.exit();
-    }
-
-    @FXML
-    public void setLiricalDataDirectory(Event e) {
-        setLiricalDataDirectory();
     }
 
     public void setLiricalDataDirectory() {
@@ -676,7 +688,7 @@ public class MainController {
                 setGraphic(icon1);
                 if (mapDataList != null) {
                     for (MapData mapData : mapDataList) {
-                        if (mapData != null && mapData.getMondoId().equals(item.term.id()) && mapData.getSliderValue() > 1.0) {
+                        if (mapData != null && mapData.getMondoId() != null && mapData.getMondoId().equals(item.term.id()) && mapData.getSliderValue() > 1.0) {
                             setGraphic(icon2);
                         }
                     }
@@ -717,9 +729,9 @@ public class MainController {
                         w = newValue.getValue();
                     }
                     TreeItem<OntologyTermWrapper> item = new OntologyTermTreeItem(w);
+                    pretestMap = makeSelectedDiseaseMap(sliderValue);
                     updateDescription(item);
                     selectedTerm = item.getValue().term;
-                    makeSelectedDiseaseMap(preTestProb);
                     if (mapDisplay != null) {
                         mapDisplay.updateTable();
                     }
@@ -794,7 +806,7 @@ public class MainController {
             }
         }
         HashMap<TermId, TermId> selectedTerms = new HashMap<>();
-        mapDataList = new ArrayList<>();
+        mapDataList.removeIf(mapData -> !mapData.isFixed());
         String name = "";
 //        TreeItem<OntologyTermWrapper> selectedItem = ontologyTreeView.getSelectionModel().getSelectedItem();
         if (selectedTerm != null) {
@@ -818,17 +830,16 @@ public class MainController {
                     }
                 }
             });
-            Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb);
+            Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb, mapDataList);
             boolean addNonSelected = true;
             for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
                 TermId omimID = entry.getKey();
                 if (selectedTerms.containsKey(omimID)) {
                     TermId mondoID = selectedTerms.get(omimID);
-                    addToMapData(ontology, mondoID, omimID, entry.getValue(), adjProb);
+                    addToMapData(ontology, mondoID, omimID, entry.getValue(), adjProb, false);
                 } else if (!selectedTerms.containsKey(omimID) && addNonSelected) {
                     if (omimToMondoMap.get(omimID) != null) {
-                        TermId mondoID = omimToMondoMap.get(omimID).get(0);
-                        addToMapData(ontology, mondoID, omimID, entry.getValue(), 1.0);
+                        addToMapData(null, null, null, entry.getValue(), 1.0, false);
                         addNonSelected = false;
                     }
                 }
@@ -837,21 +848,20 @@ public class MainController {
         } else {
             TermId omimId = diseaseMap.keySet().iterator().next();
             if (omimToMondoMap.get(omimId) != null) {
-                TermId mondoID = omimToMondoMap.get(omimId).get(0);
-                addToMapData(ontology, mondoID, omimId, diseaseMap.get(omimId), 1.0);
+                addToMapData(null, null, null, diseaseMap.get(omimId), 1.0, false);
             }
             return diseaseMap;
         }
     }
 
-    private void addToMapData(Ontology ontology, TermId mondoID, TermId omimID, Double probValue, Double sliderValue) {
+    private void addToMapData(Ontology ontology, TermId mondoID, TermId omimID, Double probValue, Double sliderValue, boolean isFixed) {
         String name = "";
-        if (mondoID != null) {
+        if (mondoID != null & ontology != null) {
             name = ontology.getTermMap().get(mondoID).getName();
-        } else if (optionalHpoaResource != null){
-            name = optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
+        } else if (ontology == null) {
+            name = "other diseases"; //optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
         }
-        mapDataList.add(new MapData(name, mondoID, omimID, probValue, sliderValue));
+        mapDataList.add(new MapData(name, mondoID, omimID, probValue, sliderValue, isFixed));
     }
 
     /**
@@ -863,14 +873,14 @@ public class MainController {
         if (treeItem == null)
             return;
         Term term = treeItem.getValue().term;
-//        if (optionalHpoaResource.getIndirectAnnotMap() == null) {
-//            logger.error("Attempt to get Indirect annotation map but it was null");
-//            return;
-//        }
-        List<HpoDisease> annotatedDiseases =  new ArrayList<>();//optionalHpoaResource.getIndirectAnnotMap().getOrDefault(term.id(), List.of());
+        if (optionalHpoaResource.getIndirectAnnotMap() == null) {
+            logger.error("Attempt to get Indirect annotation map but it was null");
+            return;
+        }
+        List<HpoDisease> annotatedDiseases =  optionalHpoaResource.getIndirectAnnotMap().getOrDefault(term.id(), List.of());
         int n_descendents = 42;//getDescendents(model.getHpoOntology(),term.getId()).size();
         //todo--add number of descendents to HTML
-        String content = HpoHtmlPageGenerator.getHTML(term, annotatedDiseases);
+        String content = HpoHtmlPageGenerator.getHTML(term, annotatedDiseases, pretestMap);
         //System.out.print(content);
         // infoWebEngine=this.infoWebView.getEngine();
         infoWebEngine.loadContent(content);
@@ -967,24 +977,56 @@ public class MainController {
     }
 
     private void sliderAction() {
-        preTestProb = probSlider.getValue();
-        sliderTextField.setText(String.format("%.2f", preTestProb));
-        makeSelectedDiseaseMap(preTestProb);
+        sliderValue = probSlider.getValue();
+        sliderTextField.setText(String.format("%.2f", sliderValue));
+        pretestMap = makeSelectedDiseaseMap(sliderValue);
         if (mapDisplay != null) {
             mapDisplay.updateTable();
         }
+        TreeItem<OntologyTermWrapper> treeItem = ontologyTreeView.getSelectionModel().getSelectedItem();
+        updateDescription(treeItem);
     }
 
     @FXML
     public void liricalButtonAction(ActionEvent actionEvent) throws Exception {
-        System.out.println("Pretest Probability = " + preTestProb);
+        System.out.println("Slider Value = " + sliderValue);
         if (selectedTerm != null) {
-            Map<TermId, Double> preTestMap = makeSelectedDiseaseMap(preTestProb);
+            Map<TermId, Double> preTestMap = makeSelectedDiseaseMap(sliderValue);
             AnalysisData analysisData = prepareAnalysisData(lirical);
             AnalysisOptions analysisOptions = AnalysisOptions.of(false, PretestDiseaseProbability.of(preTestMap));
             LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
             AnalysisResults results = analysisRunner.run(analysisData, analysisOptions);
-            System.out.println(results.resultsWithDescendingPostTestProbability().toList().subList(0,4));
+            FilteringStats filteringStats = analysisData.genes().computeFilteringStats();
+            AnalysisResultsMetadata metadata = AnalysisResultsMetadata.builder()
+                    .setLiricalVersion(pgProperties.getProperty("lirical.version"))
+                    .setHpoVersion(lirical.phenotypeService().hpo().getMetaInfo().getOrDefault("release", "UNKNOWN RELEASE"))
+                    .setTranscriptDatabase(pgProperties.getProperty("transcript.database"))
+                    .setLiricalPath(pgProperties.getProperty("lirical.data.path"))
+                    .setExomiserPath(pgProperties.getProperty("exomiser.variant.path") == "unset" ? "" : pgProperties.getProperty("exomiser.variant.path"))
+                    .setAnalysisDate(getTodaysDate())
+                    .setSampleName(analysisData.sampleId())
+                    .setnGoodQualityVariants(filteringStats.nGoodQualityVariants())
+                    .setnFilteredVariants(filteringStats.nFilteredVariants())
+                    .setGenesWithVar(0) // TODO
+                    .setGlobalMode(false)
+                    .build();
+
+            OutputOptions outputOptions = createOutputOptions();
+            lirical.analysisResultsWriterFactory()
+                    .getWriter(analysisData, results, metadata)
+                    .process(outputOptions);
+            String outFileName = outputOptions.prefix() + "." + outputOptions.outputFormats().iterator().next().name().toLowerCase();
+            File outFile = new File(String.join(File.separator, outputOptions.outputDirectory().toString(), outFileName));
+            if (outFile.isFile() & outFileName.endsWith("html")) {
+                if (Desktop.isDesktopSupported()) {
+                    boolean showResults = PopUps.getBooleanFromUser("Open results in browser?", "LIRICAL analysis complete.", "Load results");
+                    if (showResults) {
+                        Desktop.getDesktop().open(outFile);
+                    }
+                } else {
+                    PopUps.showHtmlContent("LIRICAL Analysis Results: " + outFileName, outFile.getAbsolutePath(), MainApp.mainStage);
+                }
+            }
         } else {
             logger.info("Unable to run analysis: no term selected.");
             PopUps.showInfoMessage("Error: No term selected.", "ERROR");
@@ -1083,6 +1125,50 @@ public class MainController {
             int current = counter.incrementAndGet();
             if (current % 5000 == 0)
                 logger.info("Read {} variants", current);
+        };
+    }
+
+    /**
+     * @return a string with today's date in the format yyyy/MM/dd.
+     */
+    private static String getTodaysDate() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+        Date date = new Date();
+        return dateFormat.format(date);
+    }
+
+    protected OutputOptions createOutputOptions() {
+        double lrThresholdValue = Double.parseDouble(pgProperties.getProperty("lr.threshold"));
+        int minDiagnosisValue = Integer.parseInt(pgProperties.getProperty("min.diagnosis.count"));
+        String outputFormatsString = pgProperties.getProperty("output.formats");
+        float pathogenicityThreshold = Float.parseFloat(pgProperties.getProperty("pathogenicity.threshold"));
+        boolean displayAllVariants = Boolean.parseBoolean(pgProperties.getProperty("display.all.variants"));
+        Path outdir = Path.of(pgProperties.getProperty("lirical.results.path"));
+        String outfileText = outputFileTextField.getText();
+        String outfilePrefix = outfileText == null ? "lircal" : outfileText;
+        LrThreshold lrThreshold = lrThresholdValue < 0 ? LrThreshold.notInitialized() : LrThreshold.setToUserDefinedThreshold(lrThresholdValue);
+        MinDiagnosisCount minDiagnosisCount = minDiagnosisValue < 0 ? MinDiagnosisCount.notInitialized() : MinDiagnosisCount.setToUserDefinedMinCount(minDiagnosisValue);
+        List<OutputFormat> outputFormats = parseOutputFormats(outputFormatsString);
+        return new OutputOptions(lrThreshold, minDiagnosisCount, pathogenicityThreshold,
+                displayAllVariants, outdir, outfilePrefix, outputFormats);
+    }
+
+    private List<OutputFormat> parseOutputFormats(String outputFormats) {
+        return Arrays.stream(outputFormats.split(","))
+                .map(String::trim)
+                .map(toOutputFormat())
+                .flatMap(Optional::stream)
+                .toList();
+    }
+
+    private static Function<String, Optional<OutputFormat>> toOutputFormat() {
+        return payload -> switch (payload.toUpperCase()) {
+            case "HTML" -> Optional.of(OutputFormat.HTML);
+            case "TSV" -> Optional.of(OutputFormat.TSV);
+            default -> {
+                logger.warn("Unknown output format {}", payload);
+                yield Optional.empty();
+            }
         };
     }
 

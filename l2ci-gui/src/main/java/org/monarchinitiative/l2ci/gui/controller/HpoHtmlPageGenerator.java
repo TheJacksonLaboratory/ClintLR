@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  */
 class HpoHtmlPageGenerator {
     /**@return A String with the HTML for representing one HPO term and the diseases it is annotated to. */
-    static String getHTML(Term term, List<HpoDisease> annotatedDiseases) {
+    static String getHTML(Term term, List<HpoDisease> annotatedDiseases, Map<TermId, Double> pretestMap) {
 
         String termID = term.id().getValue();
         String synonyms = (term.getSynonyms() == null) ? "" : term.getSynonyms().stream().map(TermSynonym::getValue)
@@ -34,9 +34,16 @@ class HpoHtmlPageGenerator {
         String diseaseTable = getDiseaseTableHTML(annotatedDiseases, termID);
         List<SimpleXref> pmids=term.getPmidXrefs();
         List<Dbxref> xrefs = term.getXrefs();
+        Double pretestProb = 1.0;
         for (Dbxref xref : xrefs) {
-            if (xref.getName().contains("OMIM")) {
-                termID += " (" + xref.getName() + ")";
+            String name = xref.getName();
+            if (name.contains("OMIM")) {
+                termID += " (" + name + ")";
+                TermId omimTermId = Term.of(name, name).id();
+                if (pretestMap.keySet().contains(omimTermId)) {
+                    pretestProb = pretestMap.get(omimTermId);
+                    break;
+                }
             }
         }
         String pmidList;
@@ -49,7 +56,7 @@ class HpoHtmlPageGenerator {
             xrefList="-";
         else
             xrefList= xrefs.stream().map(Dbxref::getName).collect(Collectors.joining(", "));
-        return String.format(HTML_TEMPLATE, CSS, term.getName(), termID, definition, comment, synonyms, pmidList, xrefList, diseaseTable);
+        return String.format(HTML_TEMPLATE, CSS, term.getName(), termID, definition, comment, synonyms, pmidList, xrefList, pretestProb, diseaseTable);
     }
 
     /**
@@ -242,6 +249,7 @@ class HpoHtmlPageGenerator {
             "<p><b>Synonyms:</b> %s</p>" +
             "<p><b>PMID:</b> %s</p>" +
             "<p><b>Xrefs:</b> %s</p>" +
+            "<p><b>Pretest Probability:</b> %6.2e</p>" +
             "%s" +
             "</body></html>";
 

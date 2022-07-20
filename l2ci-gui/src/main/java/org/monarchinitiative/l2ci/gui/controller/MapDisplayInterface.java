@@ -1,5 +1,7 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
@@ -8,7 +10,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.monarchinitiative.l2ci.gui.MapData;
+import javafx.util.Callback;
+import org.monarchinitiative.l2ci.core.pretestprob.MapData;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.util.List;
@@ -38,8 +41,21 @@ public class MapDisplayInterface {
         mapStage.show();
     }
 
+    public static class FixedValueFactory implements Callback<TableColumn.CellDataFeatures<MapData, CheckBox>, ObservableValue<CheckBox>> {
+        @Override
+        public ObservableValue<CheckBox> call(TableColumn.CellDataFeatures<MapData, CheckBox> param) {
+            MapData mapData = param.getValue();
+            CheckBox checkBox = new CheckBox();
+            checkBox.selectedProperty().setValue(mapData.isFixed());
+            checkBox.selectedProperty().addListener((ov, old_val, new_val) -> {
+                mapData.setFixed(new_val);
+            });
+            return new SimpleObjectProperty<>(checkBox);
+        }
+    }
+
     public void updateTable() {
-        MainController.getController().makeSelectedDiseaseMap(MainController.preTestProb);
+        MainController.getController().makeSelectedDiseaseMap(MainController.sliderValue);
         List<MapData> mapDataList = MainController.mapDataList;
         ObservableList<MapData> data = FXCollections.observableArrayList();
         for (MapData mapData : mapDataList) {
@@ -47,17 +63,19 @@ public class MapDisplayInterface {
         }
         tableView.itemsProperty().setValue(data);
 
-        TableColumn<TermId, String> mondoIdColumn = new TableColumn("MondoId");
-        TableColumn<TermId, String> omimIdColumn = new TableColumn("OmimId");
-        TableColumn<String, String> nameColumn = new TableColumn("Name");
-        TableColumn<Double, Double> probColumn = new TableColumn("Probability");
+        TableColumn<TermId, String> mondoIdColumn = new TableColumn<>("MondoId");
+        TableColumn<TermId, String> omimIdColumn = new TableColumn<>("OmimId");
+        TableColumn<String, String> nameColumn = new TableColumn<>("Name");
+        TableColumn<Double, Double> probColumn = new TableColumn<>("Probability");
         TableColumn<Double, Double> sliderColumn = new TableColumn<>("SliderValue");
+        TableColumn<MapData, CheckBox> fixedColumn = new TableColumn<>("Fixed");
 
         mondoIdColumn.setCellValueFactory(new PropertyValueFactory<>("MondoId"));
         omimIdColumn.setCellValueFactory(new PropertyValueFactory<>("OmimId"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("Name"));
         probColumn.setCellValueFactory(new PropertyValueFactory<>("Probability"));
         sliderColumn.setCellValueFactory(new PropertyValueFactory<>("SliderValue"));
+        fixedColumn.setCellValueFactory(new FixedValueFactory());
 
         probColumn.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -84,7 +102,10 @@ public class MapDisplayInterface {
         });
 
         tableView.getColumns().clear();
-        tableView.getColumns().addAll(mondoIdColumn, omimIdColumn, nameColumn, sliderColumn, probColumn);
+        tableView.getColumns().addAll(mondoIdColumn, omimIdColumn, nameColumn, sliderColumn, probColumn, fixedColumn);
+
+        tableView.getSortOrder().add(nameColumn);
+        tableView.sort();
     }
 
 }
