@@ -35,6 +35,14 @@
             <groupId>org.monarchinitiative.phenol</groupId>
             <artifactId>phenol-io</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.monarchinitiative.lirical</groupId>
+            <artifactId>lirical-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.monarchinitiative.lirical</groupId>
+            <artifactId>lirical-configuration</artifactId>
+        </dependency>
 
 <!--        <dependency>-->
 <!--            <groupId>commons-net</groupId>-->

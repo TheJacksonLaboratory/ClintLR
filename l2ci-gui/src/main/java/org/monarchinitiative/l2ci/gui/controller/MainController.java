@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
@@ -24,28 +25,21 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.awt.*;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.monarchinitiative.biodownload.BioDownloader;
-import org.monarchinitiative.biodownload.BioDownloaderBuilder;
+import org.monarchinitiative.l2ci.core.LiricalAnalysis;
 import org.monarchinitiative.l2ci.core.pretestprob.MapData;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.io.MapFileWriter;
@@ -57,16 +51,7 @@ import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
-import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
-import org.monarchinitiative.lirical.core.io.VariantParser;
-import org.monarchinitiative.lirical.core.io.VariantParserFactory;
-import org.monarchinitiative.lirical.core.model.*;
 import org.monarchinitiative.lirical.core.output.*;
-import org.monarchinitiative.lirical.core.service.HpoTermSanitizer;
-import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
-import org.monarchinitiative.lirical.io.analysis.PhenopacketImporter;
-import org.monarchinitiative.lirical.io.analysis.PhenopacketImporters;
-import org.monarchinitiative.phenol.annotations.formats.GeneIdentifier;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Dbxref;
@@ -95,7 +80,7 @@ public class MainController {
     private static MainController mainController;
     private Ontology ont;
 
-    private static final Logger logger = LoggerFactory.getLogger(MainController.class);
+    public static final Logger logger = LoggerFactory.getLogger(MainController.class);
     private static final String EVENT_TYPE_CLICK = "click";
 
     /**
@@ -166,6 +151,14 @@ public class MainController {
     private TextField outputFileTextField = new TextField();
     @FXML
     private Label outputFileTypeLabel = new Label();
+    @FXML
+    private TextField lrThresholdTextField = new TextField();
+    @FXML
+    private Spinner minDiagnosisSpinner = new Spinner();
+    @FXML
+    private TextField pathogenicityTextField = new TextField();
+    @FXML
+    private CheckBox variantsCheckbox = new CheckBox();
 
 
     private final Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
@@ -175,7 +168,8 @@ public class MainController {
     private Map<TermId, Double> pretestMap;
     public MapDisplayInterface mapDisplay;
     public static List<MapData> mapDataList = new ArrayList<>();
-    private Lirical lirical;
+    public Lirical lirical;
+    private LiricalAnalysis liricalAnalysis;
 
     @FXML
     private Label phenopacketLabel;
@@ -236,7 +230,6 @@ public class MainController {
     private void initialize() throws IOException {
         mainController = this;
         logger.info("Initializing main controller");
-        StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
         liricalButton.setDisable(true);
         initializeProperty("lirical.data.path", new String[]{"LIRICAL", "data"});
         initializeProperty("genome.build", new String[]{"hg38"});
@@ -250,41 +243,19 @@ public class MainController {
         String dir = String.join(File.separator, homeDir, "LIRICAL", "results");
         pgProperties.setProperty("lirical.results.path", dir);
         initializeProperty("lirical.version", new String[]{"2.0.0-RC1"});
-        initializeProperty("lr.threshold", new String[]{"-1"});
-        initializeProperty("min.diagnosis.count", new String[]{"-1"});
+        initializeProperty("min.diagnosis.count", new String[]{"10"});
         initializeProperty("output.formats", new String[]{"html"});
-        initializeProperty("display.all.variants", new String[]{"false"});
+        lrThresholdTextField.setText("0.05");
+        SpinnerValueFactory<Integer> spinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10);
+        minDiagnosisSpinner.setValueFactory(spinnerFactory);
+        pathogenicityTextField.setText(pgProperties.getProperty("pathogenicity.threshold"));
+        variantsCheckbox.setSelected(false);
         outputFileTextField.setText("lirical");
         outputFileTypeLabel.setText("." + pgProperties.getProperty("output.formats"));
-        CompletableFuture.runAsync(() -> {
-            try {
-                lirical = task.buildLirical();
-                if (lirical != null) {
-                    liricalButton.setDisable(false);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        publishMessage("Loading resources");
-        ProgressIndicator pb = new ProgressIndicator();
-        pb.setProgress(0);
-        pb.progressProperty().unbind();
-        pb.progressProperty().bind(task.progressProperty());
-        Stage window = PopUps.setupProgressDialog("Initializing", "Loading resources...", pb);
-        window.show();
-        window.toFront();
-        task.setOnSucceeded(e -> {
-            makeOmimMap();
-            WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
-            publishMessage("Successfully loaded files");
-            window.close();
-        });
-        task.setOnFailed(e -> {
-            publishMessage("Unable to load ontologies/annotations", MessageType.ERROR);
-            window.close();
-        });
-        this.executor.submit(task);
+        StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
+        LiricalBuildTask liricalTask = new LiricalBuildTask(pgProperties);
+        showProgress(task, "startup", "loading resources");
+        showProgress(liricalTask, "lirical", "building LIRICAL");
         String ver = MainController.getVersion();
         copyrightLabel.setText("L4CI, v. " + ver + ", \u00A9 Monarch Initiative 2022");
         probSlider.setMin(1);
@@ -364,6 +335,44 @@ public class MainController {
         }
     }
 
+    private void showProgress(Task task, String type, String taskMessage) {
+        publishMessage(taskMessage);
+        ProgressIndicator pb = new ProgressIndicator();
+        pb.setProgress(0);
+        pb.progressProperty().unbind();
+        pb.progressProperty().bind(task.progressProperty());
+        Stage window = PopUps.setupProgressDialog("Initializing", taskMessage + "...", pb);
+        window.show();
+        window.toFront();
+        window.setAlwaysOnTop(true);
+        switch (type) {
+            case "startup":
+                task.setOnSucceeded(e -> {
+                    makeOmimMap();
+                    WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
+                    publishMessage("Finished " + taskMessage);
+                    window.close();
+                });
+                break;
+            case "lirical":
+                task.setOnSucceeded(e -> {
+                    if (lirical != null) {
+                        liricalAnalysis = new LiricalAnalysis(lirical, pgProperties);
+                        liricalButton.setDisable(false);
+                        publishMessage("Finished " + taskMessage);
+                    } else {
+                        publishMessage("Failed " + taskMessage + ". LIRICAL instance is null.", MessageType.ERROR);
+                    }
+                    window.close();
+                });
+                break;
+        }
+        task.setOnFailed(e -> {
+            publishMessage("Failed " + taskMessage, MessageType.ERROR);
+            window.close();
+        });
+        this.executor.submit(task);
+    }
 
     @FXML
     public void loadMondoFile(Event e) {
@@ -431,42 +440,6 @@ public class MainController {
         }
     }
 
-    public void downloadMondoFile(String path) {
-        try {
-            BioDownloaderBuilder builder = BioDownloader.builder(Path.of(path));
-            builder.mondoOwl();
-            BioDownloader downloader = builder.build();
-            downloader.download();
-            File owl = new File(path, "mondo.owl");
-            String jarPath = pgProperties.getProperty("obographs.jar.path");
-            if (jarPath != null && new File(jarPath).isFile()) {
-                String[] command = {"java",  "-jar", jarPath, "convert", "-f", "json", owl.getAbsolutePath()};
-                logger.info("Converting mondo.owl to readable mondo.json file using obographs.");
-                logger.info(String.join(" ", command));
-                executeCommand(command);
-                loadMondoFile(new File(path, "mondo.json").getAbsolutePath());
-            } else {
-                logger.info("Cannot find obographs-cli jar file to convert mondo.owl to readable mondo.json file.");
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    void executeCommand(String[] args) throws Exception {
-        ProcessBuilder builder = new ProcessBuilder(args);
-        builder.redirectErrorStream(true);
-        Process p = builder.start();
-        BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        while (true) {
-            line = r.readLine();
-            if (line == null) { break; }
-            System.out.println(line);
-        }
-        r.close();
-    }
-
     @FXML
     public void showMondoStats(ActionEvent actionEvent) {
         if (ont != null) {
@@ -530,14 +503,19 @@ public class MainController {
     }
 
     public void setLiricalDataDirectory() {
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("Set LIRICAL Data Directory");
-        Stage stage = MainApp.mainStage;
-        File directory = directoryChooser.showDialog(stage);
+        File directory = PopUps.selectDirectory(MainApp.mainStage, new File(pgProperties.getProperty("lirical.data.path")), "Set LIRICAL Data Directory");
         if (directory != null) {
             String liricalDataPath = directory.getAbsolutePath();
             pgProperties.setProperty("lirical.data.path", liricalDataPath);
             logger.info("Set LIRICAL data directory to {}", directory.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    public void setLiricalResultsDirectory() {
+        File dir = PopUps.selectDirectory(MainApp.mainStage, new File(pgProperties.getProperty("lirical.results.path")), "Choose Directory to Save Results");
+        if (dir != null) {
+            pgProperties.setProperty("lirical.results.path", dir.getAbsolutePath());
         }
     }
 
@@ -547,10 +525,7 @@ public class MainController {
     }
 
     public void setExomiserVariantFile() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Set Exomiser Variant File");
-        Stage stage = MainApp.mainStage;
-        File file = fileChooser.showOpenDialog(stage);
+        File file = PopUps.selectFileToOpen(MainApp.mainStage, new File(pgProperties.getProperty("exomiser.variant.path")), "Set Exomiser Variant File");
         if (file != null) {
             String exomiserVariantPath = file.getAbsolutePath();
             pgProperties.setProperty("exomiser.variant.path", exomiserVariantPath);
@@ -559,10 +534,7 @@ public class MainController {
     }
 
     public void setBackgroundFrequencyFile() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Set Background Frequency File");
-        Stage stage = MainApp.mainStage;
-        File file = fileChooser.showOpenDialog(stage);
+        File file = PopUps.selectFileToOpen(MainApp.mainStage, new File(pgProperties.getProperty("background.frequency.path")), "Set Background Frequency File");
         if (file != null) {
             String bkgFreqPath = file.getAbsolutePath();
             pgProperties.setProperty("background.frequency.path", bkgFreqPath);
@@ -944,6 +916,7 @@ public class MainController {
     public void phenopacketButtonAction() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Choose Phenopacket File");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Phenopacket JSON File", "*.json"));
         Stage stage = MainApp.mainStage;
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
@@ -992,40 +965,18 @@ public class MainController {
         System.out.println("Slider Value = " + sliderValue);
         if (selectedTerm != null) {
             Map<TermId, Double> preTestMap = makeSelectedDiseaseMap(sliderValue);
-            AnalysisData analysisData = prepareAnalysisData(lirical);
-            AnalysisOptions analysisOptions = AnalysisOptions.of(false, PretestDiseaseProbability.of(preTestMap));
-            LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
-            AnalysisResults results = analysisRunner.run(analysisData, analysisOptions);
-            FilteringStats filteringStats = analysisData.genes().computeFilteringStats();
-            AnalysisResultsMetadata metadata = AnalysisResultsMetadata.builder()
-                    .setLiricalVersion(pgProperties.getProperty("lirical.version"))
-                    .setHpoVersion(lirical.phenotypeService().hpo().getMetaInfo().getOrDefault("release", "UNKNOWN RELEASE"))
-                    .setTranscriptDatabase(pgProperties.getProperty("transcript.database"))
-                    .setLiricalPath(pgProperties.getProperty("lirical.data.path"))
-                    .setExomiserPath(pgProperties.getProperty("exomiser.variant.path") == "unset" ? "" : pgProperties.getProperty("exomiser.variant.path"))
-                    .setAnalysisDate(getTodaysDate())
-                    .setSampleName(analysisData.sampleId())
-                    .setnGoodQualityVariants(filteringStats.nGoodQualityVariants())
-                    .setnFilteredVariants(filteringStats.nFilteredVariants())
-                    .setGenesWithVar(0) // TODO
-                    .setGlobalMode(false)
-                    .build();
-
+            String phenopacketFile = phenopacketLabel.getText();
+            if (!new File(phenopacketFile).isFile()) {
+                PopUps.showInfoMessage("Error: Unable to run analysis: no phenopacket present.", "ERROR");
+                logger.info("Unable to run analysis: no phenopacket present.");
+                throw new LiricalParseException("No phenopacket present.");
+            }
             OutputOptions outputOptions = createOutputOptions();
-            lirical.analysisResultsWriterFactory()
-                    .getWriter(analysisData, results, metadata)
-                    .process(outputOptions);
+            liricalAnalysis.runAnalysis(preTestMap, phenopacketFile, outputOptions);
             String outFileName = outputOptions.prefix() + "." + outputOptions.outputFormats().iterator().next().name().toLowerCase();
             File outFile = new File(String.join(File.separator, outputOptions.outputDirectory().toString(), outFileName));
             if (outFile.isFile() & outFileName.endsWith("html")) {
-                if (Desktop.isDesktopSupported()) {
-                    boolean showResults = PopUps.getBooleanFromUser("Open results in browser?", "LIRICAL analysis complete.", "Load results");
-                    if (showResults) {
-                        Desktop.getDesktop().open(outFile);
-                    }
-                } else {
-                    PopUps.showHtmlContent("LIRICAL Analysis Results: " + outFileName, outFile.getAbsolutePath(), MainApp.mainStage);
-                }
+                MainApp.host.showDocument(outFile.getAbsolutePath());
             }
         } else {
             logger.info("Unable to run analysis: no term selected.");
@@ -1033,121 +984,21 @@ public class MainController {
         }
     }
 
-    protected AnalysisData prepareAnalysisData(Lirical lirical) throws Exception {
-        String phenopacketFile = phenopacketLabel.getText();
-        if (new File(phenopacketFile).isFile()) {
-            Path phenopacketPath = Path.of(phenopacketFile);
-            logger.info("Reading phenopacket from {}.", phenopacketPath.toAbsolutePath());
-
-            PhenopacketData data = null;
-            try (InputStream is = Files.newInputStream(phenopacketPath)) {
-                PhenopacketImporter v2 = PhenopacketImporters.v2();
-                data = v2.read(is);
-                logger.info("Success!");
-            } catch (Exception e) {
-                logger.info("Unable to parse as v2 phenopacket, trying v1.");
-            }
-
-            if (data == null) {
-                try (InputStream is = Files.newInputStream(phenopacketPath)) {
-                    PhenopacketImporter v1 = PhenopacketImporters.v1();
-                    data = v1.read(is);
-                } catch (IOException e) {
-                    logger.info("Unable to parse as v1 phenopacket.");
-                    throw new LiricalParseException("Unable to parse phenopacket from " + phenopacketPath.toAbsolutePath());
-                }
-            }
-
-            HpoTermSanitizer sanitizer = new HpoTermSanitizer(lirical.phenotypeService().hpo());
-            List<TermId> presentTerms = data.getHpoTerms().map(sanitizer::replaceIfObsolete).flatMap(Optional::stream).toList();
-            List<TermId> excludedTerms = data.getNegatedHpoTerms().map(sanitizer::replaceIfObsolete).flatMap(Optional::stream).toList();
-
-            // Read VCF file.
-            GenesAndGenotypes genes = GenesAndGenotypes.empty();
-            Path vcfPath = data.getVcfPath().orElse(null);
-            String sampleId = data.getSampleId();
-            if (vcfPath != null && lirical.variantParserFactory().isPresent()) {
-                genes = readVariantsFromVcfFile(sampleId, vcfPath, lirical.variantParserFactory().get());
-            }
-//            System.out.println(String.join(", ", sampleId, data.getAge().orElse(null).toString(), data.getSex().orElse(null).toString(),
-//                    presentTerms.toString(), excludedTerms.toString(), genes.toString()));
-            return AnalysisData.of(sampleId, data.getAge().orElse(null), data.getSex().orElse(null), presentTerms, excludedTerms, genes);
-        } else {
-            logger.info("Unable to run analysis: no phenopacket present.");
-            PopUps.showInfoMessage("Error: Unable to run analysis: no phenopacket present.", "ERROR");
-            throw new LiricalParseException("No phenopacket present.");
-        }
-    }
-
-    protected static GenesAndGenotypes readVariantsFromVcfFile(String sampleId,
-                                                               Path vcfPath,
-                                                               VariantParserFactory parserFactory) throws LiricalParseException {
-        if (parserFactory == null) {
-            logger.warn("Cannot process the provided VCF file {}, resources are not set.", vcfPath.toAbsolutePath());
-            return GenesAndGenotypes.empty();
-        }
-        try (VariantParser variantParser = parserFactory.forPath(vcfPath)) {
-            // Ensure the VCF file contains the sample
-            if (!variantParser.sampleNames().contains(sampleId))
-                throw new LiricalParseException("The sample " + sampleId + " is not present in VCF at '" + vcfPath.toAbsolutePath() + '\'');
-            logger.debug("Found sample {} in the VCF file at {}", sampleId, vcfPath.toAbsolutePath());
-
-            // Read variants
-            logger.info("Reading variants from {}", vcfPath.toAbsolutePath());
-            AtomicInteger counter = new AtomicInteger();
-            List<LiricalVariant> variants = variantParser.variantStream()
-                    .peek(logProgress(counter))
-                    .toList();
-            logger.info("Read {} variants", variants.size());
-
-            // Group variants by Entrez ID.
-            Map<GeneIdentifier, List<LiricalVariant>> gene2Genotype = new HashMap<>();
-            for (LiricalVariant variant : variants) {
-                variant.annotations().stream()
-                        .map(TranscriptAnnotation::getGeneId)
-                        .distinct()
-                        .forEach(geneId -> gene2Genotype.computeIfAbsent(geneId, e -> new LinkedList<>()).add(variant));
-            }
-
-            // Collect the variants into Gene2Genotype container
-            List<Gene2Genotype> g2g = gene2Genotype.entrySet().stream()
-                    .map(e -> Gene2Genotype.of(e.getKey(), e.getValue()))
-                    .toList();
-
-            return GenesAndGenotypes.of(g2g);
-        } catch (Exception e) {
-            throw new LiricalParseException(e);
-        }
-    }
-
-    private static Consumer<LiricalVariant> logProgress(AtomicInteger counter) {
-        return v -> {
-            int current = counter.incrementAndGet();
-            if (current % 5000 == 0)
-                logger.info("Read {} variants", current);
-        };
-    }
-
-    /**
-     * @return a string with today's date in the format yyyy/MM/dd.
-     */
-    private static String getTodaysDate() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
-        Date date = new Date();
-        return dateFormat.format(date);
-    }
-
-    protected OutputOptions createOutputOptions() {
-        double lrThresholdValue = Double.parseDouble(pgProperties.getProperty("lr.threshold"));
-        int minDiagnosisValue = Integer.parseInt(pgProperties.getProperty("min.diagnosis.count"));
+    protected OutputOptions createOutputOptions() throws LiricalParseException {
+        double lrThresholdValue = Double.parseDouble(lrThresholdTextField.getText());
+        int minDiagnosisValue = Integer.parseInt(minDiagnosisSpinner.getValue().toString());
         String outputFormatsString = pgProperties.getProperty("output.formats");
-        float pathogenicityThreshold = Float.parseFloat(pgProperties.getProperty("pathogenicity.threshold"));
-        boolean displayAllVariants = Boolean.parseBoolean(pgProperties.getProperty("display.all.variants"));
+        float pathogenicityThreshold = Float.parseFloat(pathogenicityTextField.getText());
+        boolean displayAllVariants = variantsCheckbox.isSelected();
+        if (lrThresholdValue < 0 || lrThresholdValue > 1) {
+            PopUps.showInfoMessage("Error: LR Threshold must be between 0 and 1.", "ERROR");
+            throw new LiricalParseException("LR Threshold not between 0 and 1.");
+        }
         Path outdir = Path.of(pgProperties.getProperty("lirical.results.path"));
         String outfileText = outputFileTextField.getText();
-        String outfilePrefix = outfileText == null ? "lircal" : outfileText;
-        LrThreshold lrThreshold = lrThresholdValue < 0 ? LrThreshold.notInitialized() : LrThreshold.setToUserDefinedThreshold(lrThresholdValue);
-        MinDiagnosisCount minDiagnosisCount = minDiagnosisValue < 0 ? MinDiagnosisCount.notInitialized() : MinDiagnosisCount.setToUserDefinedMinCount(minDiagnosisValue);
+        String outfilePrefix = outfileText == null ? "lirical" : outfileText;
+        LrThreshold lrThreshold = LrThreshold.setToUserDefinedThreshold(lrThresholdValue);
+        MinDiagnosisCount minDiagnosisCount = MinDiagnosisCount.setToUserDefinedMinCount(minDiagnosisValue);
         List<OutputFormat> outputFormats = parseOutputFormats(outputFormatsString);
         return new OutputOptions(lrThreshold, minDiagnosisCount, pathogenicityThreshold,
                 displayAllVariants, outdir, outfilePrefix, outputFormats);

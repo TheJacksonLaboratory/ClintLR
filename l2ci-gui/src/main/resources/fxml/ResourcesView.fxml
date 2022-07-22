@@ -182,7 +182,7 @@
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Button>
-                        <Label text="Genome Build" wrapText="true" GridPane.rowIndex="2">
+                        <Label text="LIRICAL results directory" wrapText="true" GridPane.rowIndex="2">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -190,30 +190,17 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <ChoiceBox fx:id="genomeBuildChoiceBox" prefWidth="80.0" GridPane.columnIndex="2" GridPane.rowIndex="2">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </ChoiceBox>
-                        <Label text="Exomiser variant file" wrapText="true" GridPane.rowIndex="3">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                            <font>
-                                <Font name="System Bold" size="18.0" />
-                            </font>
-                        </Label>
-                        <Label fx:id="exomiserFileLabel" GridPane.columnIndex="2" GridPane.rowIndex="3">
+                        <Label fx:id="liricalResultsDirLabel" GridPane.columnIndex="2" GridPane.rowIndex="2">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Label>
-                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setExomiserVariantFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="3">
+                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setLiricalResultsDirButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="2">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Button>
-                        <Label text="Background Frequency file" wrapText="true" GridPane.rowIndex="4">
+                        <Label text="Genome Build" wrapText="true" GridPane.rowIndex="3">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -221,17 +208,30 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <Label fx:id="bkgFreqFileLabel" GridPane.columnIndex="2" GridPane.rowIndex="4">
+                        <ChoiceBox fx:id="genomeBuildChoiceBox" prefWidth="80.0" GridPane.columnIndex="2" GridPane.rowIndex="3">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                        </ChoiceBox>
+                        <Label text="Exomiser variant file" wrapText="true" GridPane.rowIndex="4">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                            <font>
+                                <Font name="System Bold" size="18.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="exomiserFileLabel" GridPane.columnIndex="2" GridPane.rowIndex="4">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Label>
-                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setBackgroundFrequencyFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="4">
+                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setExomiserVariantFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="4">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Button>
-                        <Label text="Genotype LR Properties" wrapText="true" GridPane.rowIndex="5">
+                        <Label text="Background Frequency file" wrapText="true" GridPane.rowIndex="5">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -239,7 +239,17 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <Label text="    Pathogenicity Threshold" wrapText="true" GridPane.rowIndex="6">
+                        <Label fx:id="bkgFreqFileLabel" GridPane.columnIndex="2" GridPane.rowIndex="5">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                        </Label>
+                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setBackgroundFrequencyFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="5">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                        </Button>
+                        <Label text="Genotype LR Properties" wrapText="true" GridPane.rowIndex="6">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -247,12 +257,20 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <TextField fx:id="pathogenicityTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="6">
+                        <Label text="    Pathogenicity Threshold" wrapText="true" GridPane.rowIndex="7">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                            <font>
+                                <Font name="System Bold" size="18.0" />
+                            </font>
+                        </Label>
+                        <TextField fx:id="pathogenicityTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="7">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </TextField>
-                        <Label text="    Default Variant Background Frequency" wrapText="true" GridPane.rowIndex="7">
+                        <Label text="    Default Variant Background Frequency" wrapText="true" GridPane.rowIndex="8">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -260,12 +278,12 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <TextField fx:id="variantBkgFreqTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="7">
+                        <TextField fx:id="variantBkgFreqTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="8">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </TextField>
-                        <Label text="    Strict" wrapText="true" GridPane.rowIndex="8">
+                        <Label text="    Strict" wrapText="true" GridPane.rowIndex="9">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -273,12 +291,25 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <ChoiceBox fx:id="strictChoiceBox" prefWidth="80.0" GridPane.columnIndex="2" GridPane.rowIndex="8">
+                        <CheckBox fx:id="strictCheckBox" prefWidth="80.0" GridPane.columnIndex="2" GridPane.rowIndex="9">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                        </CheckBox>
+                        <Label text="Transcript Database" wrapText="true" GridPane.rowIndex="10">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                            <font>
+                                <Font name="System Bold" size="18.0" />
+                            </font>
+                        </Label>
+                        <ChoiceBox fx:id="transcriptDBChoiceBox" prefWidth="80.0" GridPane.columnIndex="2" GridPane.rowIndex="10">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </ChoiceBox>
-                        <Label text="Transcript Database" wrapText="true" GridPane.rowIndex="9">
+                        <Label text="Default Allele Frequency" wrapText="true" GridPane.rowIndex="11">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -286,20 +317,7 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <ChoiceBox fx:id="transcriptDBChoiceBox" prefWidth="80.0" GridPane.columnIndex="2" GridPane.rowIndex="9">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </ChoiceBox>
-                        <Label text="Default Allele Frequency" wrapText="true" GridPane.rowIndex="10">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                            <font>
-                                <Font name="System Bold" size="18.0" />
-                            </font>
-                        </Label>
-                        <TextField fx:id="alleleFreqTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="10">
+                        <TextField fx:id="alleleFreqTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="11">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>

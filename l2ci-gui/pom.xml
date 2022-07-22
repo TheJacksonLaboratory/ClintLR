@@ -50,10 +50,10 @@
             <groupId>org.monarchinitiative.lirical</groupId>
             <artifactId>lirical-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.monarchinitiative.lirical</groupId>
-            <artifactId>lirical-configuration</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.monarchinitiative.lirical</groupId>-->
+<!--            <artifactId>lirical-configuration</artifactId>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.monarchinitiative.biodownload</groupId>
             <artifactId>biodownload</artifactId>
