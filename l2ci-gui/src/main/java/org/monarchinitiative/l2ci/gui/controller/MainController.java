@@ -969,7 +969,6 @@ public class MainController {
             if (!new File(phenopacketFile).isFile()) {
                 PopUps.showInfoMessage("Error: Unable to run analysis: no phenopacket present.", "ERROR");
                 logger.info("Unable to run analysis: no phenopacket present.");
-                throw new LiricalParseException("No phenopacket present.");
             }
             OutputOptions outputOptions = createOutputOptions();
             liricalAnalysis.runAnalysis(preTestMap, phenopacketFile, outputOptions);
