@@ -178,15 +178,8 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
         return genomeBuildOptional.get();
     }
 
-    protected AnalysisOptions prepareAnalysisOptions(Lirical lirical, Map<TermId, Double> preTestMap) {
-        PretestDiseaseProbability pretestDiseaseProbability;
-        if (runConfiguration.globalAnalysisMode) {
-            LOGGER.debug("Using uniform pretest disease probabilities.");
-            pretestDiseaseProbability = PretestDiseaseProbabilities.uniform(lirical.phenotypeService().diseases());
-        } else {
-            pretestDiseaseProbability = PretestDiseaseProbability.of(preTestMap);
-        }
-        return AnalysisOptions.of(runConfiguration.globalAnalysisMode, pretestDiseaseProbability);
+    protected AnalysisOptions prepareAnalysisOptions(Map<TermId, Double> preTestMap) {
+        return AnalysisOptions.of(false, PretestDiseaseProbability.of(preTestMap));
     }
 
     protected static GenesAndGenotypes readVariantsFromVcfFile(String sampleId,

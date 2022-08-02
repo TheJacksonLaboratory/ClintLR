@@ -388,12 +388,13 @@ public class MainController {
     }
 
     public void loadMondoFile(String mondoPath) {
+        System.out.println(mondoPath);
         HPOParser parser = new HPOParser(mondoPath);
         ont = parser.getHPO();
         if (ont != null) {
             optionalMondoResource.setOntology(ont);
             pgProperties.setProperty("mondo.json.path", mondoPath);
-            pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, mondoPath);
+            pgProperties.setProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, mondoPath);
             logger.info("Loaded Ontology {} from file {}", ont.toString(), mondoPath);
             activateOntologyTree();
             publishMessage("Loaded Ontology from file " + mondoPath);
@@ -432,6 +433,7 @@ public class MainController {
     }
 
     void loadHPOAFile(String filePath) {
+        System.out.println(filePath);
         if (optionalHpoResource.getOntology() != null ) {
             optionalHpoaResource.setAnnotationResources(filePath, optionalHpoResource.getOntology());
             pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, filePath);
@@ -787,7 +789,7 @@ public class MainController {
                 for (TermId mondoID : mondoIDs) {
                     if (mondoID.equals(selectedTerm.id()) && omimID != null) {
                         selectedTerms.put(omimID, mondoID);
-                        Set<Term> descendents = getTermRelations(selectedTerm, Relation.DESCENDENT);
+                        Set<Term> descendents = getTermRelations(selectedTerm.id(), Relation.DESCENDENT);
                         for (Term descendent : descendents) {
                             omimToMondoMap.forEach((omimID2, mondoIDs2) -> {
                                 for (TermId mondoID2 : mondoIDs2) {
@@ -1039,11 +1041,11 @@ public class MainController {
             // find root -> term path through the tree
             Stack<Term> termStack = new Stack<>();
             termStack.add(term);
-            Set<Term> parents = getTermRelations(term, Relation.PARENT);
+            Set<Term> parents = getTermRelations(term.id(), Relation.PARENT);
             while (parents.size() != 0) {
                 Term parent = parents.iterator().next();
                 termStack.add(parent);
-                parents = getTermRelations(parent, Relation.PARENT);
+                parents = getTermRelations(parent.id(), Relation.PARENT);
             }
 
             // expand tree nodes in top -> down direction
@@ -1074,18 +1076,18 @@ public class MainController {
     /**
      * Get the relations of "term"
      *
-     * @param term Mondo Term of interest
+     * @param termId Mondo Term ID of interest
      * @param relation Relation of interest (ancestor, descendent, child, parent)
      * @return relations of term (not including term itself).
      */
-    private Set<Term> getTermRelations(Term term, Relation relation) {
+    private Set<Term> getTermRelations(TermId termId, Relation relation) {
         Ontology ontology = optionalMondoResource.getOntology();
         if (ontology == null) {
             logger.error("Ontology null");
             PopUps.showInfoMessage("Error: Could not initialize Ontology", "ERROR");
             return Set.of();
         }
-        TermId termId = term.id();
+
         Set<TermId> relationIds;
         switch (relation) {
             case ANCESTOR:
@@ -1143,7 +1145,7 @@ public class MainController {
          */
         @Override
         public boolean isLeaf() {
-            return getTermRelations(getValue().term, Relation.CHILD).size() == 0;
+            return getTermRelations(getValue().term.id(), Relation.CHILD).size() == 0;
         }
 
 
@@ -1156,8 +1158,8 @@ public class MainController {
             if (childrenList == null) {
                 // logger.debug(String.format("Getting children for term %s", getValue().term.getName()));
                 childrenList = FXCollections.observableArrayList();
-                Set<Term> children = getTermRelations(getValue().term, Relation.CHILD);
-                Comparator<Term> compByChildrenSize = (term1, term2) -> getTermRelations(term2, Relation.CHILD).size() - getTermRelations(term1, Relation.CHILD).size();
+                Set<Term> children = getTermRelations(getValue().term.id(), Relation.CHILD);
+                Comparator<Term> compByChildrenSize = (term1, term2) -> getTermRelations(term2.id(), Relation.CHILD).size() - getTermRelations(term1.id(), Relation.CHILD).size();
                 children.stream()
                         .sorted(compByChildrenSize.thenComparing(Term::getName))
                         .map(term -> new OntologyTermTreeItem(new OntologyTermWrapper(term)))

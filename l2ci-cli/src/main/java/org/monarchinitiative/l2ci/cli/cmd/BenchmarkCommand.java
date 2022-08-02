@@ -115,10 +115,6 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         }
     }
 
-    Ontology mondo;
-    Ontology hpo;
-    OptionalHpoaResource optionalHpoaResource = new OptionalHpoaResource();
-
     @Override
     public Integer call() throws Exception {
         printBanner();
@@ -142,8 +138,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
 
         // 2 - prepare the simulation data shared by all phenopackets.
         List<LiricalVariant> backgroundVariants = readBackgroundVariants(lirical);
-        loadOntologies();
-        Map<TermId, List<TermId>> omimToMondoMap = makeOmimMap();
+        OntologyData ontologyData = loadOntologies();
+        Map<TermId, List<TermId>> omimToMondoMap = makeOmimMap(ontologyData.mondo);
 
         try (BufferedWriter writer = openWriter(outputPath);
              CSVPrinter printer = CSVFormat.DEFAULT.print(writer)) {
@@ -151,11 +147,10 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                     "is_causal", "disease_id", "post_test_proba"); // header
 
             for (Path phenopacketPath : phenopacketPaths) {
-                List<TermId> selectedTermId = getSelectedDisease(omimToMondoMap, phenopacketPath);
-                Term selectedTerm = selectedTermId.get(0) == null ? null : Term.of(selectedTermId.get(0).toString(), selectedTermId.get(0).toString());
-                Map<TermId, TermId> selectedDiseases = makeSelectedDiseasesMap(omimToMondoMap, selectedTerm);
-                Map<TermId, Double> pretestMap = makeSelectedDiseasePretestMap(omimToMondoMap, selectedDiseases, multiplier);
-                AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap);
+                DiseaseId selectedDisease = getSelectedDisease(omimToMondoMap, phenopacketPath);
+                Map<TermId, TermId> selectedDiseases = makeSelectedDiseasesMap(omimToMondoMap, selectedDisease.mondoId, ontologyData.mondo);
+                Map<TermId, Double> pretestMap = makeSelectedDiseasePretestMap(omimToMondoMap, selectedDiseases, multiplier, ontologyData.optionalHpoaResource);
+                AnalysisOptions analysisOptions = prepareAnalysisOptions(pretestMap);
                 // 3 - prepare benchmark data per phenopacket
                 BenchmarkData benchmarkData = prepareBenchmarkData(lirical, backgroundVariants, phenopacketPath);
 
@@ -167,7 +162,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 // 5 - summarize the results.
                 String phenopacketName = phenopacketPath.toFile().getName();
                 String backgroundVcf = vcfPath == null ? "" : vcfPath.toFile().getName();
-                writeResults(phenopacketName, backgroundVcf, selectedTermId, selectedDiseases, multiplier, pretestMap, benchmarkData, results, printer);
+                writeResults(phenopacketName, backgroundVcf, selectedDisease, selectedDiseases, multiplier, pretestMap, benchmarkData, results, printer);
             }
         }
         LOGGER.info("Benchmark results were stored to {}", outputPath.toAbsolutePath());
@@ -192,9 +187,14 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return errors;
     }
 
-    Void loadOntologies() {
+    private record OntologyData(Ontology mondo, Ontology hpo, OptionalHpoaResource optionalHpoaResource) {}
+
+    OntologyData loadOntologies() {
         String[] paths = {mondoPath, hpoPath, hpoaPath};
         String[] types = {"Mondo", "HPO", "HPOA"};
+        Ontology mondo = null;
+        Ontology hpo = null;
+        OptionalHpoaResource optionalHpoaResource = new OptionalHpoaResource();
         for (int i = 0; i < paths.length; i++) {
             String path = paths[i];
             String type = types[i];
@@ -227,26 +227,24 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 }
             }
         }
-        return null;
+        return new OntologyData(mondo, hpo, optionalHpoaResource);
     }
 
 
-    List<TermId> getSelectedDisease(Map<TermId, List<TermId>> omimToMondoMap, Path phenopacketPath) throws Exception {
+    private record DiseaseId(TermId mondoId, TermId omimId) {}
+    static DiseaseId getSelectedDisease(Map<TermId, List<TermId>> omimToMondoMap, Path phenopacketPath) throws Exception {
         PhenopacketData data = readPhenopacketData(phenopacketPath);
         List<TermId> diseaseIds = data.getDiseaseIds();
-        if (omimToMondoMap.get(diseaseIds.get(0)) == null || omimToMondoMap.get(diseaseIds.get(0)).isEmpty()) {
-            return Arrays.asList(null, diseaseIds.get(0));
-        } else {
-            return Arrays.asList(omimToMondoMap.get(diseaseIds.get(0)).get(0), diseaseIds.get(0));
+        TermId omimId = diseaseIds.get(0);
+        TermId mondoId = null;
+        if (omimToMondoMap.get(omimId) != null) {
+            mondoId = omimToMondoMap.get(omimId).get(0);
         }
+        return new DiseaseId(mondoId, omimId);
     }
 
-    Map<TermId, Double> makeSelectedDiseasePretestMap(Map<TermId, List<TermId>> omimToMondoMap, Map<TermId, TermId> selectedTerms, double adjProb) {
+    Map<TermId, Double> makeSelectedDiseasePretestMap(Map<TermId, List<TermId>> omimToMondoMap, Map<TermId, TermId> selectedTerms, double adjProb, OptionalHpoaResource optionalHpoaResource) {
         Map<TermId, Double> diseaseMap = new HashMap<>();
-        if (mondo == null) {
-            LOGGER.error("makeSelectedDiseaseMap: Mondo ontology is null.");
-            return diseaseMap;
-        }
         for (TermId omimId : omimToMondoMap.keySet()) {
             diseaseMap.put(omimId, 1.0);
         }
@@ -258,10 +256,9 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb, new ArrayList<>());
     }
 
-    private Map<TermId, List<TermId>> makeOmimMap() {
-        Ontology ontology = mondo;
+    private Map<TermId, List<TermId>> makeOmimMap(Ontology mondo) {
         Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
-        for (Term mondoTerm : ontology.getTerms()) {
+        for (Term mondoTerm : mondo.getTerms()) {
                 for (Dbxref ref : mondoTerm.getXrefs()) {
                     String refName = ref.getName();
                     if (refName.contains("OMIM:")) {
@@ -280,14 +277,14 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return omimToMondoMap;
     }
 
-    Map<TermId, TermId> makeSelectedDiseasesMap(Map<TermId, List<TermId>> omimToMondoMap, Term selectedTerm) {
+    Map<TermId, TermId> makeSelectedDiseasesMap(Map<TermId, List<TermId>> omimToMondoMap, TermId selectedTermId, Ontology mondo) {
         HashMap<TermId, TermId> selectedTerms = new HashMap<>();
-        if (selectedTerm != null) {
+        if (selectedTermId != null) {
             omimToMondoMap.forEach((omimID, mondoIDs) -> {
                 for (TermId mondoID : mondoIDs) {
-                    if (mondoID.equals(selectedTerm.id()) && omimID != null) {
+                    if (mondoID.equals(selectedTermId) && omimID != null) {
                         selectedTerms.put(omimID, mondoID);
-                        Set<Term> descendents = getTermRelations(selectedTerm, Relation.DESCENDENT);
+                        Set<Term> descendents = getTermRelations(selectedTermId, Relation.DESCENDENT, mondo);
                         for (Term descendent : descendents) {
                             omimToMondoMap.forEach((omimID2, mondoIDs2) -> {
                                 for (TermId mondoID2 : mondoIDs2) {
@@ -309,37 +306,31 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     /**
      * Get the relations of "term"
      *
-     * @param term Mondo Term of interest
+     * @param termId Mondo Term ID of interest
      * @param relation Relation of interest (ancestor, descendent, child, parent)
      * @return relations of term (not including term itself).
      */
-    private Set<Term> getTermRelations(Term term, Relation relation) {
-        Ontology ontology = mondo;
-        if (ontology == null) {
-            LOGGER.error("Ontology null");
-            return Set.of();
-        }
-        TermId termId = term.id();
+    private Set<Term> getTermRelations(TermId termId, Relation relation, Ontology mondo) {
         Set<TermId> relationIds;
         switch (relation) {
             case ANCESTOR:
-                relationIds = getAncestorTerms(ontology, termId, false);
+                relationIds = getAncestorTerms(mondo, termId, false);
                 break;
             case DESCENDENT:
-                relationIds = getDescendents(ontology, termId);
+                relationIds = getDescendents(mondo, termId);
                 break;
             case CHILD:
-                relationIds = getChildTerms(ontology, termId, false);
+                relationIds = getChildTerms(mondo, termId, false);
                 break;
             case PARENT:
-                relationIds = getParentTerms(ontology, termId, false);
+                relationIds = getParentTerms(mondo, termId, false);
                 break;
             default:
                 return Set.of();
         }
         Set<Term> relations = new HashSet<>();
         relationIds.forEach(tid -> {
-            Term ht = ontology.getTermMap().get(tid);
+            Term ht = mondo.getTermMap().get(tid);
             relations.add(ht);
         });
         return relations;
@@ -460,7 +451,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
      */
     private static void writeResults(String phenopacketName,
                                      String backgroundVcfName,
-                                     List<TermId> selectedTerm,
+                                     DiseaseId selectedTerm,
                                      Map<TermId, TermId> selectedDiseases,
                                      double multiplier,
                                      Map<TermId, Double> pretestMap,
@@ -474,8 +465,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                     try {
                         printer.print(phenopacketName);
                         printer.print(backgroundVcfName);
-                        printer.print(selectedTerm.get(0) == null ? "N/A": selectedTerm.get(0));
-                        printer.print(selectedTerm.get(1) == null ? "N/A": selectedTerm.get(1));
+                        printer.print(selectedTerm.mondoId == null ? "N/A": selectedTerm.mondoId);
+                        printer.print(selectedTerm.omimId == null ? "N/A": selectedTerm.omimId);
                         printer.print(!selectedDiseases.keySet().contains(result.diseaseId()) ? 1 : multiplier);
                         printer.print(pretestMap.get(result.diseaseId()));
                         printer.print(result.pretestProbability());

@@ -285,43 +285,6 @@ public final class ResourcesController {
         bkgFreqFileLabel.setText(bkgFreqFilePath);
     }
 
-    public void downloadFile(String path, String type) throws FileDownloadException {
-        switch (type) {
-            case "HPO":
-                BioDownloaderBuilder builder = BioDownloader.builder(Path.of(path));
-                builder.hpoJson();
-                BioDownloader downloader = builder.build();
-                downloader.download();
-                break;
-            case "HPOA":
-                builder = BioDownloader.builder(Path.of(path));
-                builder.hpDiseaseAnnotations();
-                downloader = builder.build();
-                downloader.download();
-                break;
-            case "MONDO":
-                try {
-                    builder = BioDownloader.builder(Path.of(path));
-                    builder.mondoOwl();
-                    downloader = builder.build();
-                    downloader.download();
-                    File owl = new File(path, "mondo.owl");
-                    String jarPath = pgProperties.getProperty("obographs.jar.path");
-                    if (jarPath != null && new File(jarPath).isFile()) {
-                        String[] command = {"java",  "-jar", jarPath, "convert", "-f", "json", owl.getAbsolutePath()};
-                        mainController.logger.info("Converting mondo.owl to readable mondo.json file using obographs.");
-                        mainController.logger.info(String.join(" ", command));
-                        executeCommand(command);
-                        mainController.loadMondoFile(new File(path, "mondo.json").getAbsolutePath());
-                    } else {
-                        mainController.logger.info("Cannot find obographs-cli jar file to convert mondo.owl to readable mondo.json file.");
-                    }
-                } catch (Exception ex) {
-                    throw new RuntimeException(ex);
-                }
-                break;
-        }
-    }
 
     void executeCommand(String[] args) throws Exception {
         ProcessBuilder builder = new ProcessBuilder(args);
@@ -426,7 +389,7 @@ public final class ResourcesController {
 
     void downloadFileButtonAction(String type, String pathProperty) {
         String path = pgProperties.getProperty("download.path");
-        File target = new File(path, pathProperty.replace(".path", "").replace("hpoa/path", "LIRICAL/data/phenotype.hpoa"));
+        File target = new File(path, pathProperty.replace(".path", "").replace("hpoa/path", "phenotype.hpoa"));
         if (target.isFile()) {
             boolean response = PopUps.getBooleanFromUser("Overwrite?",
                     type + " file already exists at " + target.getAbsolutePath(),
@@ -470,17 +433,14 @@ public final class ResourcesController {
                     mainController.loadHPOFile(target);
                     hpJsonLabel.setText(filePath);
                     downloadHPOAButton.setDisable(false);
-                    pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, filePath);
                     break;
                 case "HPOA":
                     mainController.loadHPOAFile(filePath);
                     hpoaLabel.setText(filePath);
-                    pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, filePath);
                     break;
                 case "MONDO":
                     mainController.loadMondoFile(filePath);
                     mondoLabel.setText(filePath);
-                    pgProperties.setProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, filePath);
                     break;
             }
         } catch (Exception ex) {
