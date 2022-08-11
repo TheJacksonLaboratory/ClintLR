@@ -40,6 +40,7 @@ import java.util.function.Function;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.monarchinitiative.l2ci.core.LiricalAnalysis;
+import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.core.pretestprob.MapData;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.io.MapFileWriter;
@@ -186,24 +187,6 @@ public class MainController {
         INFO, WARNING, ERROR
     }
 
-    private enum Relation {
-        ANCESTOR("ancestor"),
-        CHILD("child"),
-        DESCENDENT("descendent"),
-        PARENT("parent");
-
-        private final String name;
-
-        Relation(String n) {
-            this.name = n;
-        }
-
-        @Override
-        public String toString() {
-            return this.name;
-        }
-    }
-
     @Value("${mondo.json.url}")
     private String mondoJsonUrl;
 
@@ -250,7 +233,7 @@ public class MainController {
         minDiagnosisSpinner.setValueFactory(spinnerFactory);
         pathogenicityTextField.setText(pgProperties.getProperty("pathogenicity.threshold"));
         variantsCheckbox.setSelected(false);
-        outputFileTextField.setText("lirical");
+        outputFileTextField.setText("lirical_results");
         outputFileTypeLabel.setText("." + pgProperties.getProperty("output.formats"));
         StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
         LiricalBuildTask liricalTask = new LiricalBuildTask(pgProperties);
@@ -976,6 +959,14 @@ public class MainController {
             liricalAnalysis.runAnalysis(preTestMap, phenopacketFile, outputOptions);
             String outFileName = outputOptions.prefix() + "." + outputOptions.outputFormats().iterator().next().name().toLowerCase();
             File outFile = new File(String.join(File.separator, outputOptions.outputDirectory().toString(), outFileName));
+            if (outFile.isFile()) {
+                boolean response = PopUps.getBooleanFromUser("Overwrite?",
+                        "Results file already exists at " + outFile.getAbsolutePath(),
+                        "Write Results file");
+                if (!response) {
+                    return;
+                }
+            }
             if (outFile.isFile() & outFileName.endsWith("html")) {
                 MainApp.host.showDocument(outFile.getAbsolutePath());
             }
@@ -997,7 +988,7 @@ public class MainController {
         }
         Path outdir = Path.of(pgProperties.getProperty("lirical.results.path"));
         String outfileText = outputFileTextField.getText();
-        String outfilePrefix = outfileText == null ? "lirical" : outfileText;
+        String outfilePrefix = outfileText == null ? "lirical_results" : outfileText;
         LrThreshold lrThreshold = LrThreshold.setToUserDefinedThreshold(lrThresholdValue);
         MinDiagnosisCount minDiagnosisCount = MinDiagnosisCount.setToUserDefinedMinCount(minDiagnosisValue);
         List<OutputFormat> outputFormats = parseOutputFormats(outputFormatsString);

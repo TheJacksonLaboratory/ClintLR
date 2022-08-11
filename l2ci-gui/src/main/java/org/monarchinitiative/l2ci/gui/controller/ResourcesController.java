@@ -48,55 +48,55 @@ public final class ResourcesController {
     private final ExecutorService executorService;
 
     @FXML
-    public ProgressIndicator hpoProgressIndicator = new ProgressIndicator();
+    public ProgressIndicator hpoProgressIndicator;
 
     @FXML
-    public ProgressIndicator hpoaProgressIndicator = new ProgressIndicator();
+    public ProgressIndicator hpoaProgressIndicator;
 
     @FXML
-    public ProgressIndicator mondoProgressIndicator = new ProgressIndicator();
+    public ProgressIndicator mondoProgressIndicator;
 
    @FXML
-    private Label hpJsonLabel = new Label();
+    private Label hpJsonLabel;
 
     @FXML
-    private Label hpoaLabel = new Label();
+    private Label hpoaLabel;
 
     @FXML
-    private Label mondoLabel = new Label();
+    private Label mondoLabel;
 
     @FXML
-    private Label liricalDataDirLabel = new Label();
+    private Label liricalDataDirLabel;
 
     @FXML
-    private Label liricalResultsDirLabel = new Label();
+    private Label liricalResultsDirLabel;
 
     @FXML
-    private Label exomiserFileLabel = new Label();
+    private Label exomiserFileLabel;
 
     @FXML
-    private Label bkgFreqFileLabel = new Label();
+    private Label bkgFreqFileLabel;
 
     @FXML
-    private Button downloadHPOAButton = new Button();
+    private Button downloadHPOAButton;
 
     @FXML
-    private ChoiceBox genomeBuildChoiceBox = new ChoiceBox<>();
+    private ChoiceBox genomeBuildChoiceBox;
 
     @FXML
-    private ChoiceBox transcriptDBChoiceBox = new ChoiceBox<>();
+    private ChoiceBox transcriptDBChoiceBox;
 
     @FXML
-    private TextField alleleFreqTextField = new TextField();
+    private TextField alleleFreqTextField;
 
     @FXML
-    private TextField pathogenicityTextField = new TextField();
+    private TextField pathogenicityTextField;
 
     @FXML
-    private TextField variantBkgFreqTextField = new TextField();
+    private TextField variantBkgFreqTextField;
 
     @FXML
-    private CheckBox strictCheckBox = new CheckBox();
+    private CheckBox strictCheckBox;
 
 
     @Autowired
@@ -107,7 +107,6 @@ public final class ResourcesController {
         this.optionalMondoResource = mondoResource;
         this.pgProperties = properties;
         this.executorService = executorService;
-        initialize();
     }
 
 
@@ -157,6 +156,14 @@ public final class ResourcesController {
                 pgProperties.setProperty(propName, choiceBox.getValue().toString());
                 LOGGER.info(propName + ": " + pgProperties.getProperty(propName));
             });
+        });
+        genomeBuildChoiceBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            File exomiserFile = new File(exomiserPath);
+            File bkgFreqFile = new File(bkgFreqPath);
+            if (!(exomiserFile.isFile() && exomiserFile.getName().contains(newVal.toString()))
+                    || !(bkgFreqFile.isFile() && bkgFreqFile.getName().contains(newVal.toString()))) {
+                PopUps.showInfoMessage("Genome build of Exomiser variant or background frequency files does not match the selected genome build.", "Warning");
+            }
         });
         HashMap<TextField, String> textFieldHashMap = new HashMap<>();
         textFieldHashMap.put(pathogenicityTextField, "pathogenicity.threshold");

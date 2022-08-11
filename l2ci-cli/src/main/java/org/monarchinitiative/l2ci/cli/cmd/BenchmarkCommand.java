@@ -4,6 +4,7 @@ import de.charite.compbio.jannovar.annotation.VariantEffect;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.monarchinitiative.l2ci.core.OptionalHpoaResource;
+import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.pretestprob.PretestProbability;
 import org.monarchinitiative.lirical.core.Lirical;
@@ -97,24 +98,6 @@ public class BenchmarkCommand extends BaseLiricalCommand {
             description = "Genome build (default: ${DEFAULT-VALUE}).")
     protected String genomeBuild = "hg38";
 
-    private enum Relation {
-        ANCESTOR("ancestor"),
-        CHILD("child"),
-        DESCENDENT("descendent"),
-        PARENT("parent");
-
-        private final String name;
-
-        Relation(String n) {
-            this.name = n;
-        }
-
-        @Override
-        public String toString() {
-            return this.name;
-        }
-    }
-
     @Override
     public Integer call() throws Exception {
         printBanner();
@@ -150,7 +133,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 DiseaseId selectedDisease = getSelectedDisease(omimToMondoMap, phenopacketPath);
                 Map<TermId, TermId> selectedDiseases = makeSelectedDiseasesMap(omimToMondoMap, selectedDisease.mondoId, ontologyData.mondo);
                 Map<TermId, Double> pretestMap = makeSelectedDiseasePretestMap(omimToMondoMap, selectedDiseases, multiplier, ontologyData.optionalHpoaResource);
-                AnalysisOptions analysisOptions = prepareAnalysisOptions(pretestMap);
+                AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap);
                 // 3 - prepare benchmark data per phenopacket
                 BenchmarkData benchmarkData = prepareBenchmarkData(lirical, backgroundVariants, phenopacketPath);
 

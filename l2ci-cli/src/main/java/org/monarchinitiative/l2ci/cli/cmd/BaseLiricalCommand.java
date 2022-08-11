@@ -1,5 +1,6 @@
 package org.monarchinitiative.l2ci.cli.cmd;
 
+import org.monarchinitiative.l2ci.core.pretestprob.PretestProbability;
 import org.monarchinitiative.lirical.configuration.GenotypeLrProperties;
 import org.monarchinitiative.lirical.configuration.LiricalBuilder;
 import org.monarchinitiative.lirical.core.Lirical;
@@ -178,8 +179,15 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
         return genomeBuildOptional.get();
     }
 
-    protected AnalysisOptions prepareAnalysisOptions(Map<TermId, Double> preTestMap) {
-        return AnalysisOptions.of(false, PretestDiseaseProbability.of(preTestMap));
+    protected AnalysisOptions prepareAnalysisOptions(Lirical lirical, Map<TermId, Double> preTestMap) {
+        PretestDiseaseProbability pretestDiseaseProbability;
+        if (runConfiguration.globalAnalysisMode) {
+            LOGGER.info("Using uniform pretest disease probabilities.");
+            pretestDiseaseProbability = PretestDiseaseProbabilities.uniform(lirical.phenotypeService().diseases());
+        } else {
+            pretestDiseaseProbability = PretestDiseaseProbability.of(preTestMap);
+        }
+        return AnalysisOptions.of(runConfiguration.globalAnalysisMode, pretestDiseaseProbability);
     }
 
     protected static GenesAndGenotypes readVariantsFromVcfFile(String sampleId,
