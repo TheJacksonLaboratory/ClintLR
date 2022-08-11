@@ -73,6 +73,10 @@
             <artifactId>snakeyaml</artifactId>
             <version>1.29</version>
         </dependency>
+        <dependency>
+            <groupId>org.monarchinitiative.biodownload</groupId>
+            <artifactId>biodownload</artifactId>
+        </dependency>
 
     </dependencies>
 

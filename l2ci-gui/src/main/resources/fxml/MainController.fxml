@@ -29,8 +29,9 @@
                  <menus>
                      <Menu mnemonicParsing="false" text="File">
                         <items>
-                            <MenuItem onAction="#downloadFile" text="Download Mondo JSON File" />
-                            <MenuItem onAction="#loadFile" text="Load Local Mondo JSON File" />
+                            <MenuItem onAction="#showResourcesInterface" text="Show Resources"/>
+                            <MenuItem onAction="#downloadMondoFile" text="Download Mondo JSON File" />
+                            <MenuItem onAction="#loadMondoFile" text="Load Local Mondo JSON File" />
                             <MenuItem onAction="#showMondoStats" text="Show Mondo Stats" />
                             <MenuItem onAction="#saveMapOutputFile" text="Save Map to File"/>
                             <MenuItem onAction="#showMapInterface" text="Show Map Interface"/>

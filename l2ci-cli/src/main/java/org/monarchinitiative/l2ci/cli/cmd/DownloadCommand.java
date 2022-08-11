@@ -1,9 +1,12 @@
 package org.monarchinitiative.l2ci.cli.cmd;
 
+import org.monarchinitiative.biodownload.FileDownloadException;
+import org.monarchinitiative.l2ci.core.io.Download;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
+import java.io.File;
 import java.util.concurrent.Callable;
 
 /**
@@ -25,9 +28,12 @@ public class DownloadCommand implements Callable<Integer>{
     public boolean overwrite;
 
     @Override
-    public Integer call() {
-        logger.info(String.format("Download analysis to %s", datadir));
-        System.out.println("TODO");
+    public Integer call() throws FileDownloadException {
+        String homeDir = new File(".").getAbsolutePath();
+        String path = String.join(File.separator, homeDir.substring(0, homeDir.length() - 2), datadir);
+        logger.info(String.format("Download resource files to %s", path));
+        Download download = new Download(path, overwrite);
+        download.run();
         return 0;
     }
 

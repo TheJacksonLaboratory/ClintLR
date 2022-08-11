@@ -12,6 +12,11 @@ public class OptionalMondoResource implements OptionalOntologyResource {
 
     private final ObjectProperty<Ontology> mondoOntology = new SimpleObjectProperty<>(this, "mondoOntology", null);
 
+    /**
+     * Use this name to save MONDO.json file on the local filesystem.
+     */
+    public static final String DEFAULT_MONDO_FILE_NAME = "MONDO.json";
+
     public final static String MONDO_JSON_PATH_PROPERTY = "mondo.json.path";
 
     public OptionalMondoResource() {

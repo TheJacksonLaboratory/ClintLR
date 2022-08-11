@@ -86,7 +86,7 @@ public class DirectIndirectHpoAnnotationParser {
         }
         for (TermId diseaseId : diseaseMap.keySet()) {
             HpoDisease disease = diseaseMap.get(diseaseId);
-            for (TermId hpoId : disease.phenotypicAbnormalityTermIds().toList()) {
+            for (TermId hpoId : disease.annotationTermIdList()) {
                 directAnnotationMap.putIfAbsent(hpoId,new ArrayList<>());
                 directAnnotationMap.get(hpoId).add(disease);
                 Set<TermId> ancs = OntologyAlgorithm.getAncestorTerms(ontology, hpoId, true);

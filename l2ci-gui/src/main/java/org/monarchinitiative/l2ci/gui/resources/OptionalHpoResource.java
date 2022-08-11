@@ -13,6 +13,11 @@ public class OptionalHpoResource implements OptionalOntologyResource {
 
     private final ObjectProperty<Ontology> hpoOntology = new SimpleObjectProperty<>(this, "hpoOntology", null);
 
+    /**
+     * Use this name to save HP.json file on the local filesystem.
+     */
+    public static final String DEFAULT_HPO_FILE_NAME = "HP.json";
+
     public final static String HP_JSON_PATH_PROPERTY = "hp.json.path";
 
     public OptionalHpoResource() {

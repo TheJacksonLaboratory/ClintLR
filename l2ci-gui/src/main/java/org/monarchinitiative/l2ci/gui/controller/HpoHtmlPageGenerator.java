@@ -165,10 +165,10 @@ class HpoHtmlPageGenerator {
      */
     private static String getListOfTermsHTML(HpoDisease disease, Ontology ontology) {
         List<Term> modesOfInheritance = getTerms(disease.modesOfInheritance(),ontology);
-        List<Term> negativeTerms=getTerms(disease.absentPhenotypicAbnormalitiesStream()
+        List<Term> negativeTerms=getTerms(disease.absentAnnotationsStream()
                 .map(HpoDiseaseAnnotation::id)
                 .collect(Collectors.toList()),ontology);
-        List<HpoDiseaseAnnotation> annotations = disease.phenotypicAbnormalitiesStream().toList();
+        List<HpoDiseaseAnnotation> annotations = disease.annotationStream().toList();
 
         if (annotations == null) {
             return "<p>No HPO annotations found.</p>";
