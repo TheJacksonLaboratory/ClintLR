@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
@@ -14,6 +15,9 @@ import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -21,23 +25,23 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
-import org.monarchinitiative.biodownload.BioDownloader;
-import org.monarchinitiative.biodownload.BioDownloaderBuilder;
-import org.monarchinitiative.biodownload.FileDownloadException;
-import org.monarchinitiative.l2ci.core.io.Download;
+import org.apache.commons.lang.ArrayUtils;
+import org.monarchinitiative.l2ci.core.LiricalAnalysis;
+import org.monarchinitiative.l2ci.core.Relation;
+import org.monarchinitiative.l2ci.core.pretestprob.MapData;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.io.MapFileWriter;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
@@ -48,10 +52,10 @@ import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
-import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
-import org.monarchinitiative.lirical.core.model.GenesAndGenotypes;
+import org.monarchinitiative.lirical.core.output.*;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.io.OntologyLoader;
+import org.monarchinitiative.phenol.ontology.data.Dbxref;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -77,7 +81,7 @@ public class MainController {
     private static MainController mainController;
     private Ontology ont;
 
-    private static final Logger logger = LoggerFactory.getLogger(MainController.class);
+    public static final Logger logger = LoggerFactory.getLogger(MainController.class);
     private static final String EVENT_TYPE_CLICK = "click";
 
     /**
@@ -107,6 +111,8 @@ public class MainController {
     public HBox statusHBox;
     @FXML
     private TextField autocompleteTextfield;
+    @FXML
+    private TextField autocompleteOmimTextfield;
 
     /**
      * The term that is currently selected in the Browser window.
@@ -114,9 +120,10 @@ public class MainController {
     private Term selectedTerm = null;
 
     /**
-     * Key: a term name such as "Myocardial infarction"; value: the corresponding HPO id as a {@link TermId}.
+     * Key: a term name such as "Myocardial infarction"; value: the corresponding Mondo id as a {@link TermId}.
      */
     private final Map<String, TermId> ontologyLabelsAndTermIdMap = new HashMap<>();
+    private final Map<String, TermId> omimLabelsAndMondoTermIdMap = new HashMap<>();
     /**
      * WebView for displaying details of the Term that is selected in the {@link #ontologyTreeView}.
      */
@@ -141,42 +148,43 @@ public class MainController {
     private Button liricalButton = new Button();
     @FXML
     private Label treeLabel = new Label();
+    @FXML
+    private TextField outputFileTextField = new TextField();
+    @FXML
+    private Label outputFileTypeLabel = new Label();
+    @FXML
+    private TextField lrThresholdTextField = new TextField();
+    @FXML
+    private Spinner minDiagnosisSpinner = new Spinner();
+    @FXML
+    private TextField pathogenicityTextField = new TextField();
+    @FXML
+    private CheckBox variantsCheckbox = new CheckBox();
 
-    public static double preTestProb;
+
+    private final Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
+
+    public static double sliderValue;
 
     private Map<TermId, Double> pretestMap;
     public MapDisplayInterface mapDisplay;
-    public static List<MapData> mapDataList;
-    private Lirical lirical;
+    public static List<MapData> mapDataList = new ArrayList<>();
+    public Lirical lirical;
+    private LiricalAnalysis liricalAnalysis;
 
-    private File mondoJSONFile;
+    @FXML
+    private Label phenopacketLabel;
 
     private Image redIcon;
 
     private Image redArrowIcon;
 
+    private Image blackIcon;
+
     private Image blackArrowIcon;
 
     public enum MessageType {
         INFO, WARNING, ERROR
-    }
-
-    private enum Relation {
-        ANCESTOR("ancestor"),
-        CHILD("child"),
-        DESCENDENT("descendent"),
-        PARENT("parent");
-
-        private final String name;
-
-        Relation(String n) {
-            this.name = n;
-        }
-
-        @Override
-        public String toString() {
-            return this.name;
-        }
     }
 
     @Value("${mondo.json.url}")
@@ -205,41 +213,32 @@ public class MainController {
     private void initialize() throws IOException {
         mainController = this;
         logger.info("Initializing main controller");
-        StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
         liricalButton.setDisable(true);
-        String liricalData = pgProperties.getProperty("lirical.data.path");
-        if (liricalData == null) {
-            String homeDir = new File(".").getAbsolutePath();
-            liricalData = String.join(File.separator, homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "LIRICAL", "data");
-            pgProperties.setProperty("lirical.data.path", liricalData);
-        }
-        CompletableFuture.runAsync(() -> {
-            try {
-                lirical = task.buildLirical();
-                if (lirical != null) {
-                    liricalButton.setDisable(false);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        publishMessage("Loading resources");
-        ProgressIndicator pb = new ProgressIndicator();
-        pb.setProgress(0);
-        pb.progressProperty().unbind();
-        pb.progressProperty().bind(task.progressProperty());
-        Stage window = PopUps.setupProgressDialog("Initializing", "Loading resources...", pb);
-        window.show();
-        window.toFront();
-        task.setOnSucceeded(e -> {
-            publishMessage("Successfully loaded files");
-            window.close();
-        });
-        task.setOnFailed(e -> {
-            publishMessage("Unable to load ontologies/annotations", MessageType.ERROR);
-            window.close();
-        });
-        this.executor.submit(task);
+        initializeProperty("lirical.data.path", new String[]{"LIRICAL", "data"});
+        initializeProperty("genome.build", new String[]{"hg38"});
+        initializeProperty("pathogenicity.threshold", new String[]{"0.8"});
+        initializeProperty("default.variant.background.frequency", new String[]{"0.1"});
+        initializeProperty("strict", new String[]{"false"});
+        initializeProperty("background.frequency.path", new String[]{"LIRICAL", "background", "background-hg38.tsv"});
+        initializeProperty("default.allele.frequency", new String[]{"1E-5"});
+        initializeProperty("transcript.database", new String[]{"refSeq"});
+        String homeDir = System.getProperty("user.home");
+        String dir = String.join(File.separator, homeDir, "LIRICAL", "results");
+        pgProperties.setProperty("lirical.results.path", dir);
+        initializeProperty("lirical.version", new String[]{"2.0.0-RC1"});
+        initializeProperty("min.diagnosis.count", new String[]{"10"});
+        initializeProperty("output.formats", new String[]{"html"});
+        lrThresholdTextField.setText("0.05");
+        SpinnerValueFactory<Integer> spinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10);
+        minDiagnosisSpinner.setValueFactory(spinnerFactory);
+        pathogenicityTextField.setText(pgProperties.getProperty("pathogenicity.threshold"));
+        variantsCheckbox.setSelected(false);
+        outputFileTextField.setText("lirical_results");
+        outputFileTypeLabel.setText("." + pgProperties.getProperty("output.formats"));
+        StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
+        LiricalBuildTask liricalTask = new LiricalBuildTask(pgProperties);
+        showProgress(task, "startup", "loading resources");
+        showProgress(liricalTask, "lirical", "building LIRICAL");
         String ver = MainController.getVersion();
         copyrightLabel.setText("L4CI, v. " + ver + ", \u00A9 Monarch Initiative 2022");
         probSlider.setMin(1);
@@ -248,7 +247,7 @@ public class MainController {
         probSlider.setMajorTickUnit(2);
         probSlider.setShowTickLabels(true);
         probSlider.setShowTickMarks(true);
-        preTestProb = probSlider.getValue();
+        sliderValue = probSlider.getValue();
         probSlider.valueProperty().addListener(e -> sliderAction());
         sliderTextField.setText(String.valueOf(probSlider.getValue()));
         sliderTextField.setOnKeyReleased(event ->  {
@@ -268,12 +267,15 @@ public class MainController {
 
         InputStream redStream = getClass().getResourceAsStream("/icons/red_circle.png");
         InputStream redArrowStream = getClass().getResourceAsStream("/icons/red_circle_up_arrow.png");
+        InputStream blackStream = getClass().getResourceAsStream("/icons/black_circle.png");
         InputStream blackArrowStream = getClass().getResourceAsStream("/icons/black_circle_up_arrow.png");
         redIcon = new Image(Objects.requireNonNull(redStream));
         redArrowIcon = new Image(Objects.requireNonNull(redArrowStream));
+        blackIcon = new Image(Objects.requireNonNull(blackStream));
         blackArrowIcon = new Image(Objects.requireNonNull(blackArrowStream));
         redStream.close();
         redArrowStream.close();
+        blackStream.close();
         blackArrowStream.close();
 
         String downloadPath = pgProperties.getProperty("download.path");
@@ -302,6 +304,58 @@ public class MainController {
         logger.info("done activate");
     }
 
+    private void initializeProperty(String name, String[] defaultValues) {
+        String property = pgProperties.getProperty(name);
+        if (property == null && defaultValues.length > 0) {
+            if (name.endsWith(".path")) {
+                String homeDir = new File(".").getAbsolutePath();
+                String[] dir = {homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources"};
+                property = String.join(File.separator, (String[]) ArrayUtils.addAll(dir, defaultValues));
+            } else {
+                property = defaultValues[0];
+            }
+            pgProperties.setProperty(name, property);
+        }
+    }
+
+    private void showProgress(Task task, String type, String taskMessage) {
+        publishMessage(taskMessage);
+        ProgressIndicator pb = new ProgressIndicator();
+        pb.setProgress(0);
+        pb.progressProperty().unbind();
+        pb.progressProperty().bind(task.progressProperty());
+        Stage window = PopUps.setupProgressDialog("Initializing", taskMessage + "...", pb);
+        window.show();
+        window.toFront();
+        window.setAlwaysOnTop(true);
+        switch (type) {
+            case "startup":
+                task.setOnSucceeded(e -> {
+                    makeOmimMap();
+                    WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
+                    publishMessage("Finished " + taskMessage);
+                    window.close();
+                });
+                break;
+            case "lirical":
+                task.setOnSucceeded(e -> {
+                    if (lirical != null) {
+                        liricalAnalysis = new LiricalAnalysis(lirical, pgProperties);
+                        liricalButton.setDisable(false);
+                        publishMessage("Finished " + taskMessage);
+                    } else {
+                        publishMessage("Failed " + taskMessage + ". LIRICAL instance is null.", MessageType.ERROR);
+                    }
+                    window.close();
+                });
+                break;
+        }
+        task.setOnFailed(e -> {
+            publishMessage("Failed " + taskMessage, MessageType.ERROR);
+            window.close();
+        });
+        this.executor.submit(task);
+    }
 
     @FXML
     public void loadMondoFile(Event e) {
@@ -317,12 +371,13 @@ public class MainController {
     }
 
     public void loadMondoFile(String mondoPath) {
+        System.out.println(mondoPath);
         HPOParser parser = new HPOParser(mondoPath);
         ont = parser.getHPO();
         if (ont != null) {
             optionalMondoResource.setOntology(ont);
             pgProperties.setProperty("mondo.json.path", mondoPath);
-            pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, mondoPath);
+            pgProperties.setProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, mondoPath);
             logger.info("Loaded Ontology {} from file {}", ont.toString(), mondoPath);
             activateOntologyTree();
             publishMessage("Loaded Ontology from file " + mondoPath);
@@ -361,53 +416,13 @@ public class MainController {
     }
 
     void loadHPOAFile(String filePath) {
+        System.out.println(filePath);
         if (optionalHpoResource.getOntology() != null ) {
             optionalHpoaResource.setAnnotationResources(filePath, optionalHpoResource.getOntology());
             pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, filePath);
         } else {
             PopUps.showInfoMessage("Cannot load phenotype.hpoa file. HPO ontology is null.", "Error loading HPOA");
         }
-    }
-
-    @FXML
-    public void downloadMondoFile(Event e) throws FileDownloadException {
-        downloadMondoFile(pgProperties.getProperty("download.path"));
-    }
-
-    public void downloadMondoFile(String path) {
-        try {
-            BioDownloaderBuilder builder = BioDownloader.builder(Path.of(pgProperties.getProperty("download.path")));
-            builder.mondoOwl();
-            BioDownloader downloader = builder.build();
-            downloader.download();
-            File owl = new File(path, "mondo.owl");
-            String jarPath = pgProperties.getProperty("obographs.jar.path");
-            if (jarPath != null && new File(jarPath).isFile()) {
-                String[] command = {"java",  "-jar", jarPath, "convert", "-f", "json", owl.getAbsolutePath()};
-                logger.info("Converting mondo.owl to readable mondo.json file using obographs.");
-                logger.info(String.join(" ", command));
-                convertOboToJson(command);
-                loadMondoFile(new File(path, "mondo.json").getAbsolutePath());
-            } else {
-                logger.info("Cannot find obographs-cli jar file to convert mondo.owl to readable mondo.json file.");
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    void convertOboToJson(String[] args) throws Exception {
-        ProcessBuilder builder = new ProcessBuilder(args);
-        builder.redirectErrorStream(true);
-        Process p = builder.start();
-        BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        while (true) {
-            line = r.readLine();
-            if (line == null) { break; }
-            System.out.println(line);
-        }
-        r.close();
     }
 
     @FXML
@@ -428,7 +443,7 @@ public class MainController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Save Map to File");
         File file = fileChooser.showSaveDialog(MainApp.mainStage);
-        pretestMap = makeSelectedDiseaseMap(preTestProb);
+        pretestMap = makeSelectedDiseaseMap(sliderValue);
         if (file != null && pretestMap != null) {
             new MapFileWriter(pretestMap, file.getAbsolutePath());
         }
@@ -436,11 +451,12 @@ public class MainController {
 
     @FXML
     public void showMapInterface(ActionEvent event) {
-        makeSelectedDiseaseMap(preTestProb);
+        makeSelectedDiseaseMap(sliderValue);
         if (mapDisplay == null) {
             mapDisplay = new MapDisplayInterface();
+            mapDisplay.initMapInterface();
         }
-        mapDisplay.launchMapInterface();
+        mapDisplay.show();
         mapDisplay.updateTable();
     }
 
@@ -471,20 +487,20 @@ public class MainController {
         Platform.exit();
     }
 
-    @FXML
-    public void setLiricalDataDirectory(Event e) {
-        setLiricalDataDirectory();
-    }
-
     public void setLiricalDataDirectory() {
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("Set LIRICAL Data Directory");
-        Stage stage = MainApp.mainStage;
-        File directory = directoryChooser.showDialog(stage);
+        File directory = PopUps.selectDirectory(MainApp.mainStage, new File(pgProperties.getProperty("lirical.data.path")), "Set LIRICAL Data Directory");
         if (directory != null) {
             String liricalDataPath = directory.getAbsolutePath();
             pgProperties.setProperty("lirical.data.path", liricalDataPath);
             logger.info("Set LIRICAL data directory to {}", directory.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    public void setLiricalResultsDirectory() {
+        File dir = PopUps.selectDirectory(MainApp.mainStage, new File(pgProperties.getProperty("lirical.results.path")), "Choose Directory to Save Results");
+        if (dir != null) {
+            pgProperties.setProperty("lirical.results.path", dir.getAbsolutePath());
         }
     }
 
@@ -494,14 +510,20 @@ public class MainController {
     }
 
     public void setExomiserVariantFile() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Set Exomiser Variant File");
-        Stage stage = MainApp.mainStage;
-        File file = fileChooser.showOpenDialog(stage);
+        File file = PopUps.selectFileToOpen(MainApp.mainStage, new File(pgProperties.getProperty("exomiser.variant.path")), "Set Exomiser Variant File");
         if (file != null) {
             String exomiserVariantPath = file.getAbsolutePath();
             pgProperties.setProperty("exomiser.variant.path", exomiserVariantPath);
             logger.info("Exomiser Variant File path set to {}", file.getAbsolutePath());
+        }
+    }
+
+    public void setBackgroundFrequencyFile() {
+        File file = PopUps.selectFileToOpen(MainApp.mainStage, new File(pgProperties.getProperty("background.frequency.path")), "Set Background Frequency File");
+        if (file != null) {
+            String bkgFreqPath = file.getAbsolutePath();
+            pgProperties.setProperty("background.frequency.path", bkgFreqPath);
+            logger.info("Background Frequency File path set to {}", file.getAbsolutePath());
         }
     }
 
@@ -623,7 +645,7 @@ public class MainController {
                 setGraphic(icon1);
                 if (mapDataList != null) {
                     for (MapData mapData : mapDataList) {
-                        if (mapData.getTermId().equals(item.term.id()) && mapData.getSliderValue() > 1.0) {
+                        if (mapData != null && mapData.getMondoId() != null && mapData.getMondoId().equals(item.term.id()) && mapData.getSliderValue() > 1.0) {
                             setGraphic(icon2);
                         }
                     }
@@ -632,16 +654,21 @@ public class MainController {
 
             @Override
             protected void updateItem(OntologyTermWrapper item, boolean empty) {
-                ImageView omimIcon = new ImageView(redIcon);
-                ImageView omimSelectedIcon = new ImageView(redArrowIcon);
+                ImageView omimPSIcon = new ImageView(redIcon);
+                ImageView omimPSSelectedIcon = new ImageView(redArrowIcon);
+                ImageView omimIcon = new ImageView(blackIcon);
                 ImageView selectedIcon = new ImageView(blackArrowIcon);
                 super.updateItem(item, empty);
                 if (!empty || item != null) {
                     setText(item.term.getName());
                     if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
-                        updateTreeIcons(item, omimIcon, omimSelectedIcon);
+                        updateTreeIcons(item, omimPSIcon, omimPSSelectedIcon);
                     } else if (item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
-                        updateTreeIcons(item, null, selectedIcon);
+                        if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
+                            updateTreeIcons(item, omimIcon, selectedIcon);
+                        } else {
+                            updateTreeIcons(item, null, null);
+                        }
                     }
                 }
             }
@@ -659,8 +686,9 @@ public class MainController {
                         w = newValue.getValue();
                     }
                     TreeItem<OntologyTermWrapper> item = new OntologyTermTreeItem(w);
+                    pretestMap = makeSelectedDiseaseMap(sliderValue);
                     updateDescription(item);
-                    makeSelectedDiseaseMap(preTestProb);
+                    selectedTerm = item.getValue().term;
                     if (mapDisplay != null) {
                         mapDisplay.updateTable();
                     }
@@ -694,42 +722,103 @@ public class MainController {
         }
     }
 
+    private void makeOmimMap() {
+        Ontology ontology = optionalMondoResource.getOntology();
+        if (ontology == null) {
+            logger.error("makeOmimMap: ontology is null.");
+        } else {
+            for (Term mondoTerm : ontology.getTerms()) {
+                for (Dbxref ref : mondoTerm.getXrefs()) {
+                    String refName = ref.getName();
+                    if (refName.contains("OMIM:")) {
+                        Term omimTerm = Term.of(refName, refName);
+                        TermId omimID = omimTerm.id();
+                        if (!omimToMondoMap.containsKey(omimID)) {
+                            omimToMondoMap.put(omimID, new ArrayList<>());
+                        }
+                        List<TermId> termList = omimToMondoMap.get(omimID);
+                        termList.add(mondoTerm.id());
+                        omimToMondoMap.put(omimID, termList);
+                        omimLabelsAndMondoTermIdMap.put(omimTerm.id().toString(), mondoTerm.id());
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     public Map<TermId, Double> makeSelectedDiseaseMap(double adjProb) {
         Map<TermId, Double> diseaseMap = new HashMap<>();
         Ontology ontology = optionalMondoResource.getOntology();
-        for (Term t : ontology.getTerms()) {
-            diseaseMap.put(t.id(), 1.0);
+        if (ontology == null) {
+            logger.error("makeSelectedDiseaseMap: ontology is null.");
+            return diseaseMap;
         }
-        Set<TermId> selectedTerms = new HashSet<>();
-        TreeItem<OntologyTermWrapper> selectedItem = ontologyTreeView.getSelectionModel().getSelectedItem();
-        mapDataList = new ArrayList<>();
-        if (selectedItem != null) {
-            Term selectedTerm = selectedItem.getValue().term;
-            selectedTerms.add(selectedTerm.id());
-            Set<Term> descendents = getTermRelations(selectedTerm, Relation.DESCENDENT);
-            descendents.forEach(t -> selectedTerms.add(t.id()));
-            Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms, adjProb);
+        for (TermId omimId : omimToMondoMap.keySet()) {
+            diseaseMap.put(omimId, 1.0);
+        }
+        if (optionalHpoaResource != null) {
+            for (TermId termId : optionalHpoaResource.getId2diseaseModelMap().keySet()) {
+                diseaseMap.put(termId, 1.0);
+            }
+        }
+        HashMap<TermId, TermId> selectedTerms = new HashMap<>();
+        mapDataList.removeIf(mapData -> !mapData.isFixed());
+        String name = "";
+//        TreeItem<OntologyTermWrapper> selectedItem = ontologyTreeView.getSelectionModel().getSelectedItem();
+        if (selectedTerm != null) {
+//            Term selectedMondoTerm = selectedTerm; //selectedItem.getValue().term;
+            omimToMondoMap.forEach((omimID, mondoIDs) -> {
+                for (TermId mondoID : mondoIDs) {
+                    if (mondoID.equals(selectedTerm.id()) && omimID != null) {
+                        selectedTerms.put(omimID, mondoID);
+                        Set<Term> descendents = getTermRelations(selectedTerm.id(), Relation.DESCENDENT);
+                        for (Term descendent : descendents) {
+                            omimToMondoMap.forEach((omimID2, mondoIDs2) -> {
+                                for (TermId mondoID2 : mondoIDs2) {
+                                    if (mondoID2.equals(descendent.id())) {
+                                        selectedTerms.put(omimID2, mondoID2);
+                                        break;
+                                    }
+                                }
+                            });
+                        }
+//                descendents.forEach(t -> selectedTerms.add(mondoTerm.id()));
+                    }
+                }
+            });
+            Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb, mapDataList);
             boolean addNonSelected = true;
             for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
-                if (selectedTerms.contains(entry.getKey())) {
-                    String name = ontology.getTermMap().get(entry.getKey()).getName();
-                    MapData mapData = new MapData(name, entry.getKey(), entry.getValue(), adjProb);
-                    mapDataList.add(mapData);
-                } else if (!selectedTerms.contains(entry.getKey()) && addNonSelected) {
-                    String name = ontology.getTermMap().get(entry.getKey()).getName();
-                    MapData mapData = new MapData(name, entry.getKey(), entry.getValue(), 1.0);
-                    mapDataList.add(mapData);
-                    addNonSelected = false;
+                TermId omimID = entry.getKey();
+                if (selectedTerms.containsKey(omimID)) {
+                    TermId mondoID = selectedTerms.get(omimID);
+                    addToMapData(ontology, mondoID, omimID, entry.getValue(), adjProb, false);
+                } else if (!selectedTerms.containsKey(omimID) && addNonSelected) {
+                    if (omimToMondoMap.get(omimID) != null) {
+                        addToMapData(null, null, null, entry.getValue(), 1.0, false);
+                        addNonSelected = false;
+                    }
                 }
             }
             return newMap;
         } else {
-            TermId id = diseaseMap.keySet().iterator().next();
-            String name = ontology.getTermMap().get(id).getName();
-            mapDataList.add(new MapData(name, id, diseaseMap.get(id), 1.0));
+            TermId omimId = diseaseMap.keySet().iterator().next();
+            if (omimToMondoMap.get(omimId) != null) {
+                addToMapData(null, null, null, diseaseMap.get(omimId), 1.0, false);
+            }
             return diseaseMap;
         }
+    }
 
+    private void addToMapData(Ontology ontology, TermId mondoID, TermId omimID, Double probValue, Double sliderValue, boolean isFixed) {
+        String name = "";
+        if (mondoID != null & ontology != null) {
+            name = ontology.getTermMap().get(mondoID).getName();
+        } else if (ontology == null) {
+            name = "other diseases"; //optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
+        }
+        mapDataList.add(new MapData(name, mondoID, omimID, probValue, sliderValue, isFixed));
     }
 
     /**
@@ -741,14 +830,14 @@ public class MainController {
         if (treeItem == null)
             return;
         Term term = treeItem.getValue().term;
-//        if (optionalHpoaResource.getIndirectAnnotMap() == null) {
-//            logger.error("Attempt to get Indirect annotation map but it was null");
-//            return;
-//        }
-        List<HpoDisease> annotatedDiseases =  new ArrayList<>();//optionalHpoaResource.getIndirectAnnotMap().getOrDefault(term.id(), List.of());
+        if (optionalHpoaResource.getIndirectAnnotMap() == null) {
+            logger.error("Attempt to get Indirect annotation map but it was null");
+            return;
+        }
+        List<HpoDisease> annotatedDiseases =  optionalHpoaResource.getIndirectAnnotMap().getOrDefault(term.id(), List.of());
         int n_descendents = 42;//getDescendents(model.getHpoOntology(),term.getId()).size();
         //todo--add number of descendents to HTML
-        String content = HpoHtmlPageGenerator.getHTML(term, annotatedDiseases);
+        String content = HpoHtmlPageGenerator.getHTML(term, annotatedDiseases, pretestMap);
         //System.out.print(content);
         // infoWebEngine=this.infoWebView.getEngine();
         infoWebEngine.loadContent(content);
@@ -783,19 +872,41 @@ public class MainController {
     @FXML
     public void goButtonAction() {
         TermId id = ontologyLabelsAndTermIdMap.get(autocompleteTextfield.getText());
+        goToTerm(id);
+        autocompleteTextfield.clear();
+    }
+
+    @FXML
+    public void omimButtonAction() {
+        TermId id = omimLabelsAndMondoTermIdMap.get(autocompleteOmimTextfield.getText());
+        goToTerm(id);
+        autocompleteOmimTextfield.clear();
+    }
+
+    public void goToTerm(TermId id) {
         if (id == null) return; // button was clicked while field was hasTermsUniqueToOnlyOneDisease, no need to do anything
-        Ontology hpo = optionalMondoResource.getOntology();
-        if (hpo == null) {
-            logger.error("goButtonAction: hpo is null");
+        Ontology mondo = optionalMondoResource.getOntology();
+        if (mondo == null) {
+            logger.error("goButtonAction: mondo is null");
             return;
         }
-        Term term = hpo.getTermMap().get(id);
+        Term term = mondo.getTermMap().get(id);
         if (term == null) {
-            logger.error("Could not retrieve HPO term from {}", id.getValue());
+            logger.error("Could not retrieve Mondo term from {}", id.getValue());
             return;
         }
         expandUntilTerm(term);
-        autocompleteTextfield.clear();
+    }
+
+    public void phenopacketButtonAction() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose Phenopacket File");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Phenopacket JSON File", "*.json"));
+        Stage stage = MainApp.mainStage;
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            phenopacketLabel.setText(file.getAbsolutePath());
+        }
     }
 
     private void updateLimits(Slider slider, double min, double max) {
@@ -824,74 +935,84 @@ public class MainController {
     }
 
     private void sliderAction() {
-        preTestProb = probSlider.getValue();
-        sliderTextField.setText(String.format("%.2f", preTestProb));
-        makeSelectedDiseaseMap(preTestProb);
+        sliderValue = probSlider.getValue();
+        sliderTextField.setText(String.format("%.2f", sliderValue));
+        pretestMap = makeSelectedDiseaseMap(sliderValue);
         if (mapDisplay != null) {
             mapDisplay.updateTable();
         }
+        TreeItem<OntologyTermWrapper> treeItem = ontologyTreeView.getSelectionModel().getSelectedItem();
+        updateDescription(treeItem);
     }
 
     @FXML
-    public void liricalButtonAction(ActionEvent actionEvent) throws LiricalParseException {
-        System.out.println("Pretest Probability = " + preTestProb);
-        Map<TermId, Double> preTestMap = makeSelectedDiseaseMap(preTestProb);
-        AnalysisData analysisData = prepareAnalysisData(lirical, preTestMap);
-        AnalysisOptions analysisOptions = AnalysisOptions.of(false, PretestDiseaseProbability.of(preTestMap));
-        LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
-        AnalysisResults results = analysisRunner.run(analysisData, analysisOptions);
-        System.out.println(results);
+    public void liricalButtonAction(ActionEvent actionEvent) throws Exception {
+        System.out.println("Slider Value = " + sliderValue);
+        if (selectedTerm != null) {
+            Map<TermId, Double> preTestMap = makeSelectedDiseaseMap(sliderValue);
+            String phenopacketFile = phenopacketLabel.getText();
+            if (!new File(phenopacketFile).isFile()) {
+                PopUps.showInfoMessage("Error: Unable to run analysis: no phenopacket present.", "ERROR");
+                logger.info("Unable to run analysis: no phenopacket present.");
+            }
+            OutputOptions outputOptions = createOutputOptions();
+            liricalAnalysis.runAnalysis(preTestMap, phenopacketFile, outputOptions);
+            String outFileName = outputOptions.prefix() + "." + outputOptions.outputFormats().iterator().next().name().toLowerCase();
+            File outFile = new File(String.join(File.separator, outputOptions.outputDirectory().toString(), outFileName));
+            if (outFile.isFile()) {
+                boolean response = PopUps.getBooleanFromUser("Overwrite?",
+                        "Results file already exists at " + outFile.getAbsolutePath(),
+                        "Write Results file");
+                if (!response) {
+                    return;
+                }
+            }
+            if (outFile.isFile() & outFileName.endsWith("html")) {
+                MainApp.host.showDocument(outFile.getAbsolutePath());
+            }
+        } else {
+            logger.info("Unable to run analysis: no term selected.");
+            PopUps.showInfoMessage("Error: No term selected.", "ERROR");
+        }
     }
 
-    protected AnalysisData prepareAnalysisData(Lirical lirical, Map<TermId, Double> pretestMap) throws LiricalParseException {
-//        LOGGER.info("Reading phenopacket from {}.", phenopacketPath.toAbsolutePath());
-//
-//        PhenopacketData data = null;
-//        try (InputStream is = Files.newInputStream(phenopacketPath)) {
-//            PhenopacketImporter v2 = PhenopacketImporters.v2();
-//            data = v2.read(is);
-//            LOGGER.info("Success!");
-//        } catch (IOException e) {
-//            LOGGER.info("Unable to parse as v2 phenopacket, trying v1.");
-//        }
-//
-//        if (data == null) {
-//            try (InputStream is = Files.newInputStream(phenopacketPath)) {
-//                PhenopacketImporter v1 = PhenopacketImporters.v1();
-//                data = v1.read(is);
-//            } catch (IOException e) {
-//                LOGGER.info("Unable to parser as v1 phenopacket.");
-//                throw new LiricalParseException("Unable to parse phenopacket from " + phenopacketPath.toAbsolutePath());
-//            }
-//        }
-//
-//        HpoTermSanitizer sanitizer = new HpoTermSanitizer(lirical.phenotypeService().hpo());
-//        List<TermId> presentTerms = data.getHpoTerms().map(sanitizer::replaceIfObsolete).flatMap(Optional::stream).toList();
-//        List<TermId> excludedTerms = data.getNegatedHpoTerms().map(sanitizer::replaceIfObsolete).flatMap(Optional::stream).toList();
-//
-//        // Read VCF file.
-//        GenesAndGenotypes genes;
-//        // Path to VCF set via CLI has priority.
-//        Path vcfPath = this.vcfPath != null
-//                ? this.vcfPath
-//                : data.getVcfPath().orElse(null);
-//        String sampleId = data.getSampleId();
-//        if (vcfPath == null) {
-//            genes = GenesAndGenotypes.empty();
-//        } else {
-//            genes = readVariantsFromVcfFile(sampleId, vcfPath, lirical.variantParserFactory());
-//        }
-//        return AnalysisData.of(sampleId,
-//                data.getAge().orElse(null),
-//                data.getSex().orElse(null),
-//                presentTerms,
-//                excludedTerms,
-//                genes);
-        String sampleId = "1";
-        List<TermId> presentTerms = pretestMap.keySet().stream().toList();
-        List<TermId> excludedTerms = new ArrayList<>();
-        GenesAndGenotypes genes = GenesAndGenotypes.empty();
-        return AnalysisData.of(sampleId, null, null, presentTerms, excludedTerms, genes);
+    protected OutputOptions createOutputOptions() throws LiricalParseException {
+        double lrThresholdValue = Double.parseDouble(lrThresholdTextField.getText());
+        int minDiagnosisValue = Integer.parseInt(minDiagnosisSpinner.getValue().toString());
+        String outputFormatsString = pgProperties.getProperty("output.formats");
+        float pathogenicityThreshold = Float.parseFloat(pathogenicityTextField.getText());
+        boolean displayAllVariants = variantsCheckbox.isSelected();
+        if (lrThresholdValue < 0 || lrThresholdValue > 1) {
+            PopUps.showInfoMessage("Error: LR Threshold must be between 0 and 1.", "ERROR");
+            throw new LiricalParseException("LR Threshold not between 0 and 1.");
+        }
+        Path outdir = Path.of(pgProperties.getProperty("lirical.results.path"));
+        String outfileText = outputFileTextField.getText();
+        String outfilePrefix = outfileText == null ? "lirical_results" : outfileText;
+        LrThreshold lrThreshold = LrThreshold.setToUserDefinedThreshold(lrThresholdValue);
+        MinDiagnosisCount minDiagnosisCount = MinDiagnosisCount.setToUserDefinedMinCount(minDiagnosisValue);
+        List<OutputFormat> outputFormats = parseOutputFormats(outputFormatsString);
+        return new OutputOptions(lrThreshold, minDiagnosisCount, pathogenicityThreshold,
+                displayAllVariants, outdir, outfilePrefix, outputFormats);
+    }
+
+    private List<OutputFormat> parseOutputFormats(String outputFormats) {
+        return Arrays.stream(outputFormats.split(","))
+                .map(String::trim)
+                .map(toOutputFormat())
+                .flatMap(Optional::stream)
+                .toList();
+    }
+
+    private static Function<String, Optional<OutputFormat>> toOutputFormat() {
+        return payload -> switch (payload.toUpperCase()) {
+            case "HTML" -> Optional.of(OutputFormat.HTML);
+            case "TSV" -> Optional.of(OutputFormat.TSV);
+            default -> {
+                logger.warn("Unknown output format {}", payload);
+                yield Optional.empty();
+            }
+        };
     }
 
     /**
@@ -911,11 +1032,11 @@ public class MainController {
             // find root -> term path through the tree
             Stack<Term> termStack = new Stack<>();
             termStack.add(term);
-            Set<Term> parents = getTermRelations(term, Relation.PARENT);
+            Set<Term> parents = getTermRelations(term.id(), Relation.PARENT);
             while (parents.size() != 0) {
                 Term parent = parents.iterator().next();
                 termStack.add(parent);
-                parents = getTermRelations(parent, Relation.PARENT);
+                parents = getTermRelations(parent.id(), Relation.PARENT);
             }
 
             // expand tree nodes in top -> down direction
@@ -946,18 +1067,18 @@ public class MainController {
     /**
      * Get the relations of "term"
      *
-     * @param term Mondo Term of interest
+     * @param termId Mondo Term ID of interest
      * @param relation Relation of interest (ancestor, descendent, child, parent)
      * @return relations of term (not including term itself).
      */
-    private Set<Term> getTermRelations(Term term, Relation relation) {
+    private Set<Term> getTermRelations(TermId termId, Relation relation) {
         Ontology ontology = optionalMondoResource.getOntology();
         if (ontology == null) {
             logger.error("Ontology null");
             PopUps.showInfoMessage("Error: Could not initialize Ontology", "ERROR");
             return Set.of();
         }
-        TermId termId = term.id();
+
         Set<TermId> relationIds;
         switch (relation) {
             case ANCESTOR:
@@ -1015,7 +1136,7 @@ public class MainController {
          */
         @Override
         public boolean isLeaf() {
-            return getTermRelations(getValue().term, Relation.CHILD).size() == 0;
+            return getTermRelations(getValue().term.id(), Relation.CHILD).size() == 0;
         }
 
 
@@ -1028,8 +1149,8 @@ public class MainController {
             if (childrenList == null) {
                 // logger.debug(String.format("Getting children for term %s", getValue().term.getName()));
                 childrenList = FXCollections.observableArrayList();
-                Set<Term> children = getTermRelations(getValue().term, Relation.CHILD);
-                Comparator<Term> compByChildrenSize = (term1, term2) -> getTermRelations(term2, Relation.CHILD).size() - getTermRelations(term1, Relation.CHILD).size();
+                Set<Term> children = getTermRelations(getValue().term.id(), Relation.CHILD);
+                Comparator<Term> compByChildrenSize = (term1, term2) -> getTermRelations(term2.id(), Relation.CHILD).size() - getTermRelations(term1.id(), Relation.CHILD).size();
                 children.stream()
                         .sorted(compByChildrenSize.thenComparing(Term::getName))
                         .map(term -> new OntologyTermTreeItem(new OntologyTermWrapper(term)))

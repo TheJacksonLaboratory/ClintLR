@@ -2,6 +2,7 @@ package org.monarchinitiative.l2ci.gui;
 
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
+import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -30,10 +31,13 @@ public class MainApp  extends Application {
 
     static public Stage mainStage;
 
+    public static HostServices host;
+
 
     @Override
     public void start(Stage stage) {
         applicationContext.publishEvent(new StageReadyEvent(stage));
+        host = getHostServices();
     }
 
     @Override

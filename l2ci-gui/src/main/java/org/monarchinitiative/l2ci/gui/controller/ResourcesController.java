@@ -1,12 +1,10 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
-import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.Event;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import org.monarchinitiative.biodownload.BioDownloader;
 import org.monarchinitiative.biodownload.BioDownloaderBuilder;
 import org.monarchinitiative.biodownload.FileDownloadException;
@@ -18,10 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -49,31 +48,55 @@ public final class ResourcesController {
     private final ExecutorService executorService;
 
     @FXML
-    public ProgressIndicator hpoProgressIndicator = new ProgressIndicator();
+    public ProgressIndicator hpoProgressIndicator;
 
     @FXML
-    public ProgressIndicator hpoaProgressIndicator = new ProgressIndicator();
+    public ProgressIndicator hpoaProgressIndicator;
 
     @FXML
-    public ProgressIndicator mondoProgressIndicator = new ProgressIndicator();
+    public ProgressIndicator mondoProgressIndicator;
 
    @FXML
-    private Label hpJsonLabel = new Label();
+    private Label hpJsonLabel;
 
     @FXML
-    private Label hpoaLabel = new Label();
+    private Label hpoaLabel;
 
     @FXML
-    private Label mondoLabel = new Label();
+    private Label mondoLabel;
 
     @FXML
-    private Label liricalDataDirLabel = new Label();
+    private Label liricalDataDirLabel;
 
     @FXML
-    private Label exomiserFileLabel = new Label();
+    private Label liricalResultsDirLabel;
 
     @FXML
-    private Button downloadHPOAButton = new Button();
+    private Label exomiserFileLabel;
+
+    @FXML
+    private Label bkgFreqFileLabel;
+
+    @FXML
+    private Button downloadHPOAButton;
+
+    @FXML
+    private ChoiceBox genomeBuildChoiceBox;
+
+    @FXML
+    private ChoiceBox transcriptDBChoiceBox;
+
+    @FXML
+    private TextField alleleFreqTextField;
+
+    @FXML
+    private TextField pathogenicityTextField;
+
+    @FXML
+    private TextField variantBkgFreqTextField;
+
+    @FXML
+    private CheckBox strictCheckBox;
 
 
     @Autowired
@@ -84,7 +107,6 @@ public final class ResourcesController {
         this.optionalMondoResource = mondoResource;
         this.pgProperties = properties;
         this.executorService = executorService;
-        initialize();
     }
 
 
@@ -97,31 +119,72 @@ public final class ResourcesController {
         String hpoaPath = pgProperties.getProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY);
         String mondoPath = pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY);
         String liricalDataPath = pgProperties.getProperty("lirical.data.path");
+        String liricalResultsPath = pgProperties.getProperty("lirical.results.path");
         String exomiserPath = pgProperties.getProperty("exomiser.variant.path");
+        String bkgFreqPath = pgProperties.getProperty("background.frequency.path");
         downloadHPOAButton.setDisable(optionalHpoResource.getOntology() == null);
-        if (hpPath != null && new File(hpPath).isFile()) {
-            hpJsonLabel.setText(hpPath);
-            hpoProgressIndicator.setProgress(1);
-        } else {
-            hpJsonLabel.setText("unset");
-            hpoProgressIndicator.setProgress(0);
-        }
-        if (hpoaPath != null && new File(hpoaPath).isFile()) {
-            hpoaLabel.setText(hpoaPath);
-            hpoaProgressIndicator.setProgress(1);
-        } else {
-            hpoaLabel.setText("unset");
-            hpoaProgressIndicator.setProgress(0);
-        }
-        if (mondoPath != null && new File(mondoPath).isFile()) {
-            mondoLabel.setText(mondoPath);
-            mondoProgressIndicator.setProgress(1);
-        } else {
-            mondoLabel.setText("unset");
-            mondoProgressIndicator.setProgress(0);
+        String[] paths = {hpPath, hpoaPath, mondoPath};
+        Label[] labels = {hpJsonLabel, hpoaLabel, mondoLabel};
+        ProgressIndicator[] indicators = {hpoProgressIndicator, hpoaProgressIndicator, mondoProgressIndicator};
+        for (int i = 0; i < paths.length; i++) {
+            if (paths[i] != null && new File(paths[i]).isFile()) {
+                labels[i].setText(paths[i]);
+                indicators[i].setProgress(1);
+            } else {
+                labels[i].setText("unset");
+                indicators[i].setProgress(0);
+            }
         }
         liricalDataDirLabel.setText(Objects.requireNonNullElse(liricalDataPath, "unset"));
+        liricalResultsDirLabel.setText(Objects.requireNonNullElse(liricalResultsPath, "unset"));
         exomiserFileLabel.setText(Objects.requireNonNullElse(exomiserPath, "unset"));
+        bkgFreqFileLabel.setText(Objects.requireNonNullElse(bkgFreqPath, "unset"));
+        HashMap<ChoiceBox, String> choiceBoxHashMap = new HashMap<>();
+        choiceBoxHashMap.put(genomeBuildChoiceBox, "genome.build");
+        choiceBoxHashMap.put(transcriptDBChoiceBox, "transcript.database");
+        choiceBoxHashMap.forEach((choiceBox, propName) -> {
+            String property = pgProperties.getProperty(propName);
+            List<String> choices = new ArrayList<>();
+            if (propName.contains("genome")) {
+                choices = Arrays.asList("hg19", "hg38");
+            } else if (propName.contains("transcript")) {
+                choices = Arrays.asList("refSeq", "UCSC");
+            }
+            choiceBox.getItems().addAll(choices);
+            choiceBox.setValue(property);
+            choiceBox.valueProperty().addListener(x -> {
+                pgProperties.setProperty(propName, choiceBox.getValue().toString());
+                LOGGER.info(propName + ": " + pgProperties.getProperty(propName));
+            });
+        });
+        genomeBuildChoiceBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            File exomiserFile = new File(exomiserPath);
+            File bkgFreqFile = new File(bkgFreqPath);
+            if (!(exomiserFile.isFile() && exomiserFile.getName().contains(newVal.toString()))
+                    || !(bkgFreqFile.isFile() && bkgFreqFile.getName().contains(newVal.toString()))) {
+                PopUps.showInfoMessage("Genome build of Exomiser variant or background frequency files does not match the selected genome build.", "Warning");
+            }
+        });
+        HashMap<TextField, String> textFieldHashMap = new HashMap<>();
+        textFieldHashMap.put(pathogenicityTextField, "pathogenicity.threshold");
+        textFieldHashMap.put(variantBkgFreqTextField, "default.variant.background.frequency");
+        textFieldHashMap.put(alleleFreqTextField, "default.allele.frequency");
+        textFieldHashMap.forEach((textField, propName) -> {
+            String property = pgProperties.getProperty(propName);
+            textField.setText(property);
+            textField.setOnKeyPressed(e -> {
+                if (e.getCode() != KeyCode.ENTER) {
+                    return;
+                }
+                pgProperties.setProperty(propName, textField.textProperty().get());
+                LOGGER.info(propName + ": " + pgProperties.getProperty(propName));
+            });
+        });
+        strictCheckBox.setSelected(Boolean.parseBoolean(pgProperties.getProperty("strict")));
+        strictCheckBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            pgProperties.setProperty("strict", newVal.toString());
+            LOGGER.info("strict: " + pgProperties.getProperty("strict"));
+        });
     }
 
 
@@ -185,42 +248,63 @@ public final class ResourcesController {
         String liricalDataPath = pgProperties.getProperty("lirical.data.path");
         if (liricalDataPath == null) {
             mainController.setLiricalDataDirectory();
-        } else {
-            liricalDataDirLabel.setText(liricalDataPath);
+            liricalDataPath = pgProperties.getProperty("lirical.data.path");
         }
+        liricalDataDirLabel.setText(liricalDataPath);
     }
 
     /**
-     * Open DirChooser and ask user to provide a directory where the Exomiser variant file is located.
+     * Open DirChooser and ask user to provide a directory where the LIRCAL results should be saved.
+     */
+    @FXML
+    void setLiricalResultsDirButtonAction() {
+        String liricalResultsPath = pgProperties.getProperty("lirical.results.path");
+        if (liricalResultsPath == null) {
+            mainController.setLiricalResultsDirectory();
+            liricalResultsPath = pgProperties.getProperty("lirical.results.path");
+        }
+        liricalResultsDirLabel.setText(liricalResultsPath);
+    }
+
+    /**
+     * Open DirChooser and ask user to provide a path to the Exomiser variant file.
      */
     @FXML
     void setExomiserVariantFileButtonAction() {
         String exomiserFilePath = pgProperties.getProperty("exomiser.variant.path");
         if (exomiserFilePath == null) {
             mainController.setExomiserVariantFile();
-        } else {
-            exomiserFileLabel.setText(exomiserFilePath);
+            exomiserFilePath = pgProperties.getProperty("exomiser.variant.path");
         }
+        exomiserFileLabel.setText(exomiserFilePath);
     }
 
-    public void downloadFile(String path, String type) throws FileDownloadException {
-        switch (type) {
-            case "HPO":
-                BioDownloaderBuilder builder = BioDownloader.builder(Path.of(path));
-                builder.hpoJson();
-                BioDownloader downloader = builder.build();
-                downloader.download();
-                break;
-            case "HPOA":
-                builder = BioDownloader.builder(Path.of(path));
-                builder.hpDiseaseAnnotations();
-                downloader = builder.build();
-                downloader.download();
-                break;
-            case "MONDO":
-                mainController.downloadMondoFile(pgProperties.getProperty("download.path"));
-                break;
+    /**
+     * Open DirChooser and ask user to provide a path to the Background Frequency file.
+     */
+    @FXML
+    void setBackgroundFrequencyFileButtonAction() {
+        String bkgFreqFilePath = pgProperties.getProperty("background.frequency.path");
+        if (bkgFreqFilePath == null) {
+            mainController.setBackgroundFrequencyFile();
+            bkgFreqFilePath = pgProperties.getProperty("background.frequency.path");
         }
+        bkgFreqFileLabel.setText(bkgFreqFilePath);
+    }
+
+
+    void executeCommand(String[] args) throws Exception {
+        ProcessBuilder builder = new ProcessBuilder(args);
+        builder.redirectErrorStream(true);
+        Process p = builder.start();
+        BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String line;
+        while (true) {
+            line = r.readLine();
+            if (line == null) { break; }
+            System.out.println(line);
+        }
+        r.close();
     }
 
 
@@ -261,7 +345,51 @@ public final class ResourcesController {
         }
         @Override
         protected Void call() throws Exception {
-            downloadFile(path, type);
+            Path filePath = Path.of(path);
+            updateProgress(0.02, 1);
+            switch (type) {
+                case "HPO":
+                    BioDownloaderBuilder builder = BioDownloader.builder(filePath);
+                    builder.hpoJson();
+                    BioDownloader downloader = builder.build();
+                    updateProgress(0.5, 1);
+                    downloader.download();
+                    updateProgress(1, 1);
+                    break;
+                case "HPOA":
+                    builder = BioDownloader.builder(filePath);
+                    builder.hpDiseaseAnnotations();
+                    downloader = builder.build();
+                    updateProgress(0.5, 1);
+                    downloader.download();
+                    updateProgress(1, 1);
+                    break;
+                case "MONDO":
+                    try {
+                        builder = BioDownloader.builder(filePath);
+                        builder.mondoOwl();
+                        downloader = builder.build();
+                        updateProgress(0.25, 1);
+                        downloader.download();
+                        updateProgress(0.5, 1);
+                        File owl = new File(path, "mondo.owl");
+                        String jarPath = pgProperties.getProperty("obographs.jar.path");
+                        if (jarPath != null && new File(jarPath).isFile()) {
+                            String[] command = {"java",  "-jar", jarPath, "convert", "-f", "json", owl.getAbsolutePath()};
+                            mainController.logger.info("Converting mondo.owl to readable mondo.json file using obographs.");
+                            mainController.logger.info(String.join(" ", command));
+                            executeCommand(command);
+                            updateProgress(0.75, 1);
+                            mainController.loadMondoFile(new File(path, "mondo.json").getAbsolutePath());
+                        } else {
+                            mainController.logger.info("Cannot find obographs-cli jar file to convert mondo.owl to readable mondo.json file.");
+                        }
+                        updateProgress(1,1);
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    break;
+            }
             return null;
         }
     }
@@ -280,6 +408,17 @@ public final class ResourcesController {
         }
         try {
             DownloadTask task = new DownloadTask(path, type);
+            switch (type) {
+                case "HPO":
+                    trackProgress(task, hpoProgressIndicator);
+                    break;
+                case "HPOA":
+                    trackProgress(task, hpoaProgressIndicator);
+                    break;
+                case "MONDO":
+                    trackProgress(task, mondoProgressIndicator);
+                    break;
+            }
             task.setOnSucceeded(e -> setResource(type, target));
             mainController.executor.submit(task);
         } catch (Exception ex) {
@@ -287,27 +426,28 @@ public final class ResourcesController {
         }
     }
 
+    void trackProgress(Task task, ProgressIndicator pb) {
+        pb.setProgress(0);
+        pb.progressProperty().unbind();
+        pb.progressProperty().bind(task.progressProperty());
+    }
+
     void setResource(String type, File target) {
         try {
+            String filePath = target.getAbsolutePath();
             switch (type) {
                 case "HPO":
-                    String hpoPath = target.getAbsolutePath();
                     mainController.loadHPOFile(target);
-                    hpJsonLabel.setText(hpoPath);
+                    hpJsonLabel.setText(filePath);
                     downloadHPOAButton.setDisable(false);
-                    pgProperties.setProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY, hpoPath);
                     break;
                 case "HPOA":
-                    String hpoaPath = target.getAbsolutePath();
-                    mainController.loadHPOAFile(hpoaPath);
-                    hpoaLabel.setText(hpoaPath);
-                    pgProperties.setProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY, hpoaPath);
+                    mainController.loadHPOAFile(filePath);
+                    hpoaLabel.setText(filePath);
                     break;
                 case "MONDO":
-                    String filepath = target.getAbsolutePath();
-                    mainController.loadMondoFile(filepath);
-                    mondoLabel.setText(filepath);
-                    pgProperties.setProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, filepath);
+                    mainController.loadMondoFile(filePath);
+                    mondoLabel.setText(filePath);
                     break;
             }
         } catch (Exception ex) {

@@ -203,7 +203,11 @@ public class PopUps {
 
         WebView browser = new WebView();
         WebEngine engine = browser.getEngine();
-        engine.load(PopUps.class.getResource(resourcePath).toString());
+        if (PopUps.class.getResource(resourcePath) != null) {
+            engine.load(PopUps.class.getResource(resourcePath).toString());
+        } else {
+            engine.load(new File(resourcePath).toURI().toString());
+        }
 
         adjWindow.setScene(new Scene(browser));
         adjWindow.showAndWait();

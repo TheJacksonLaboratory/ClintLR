@@ -4,13 +4,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.monarchinitiative.l2ci.gui.exception.L4CIException;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
+import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDiseases;
 import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseAnnotationParser;
+import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoader;
+import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoaderOptions;
+import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoaders;
 import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -71,13 +76,15 @@ public class DirectIndirectHpoAnnotationParser {
     /**
      * Parse annotations file and populate maps containing direct and indirect annotations.
      */
-    private void doParse()  throws L4CIException {
+    private void doParse() throws L4CIException, IOException {
         if (ontology == null) {
             logger.warn("Ontology unset, cannot parse annotations file");
             return;
         }
         logger.trace("doParse in DirectIndirectParser");
-        Map<TermId, HpoDisease> diseaseMap = HpoDiseaseAnnotationParser.loadDiseaseMap(Path.of(this.pathToPhenotypeAnnotationTab),this.ontology);
+        HpoDiseaseLoader hpoDiseaseLoader = HpoDiseaseLoaders.defaultLoader(ontology, HpoDiseaseLoaderOptions.defaultOptions());
+        HpoDiseases diseases = hpoDiseaseLoader.load(Path.of(this.pathToPhenotypeAnnotationTab));
+        Map<TermId, HpoDisease> diseaseMap = diseases.diseaseById();
         directAnnotationMap=new HashMap<>();
         totalAnnotationMap=new HashMap<>();
         Map<TermId, Set<HpoDisease>> tempmap = new HashMap<>();
