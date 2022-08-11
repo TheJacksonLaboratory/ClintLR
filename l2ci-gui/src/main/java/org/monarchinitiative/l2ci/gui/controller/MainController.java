@@ -9,11 +9,10 @@ import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.web.WebEngine;
@@ -23,10 +22,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -47,12 +42,7 @@ import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
 import org.monarchinitiative.lirical.core.model.GenesAndGenotypes;
-import org.monarchinitiative.lirical.core.service.HpoTermSanitizer;
-import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
-import org.monarchinitiative.lirical.io.analysis.PhenopacketImporter;
-import org.monarchinitiative.lirical.io.analysis.PhenopacketImporters;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
-import org.monarchinitiative.phenol.ontology.data.Dbxref;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -137,6 +127,8 @@ public class MainController {
     private TextField sliderTextField = new TextField();
     @FXML
     private Button liricalButton = new Button();
+    @FXML
+    private Label treeLabel = new Label();
 
     public static double preTestProb;
 
@@ -488,17 +480,29 @@ public class MainController {
 
         ontologyTreeView.setCellFactory(tv -> new TreeCell<OntologyTermWrapper>() {
 
+            private void updateTreeIcons(OntologyTermWrapper item, ImageView icon1, ImageView icon2) {
+                setGraphic(icon1);
+                if (mapDataList != null) {
+                    for (MapData mapData : mapDataList) {
+                        if (mapData.getTermId().equals(item.term.id()) && mapData.getSliderValue() > 1.0) {
+                            setGraphic(icon2);
+                        }
+                    }
+                }
+            }
+
             @Override
             protected void updateItem(OntologyTermWrapper item, boolean empty) {
                 super.updateItem(item, empty);
                 if (!empty || item != null) {
                     setText(item.term.getName());
                     if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
-                        setStyle("-fx-text-fill: firebrick;");
-                    } else if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
-                        setStyle("-fx-text-fill: red;");
-                    } else {
-                        setStyle("-fx-text-fill: black");
+                        ImageView omimIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/red_circle.png"))));
+                        ImageView omimSelectedIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/red_circle_up_arrow.png"))));
+                        updateTreeIcons(item, omimIcon, omimSelectedIcon);
+                    } else if (item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
+                        ImageView selectedIcon = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/icons/black_circle_up_arrow.png"))));
+                        updateTreeIcons(item, null, selectedIcon);
                     }
                 }
             }
@@ -517,6 +521,10 @@ public class MainController {
                     }
                     TreeItem<OntologyTermWrapper> item = new OntologyTermTreeItem(w);
                     updateDescription(item);
+                    makeSelectedDiseaseMap(preTestProb);
+                    if (mapDisplay != null) {
+                        mapDisplay.updateTable();
+                    }
                 });
         // create Map for lookup of the terms in the ontology based on their Name
         ontology.getTermMap().values().forEach(term -> {
@@ -542,37 +550,47 @@ public class MainController {
             Platform.runLater(()->{
                 initTree(mondo, k -> System.out.println("Consumed " + k));
                 WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
+                treeLabel.setText(pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY));
             });
         }
     }
 
     public Map<TermId, Double> makeSelectedDiseaseMap(double adjProb) {
         Map<TermId, Double> diseaseMap = new HashMap<>();
-        Set<TermId> selectedTerms = new HashSet<>();
-        Term selectedTerm = ontologyTreeView.getSelectionModel().getSelectedItem().getValue().term;
         Ontology ontology = optionalMondoResource.getOntology();
         for (Term t : ontology.getTerms()) {
             diseaseMap.put(t.id(), 1.0);
         }
-        selectedTerms.add(selectedTerm.id());
-        Set<Term> descendents = getTermRelations(selectedTerm, Relation.DESCENDENT);
-        descendents.forEach(t -> selectedTerms.add(t.id()));
-        Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms, adjProb);
+        Set<TermId> selectedTerms = new HashSet<>();
+        TreeItem<OntologyTermWrapper> selectedItem = ontologyTreeView.getSelectionModel().getSelectedItem();
         mapDataList = new ArrayList<>();
-        boolean addNonSelected = true;
-        for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
-            if (selectedTerms.contains(entry.getKey())) {
-                String name = ontology.getTermMap().get(entry.getKey()).getName();
-                MapData mapData = new MapData(name, entry.getKey(), entry.getValue());
-                mapDataList.add(mapData);
-            } else if (!selectedTerms.contains(entry.getKey()) && addNonSelected) {
-                String name = ontology.getTermMap().get(entry.getKey()).getName();
-                MapData mapData = new MapData(name, entry.getKey(), entry.getValue());
-                mapDataList.add(mapData);
-                addNonSelected = false;
+        if (selectedItem != null) {
+            Term selectedTerm = selectedItem.getValue().term;
+            selectedTerms.add(selectedTerm.id());
+            Set<Term> descendents = getTermRelations(selectedTerm, Relation.DESCENDENT);
+            descendents.forEach(t -> selectedTerms.add(t.id()));
+            Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms, adjProb);
+            boolean addNonSelected = true;
+            for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
+                if (selectedTerms.contains(entry.getKey())) {
+                    String name = ontology.getTermMap().get(entry.getKey()).getName();
+                    MapData mapData = new MapData(name, entry.getKey(), entry.getValue(), adjProb);
+                    mapDataList.add(mapData);
+                } else if (!selectedTerms.contains(entry.getKey()) && addNonSelected) {
+                    String name = ontology.getTermMap().get(entry.getKey()).getName();
+                    MapData mapData = new MapData(name, entry.getKey(), entry.getValue(), 1.0);
+                    mapDataList.add(mapData);
+                    addNonSelected = false;
+                }
             }
+            return newMap;
+        } else {
+            TermId id = diseaseMap.keySet().iterator().next();
+            String name = ontology.getTermMap().get(id).getName();
+            mapDataList.add(new MapData(name, id, diseaseMap.get(id), 1.0));
+            return diseaseMap;
         }
-        return newMap;
+
     }
 
     /**
@@ -668,7 +686,11 @@ public class MainController {
 
     private void sliderAction() {
         preTestProb = probSlider.getValue();
-        sliderTextField.setText(String.valueOf(preTestProb));
+        sliderTextField.setText(String.format("%.2f", preTestProb));
+        makeSelectedDiseaseMap(preTestProb);
+        if (mapDisplay != null) {
+            mapDisplay.updateTable();
+        }
     }
 
     @FXML

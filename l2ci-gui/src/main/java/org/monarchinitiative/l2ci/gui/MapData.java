@@ -10,11 +10,13 @@ public class MapData {
     String diseaseName;
     TermId termId;
     Double diseaseProb;
+    Double sliderValue;
 
-    public MapData(String name, TermId id, Double probability) {
+    public MapData(String name, TermId id, Double probability, Double sliderVal) {
         this.diseaseName = name;
         this.termId = id;
         this.diseaseProb = probability;
+        this.sliderValue = sliderVal;
     }
 
     public String getName() {
@@ -27,5 +29,9 @@ public class MapData {
 
     public Double getProbability() {
         return diseaseProb;
+    }
+
+    public Double getSliderValue() {
+        return sliderValue;
     }
 }
