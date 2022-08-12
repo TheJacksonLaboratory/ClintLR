@@ -5,6 +5,7 @@ import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.VBox;
 import org.monarchinitiative.biodownload.BioDownloader;
 import org.monarchinitiative.biodownload.BioDownloaderBuilder;
 import org.monarchinitiative.biodownload.FileDownloadException;
@@ -98,6 +99,9 @@ public final class ResourcesController {
     @FXML
     private CheckBox strictCheckBox;
 
+    @FXML
+    private Button closeButton;
+
 
     @Autowired
     ResourcesController(OptionalHpoResource hpoResource, OptionalHpoaResource hpoaResource,
@@ -187,6 +191,10 @@ public final class ResourcesController {
         });
     }
 
+    @FXML
+    void close() {
+        this.mondoLabel.getScene().getWindow().hide();
+    }
 
 
     /**
@@ -245,11 +253,8 @@ public final class ResourcesController {
      */
     @FXML
     void setLiricalDataDirButtonAction() {
+        mainController.setLiricalDataDirectory();
         String liricalDataPath = pgProperties.getProperty("lirical.data.path");
-        if (liricalDataPath == null) {
-            mainController.setLiricalDataDirectory();
-            liricalDataPath = pgProperties.getProperty("lirical.data.path");
-        }
         liricalDataDirLabel.setText(liricalDataPath);
     }
 
@@ -258,11 +263,8 @@ public final class ResourcesController {
      */
     @FXML
     void setLiricalResultsDirButtonAction() {
+        mainController.setLiricalResultsDirectory();
         String liricalResultsPath = pgProperties.getProperty("lirical.results.path");
-        if (liricalResultsPath == null) {
-            mainController.setLiricalResultsDirectory();
-            liricalResultsPath = pgProperties.getProperty("lirical.results.path");
-        }
         liricalResultsDirLabel.setText(liricalResultsPath);
     }
 
@@ -271,11 +273,8 @@ public final class ResourcesController {
      */
     @FXML
     void setExomiserVariantFileButtonAction() {
+        mainController.setExomiserVariantFile();
         String exomiserFilePath = pgProperties.getProperty("exomiser.variant.path");
-        if (exomiserFilePath == null) {
-            mainController.setExomiserVariantFile();
-            exomiserFilePath = pgProperties.getProperty("exomiser.variant.path");
-        }
         exomiserFileLabel.setText(exomiserFilePath);
     }
 
@@ -284,11 +283,8 @@ public final class ResourcesController {
      */
     @FXML
     void setBackgroundFrequencyFileButtonAction() {
+        mainController.setBackgroundFrequencyFile();
         String bkgFreqFilePath = pgProperties.getProperty("background.frequency.path");
-        if (bkgFreqFilePath == null) {
-            mainController.setBackgroundFrequencyFile();
-            bkgFreqFilePath = pgProperties.getProperty("background.frequency.path");
-        }
         bkgFreqFileLabel.setText(bkgFreqFilePath);
     }
 

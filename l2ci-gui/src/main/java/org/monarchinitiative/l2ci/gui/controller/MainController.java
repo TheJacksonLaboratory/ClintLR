@@ -23,18 +23,19 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.text.Text;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import java.awt.*;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -331,9 +332,29 @@ public class MainController {
         switch (type) {
             case "startup":
                 task.setOnSucceeded(e -> {
-                    makeOmimMap();
-                    WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
-                    publishMessage("Finished " + taskMessage);
+                    Ontology mondoOnt = optionalMondoResource.getOntology();
+                    Ontology hpoOnt = optionalHpoResource.getOntology();
+                    boolean hpoaEmpty = optionalHpoaResource.getDirectAnnotMap().isEmpty();
+                    if (mondoOnt != null && hpoOnt != null && !hpoaEmpty) {
+                        makeOmimMap();
+                        WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
+                        publishMessage("Finished " + taskMessage);
+                    } else {
+                        StringBuilder msg = new StringBuilder();
+                        Ontology[] ontologies = {mondoOnt, hpoOnt};
+                        String[] ontTypes = {"Mondo", "HPO"};
+                        for (int i=0; i<ontologies.length; i++) {
+                            Ontology ontology = ontologies[i];
+                            String ontType = ontTypes[i];
+                            if (ontology == null) {
+                                msg.append("\nNeed to set path to ").append(ontType).append(" file (See File -> Show Resources menu)");
+                            }
+                        }
+                        if (hpoaEmpty) {
+                            msg.append("\nNeed to set path to phenotype.hpoa file (See File -> Show Resources menu)");
+                        }
+                        PopUps.showInfoMessage(msg.toString(), "Error Intializing Ontologies");
+                    }
                     window.close();
                 });
                 break;
@@ -351,7 +372,9 @@ public class MainController {
                 break;
         }
         task.setOnFailed(e -> {
-            publishMessage("Failed " + taskMessage, MessageType.ERROR);
+            String msg = "Failed " + taskMessage;
+            PopUps.showInfoMessage(msg, "Error Intializing Resources");
+            publishMessage(msg, MessageType.ERROR);
             window.close();
         });
         this.executor.submit(task);
@@ -488,7 +511,9 @@ public class MainController {
     }
 
     public void setLiricalDataDirectory() {
-        File directory = PopUps.selectDirectory(MainApp.mainStage, new File(pgProperties.getProperty("lirical.data.path")), "Set LIRICAL Data Directory");
+        String homeDir = System.getProperty("user.home");
+        String initialDir = pgProperties.getProperty("lirical.data.path").equals("unset") ? homeDir : pgProperties.getProperty("lirical.data.path");
+        File directory = PopUps.selectDirectory(MainApp.mainStage, new File(initialDir), "Set LIRICAL Data Directory");
         if (directory != null) {
             String liricalDataPath = directory.getAbsolutePath();
             pgProperties.setProperty("lirical.data.path", liricalDataPath);
@@ -498,7 +523,9 @@ public class MainController {
 
     @FXML
     public void setLiricalResultsDirectory() {
-        File dir = PopUps.selectDirectory(MainApp.mainStage, new File(pgProperties.getProperty("lirical.results.path")), "Choose Directory to Save Results");
+        String homeDir = System.getProperty("user.home");
+        String initialDir = pgProperties.getProperty("lirical.results.path").equals("unset") ? homeDir : pgProperties.getProperty("lirical.results.path");
+        File dir = PopUps.selectDirectory(MainApp.mainStage, new File(initialDir), "Choose Directory to Save Results");
         if (dir != null) {
             pgProperties.setProperty("lirical.results.path", dir.getAbsolutePath());
         }
@@ -510,7 +537,10 @@ public class MainController {
     }
 
     public void setExomiserVariantFile() {
-        File file = PopUps.selectFileToOpen(MainApp.mainStage, new File(pgProperties.getProperty("exomiser.variant.path")), "Set Exomiser Variant File");
+        String homeDir = System.getProperty("user.home");
+        String initialDir = pgProperties.getProperty("exomiser.variant.path").equals("unset") ? homeDir :
+                new File(pgProperties.getProperty("exomiser.variant.path")).getParentFile().getAbsolutePath();
+        File file = PopUps.selectFileToOpen(MainApp.mainStage, new File(initialDir), "Set Exomiser Variant File");
         if (file != null) {
             String exomiserVariantPath = file.getAbsolutePath();
             pgProperties.setProperty("exomiser.variant.path", exomiserVariantPath);
@@ -519,7 +549,10 @@ public class MainController {
     }
 
     public void setBackgroundFrequencyFile() {
-        File file = PopUps.selectFileToOpen(MainApp.mainStage, new File(pgProperties.getProperty("background.frequency.path")), "Set Background Frequency File");
+        String homeDir = System.getProperty("user.home");
+        String initialDir = pgProperties.getProperty("background.frequency.path").equals("unset") ? homeDir :
+                new File(pgProperties.getProperty("background.frequency.path")).getParentFile().getAbsolutePath();
+        File file = PopUps.selectFileToOpen(MainApp.mainStage, new File(initialDir), "Set Background Frequency File");
         if (file != null) {
             String bkgFreqPath = file.getAbsolutePath();
             pgProperties.setProperty("background.frequency.path", bkgFreqPath);
@@ -660,7 +693,13 @@ public class MainController {
                 ImageView selectedIcon = new ImageView(blackArrowIcon);
                 super.updateItem(item, empty);
                 if (!empty || item != null) {
-                    setText(item.term.getName());
+                    Term mondoTerm = item.term;
+                    int nDescendents = makeDescendentsMap(mondoTerm.id()).size();
+                    if (nDescendents > 1) {
+                        setText("(" + nDescendents + ") " + mondoTerm.getName());
+                    } else {
+                        setText(mondoTerm.getName());
+                    }
                     if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
                         updateTreeIcons(item, omimPSIcon, omimPSSelectedIcon);
                     } else if (item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
@@ -747,6 +786,28 @@ public class MainController {
         }
     }
 
+    private HashMap<TermId, TermId> makeDescendentsMap(TermId mondoId) {
+        HashMap<TermId, TermId> selectedTerms = new HashMap<>();
+        omimToMondoMap.forEach((omimID, mondoIDs) -> {
+            for (TermId mondoID : mondoIDs) {
+                if (mondoID.equals(mondoId) && omimID != null) {
+                    Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT);
+                    for (Term descendent : descendents) {
+                        omimToMondoMap.forEach((omimID2, mondoIDs2) -> {
+                            for (TermId mondoID2 : mondoIDs2) {
+                                if (mondoID2.equals(descendent.id())) {
+                                    selectedTerms.put(omimID2, mondoID2);
+                                    break;
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        });
+        return selectedTerms;
+    }
+
     public Map<TermId, Double> makeSelectedDiseaseMap(double adjProb) {
         Map<TermId, Double> diseaseMap = new HashMap<>();
         Ontology ontology = optionalMondoResource.getOntology();
@@ -762,31 +823,9 @@ public class MainController {
                 diseaseMap.put(termId, 1.0);
             }
         }
-        HashMap<TermId, TermId> selectedTerms = new HashMap<>();
         mapDataList.removeIf(mapData -> !mapData.isFixed());
-        String name = "";
-//        TreeItem<OntologyTermWrapper> selectedItem = ontologyTreeView.getSelectionModel().getSelectedItem();
         if (selectedTerm != null) {
-//            Term selectedMondoTerm = selectedTerm; //selectedItem.getValue().term;
-            omimToMondoMap.forEach((omimID, mondoIDs) -> {
-                for (TermId mondoID : mondoIDs) {
-                    if (mondoID.equals(selectedTerm.id()) && omimID != null) {
-                        selectedTerms.put(omimID, mondoID);
-                        Set<Term> descendents = getTermRelations(selectedTerm.id(), Relation.DESCENDENT);
-                        for (Term descendent : descendents) {
-                            omimToMondoMap.forEach((omimID2, mondoIDs2) -> {
-                                for (TermId mondoID2 : mondoIDs2) {
-                                    if (mondoID2.equals(descendent.id())) {
-                                        selectedTerms.put(omimID2, mondoID2);
-                                        break;
-                                    }
-                                }
-                            });
-                        }
-//                descendents.forEach(t -> selectedTerms.add(mondoTerm.id()));
-                    }
-                }
-            });
+            HashMap<TermId, TermId> selectedTerms = makeDescendentsMap(selectedTerm.id());
             Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb, mapDataList);
             boolean addNonSelected = true;
             for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
@@ -839,7 +878,7 @@ public class MainController {
         //todo--add number of descendents to HTML
         String content = HpoHtmlPageGenerator.getHTML(term, annotatedDiseases, pretestMap);
         //System.out.print(content);
-        // infoWebEngine=this.infoWebView.getEngine();
+        infoWebEngine=this.infoWebView.getEngine();
         infoWebEngine.loadContent(content);
         infoWebEngine.getLoadWorker().stateProperty().addListener(// ChangeListener<Worker.State>
                 (observableValue, oldState, newState) -> {
