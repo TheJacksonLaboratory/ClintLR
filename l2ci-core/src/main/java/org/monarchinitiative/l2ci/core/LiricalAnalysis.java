@@ -52,7 +52,7 @@ public class LiricalAnalysis {
                 .setHpoVersion(lirical.phenotypeService().hpo().getMetaInfo().getOrDefault("release", "UNKNOWN RELEASE"))
                 .setTranscriptDatabase(pgProperties.getProperty("transcript.database"))
                 .setLiricalPath(pgProperties.getProperty("lirical.data.path"))
-                .setExomiserPath(pgProperties.getProperty("exomiser.variant.path").equals("unset") ? "" : pgProperties.getProperty("exomiser.variant.path"))
+                .setExomiserPath(pgProperties.getProperty("exomiser.variant.path") == null ? "" : pgProperties.getProperty("exomiser.variant.path"))
                 .setAnalysisDate(getTodaysDate())
                 .setSampleName(analysisData.sampleId())
                 .setnGoodQualityVariants(filteringStats.nGoodQualityVariants())
