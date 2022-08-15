@@ -82,7 +82,7 @@ class HpoHtmlPageGenerator {
                   </thead>
                   <tfoot>
                     <tr>
-                      <td colspan="2">More information: <a href="https://mondo.monarchinitiative.org/">Mondo Website</a></td>
+                      <td colspan="2">More information: <a href="https://www.ebi.ac.uk/ols/ontologies/mondo">Mondo Website</a></td>
                     </tr>
                   </tfoot>""".indent(2), Id, diseases.size());
         StringBuilder sb = new StringBuilder();
