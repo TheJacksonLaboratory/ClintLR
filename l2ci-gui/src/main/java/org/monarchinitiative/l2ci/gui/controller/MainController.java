@@ -675,7 +675,7 @@ public class MainController {
         ontologyTreeView.setRoot(root);
         root.getChildren().remove(1, root.getChildren().size());
         TreeItem<OntologyTermWrapper> diseasesTreeItem = root.getChildren().get(0);
-        diseasesTreeItem.getChildren().remove(1, diseasesTreeItem.getChildren().size());
+//        diseasesTreeItem.getChildren().remove(1, diseasesTreeItem.getChildren().size());
         List<TreeItem<OntologyTermWrapper>> mendelianDiseases = diseasesTreeItem.getChildren().get(0).getChildren();
         HashMap<TermId, Integer> nDescendentsMap = new HashMap<>();
         Set<TermId> omimIDs = omimToMondoMap.keySet();
@@ -749,9 +749,9 @@ public class MainController {
                         w = newValue.getValue();
                     }
                     TreeItem<OntologyTermWrapper> item = new OntologyTermTreeItem(w);
+                    selectedTerm = item.getValue().term;
                     pretestMap = makeSelectedDiseaseMap(sliderValue);
                     updateDescription(item);
-                    selectedTerm = item.getValue().term;
                     if (mapDisplay != null) {
                         mapDisplay.updateTable();
                     }
@@ -1038,6 +1038,17 @@ public class MainController {
             if (!new File(phenopacketFile).isFile()) {
                 PopUps.showInfoMessage("Error: Unable to run analysis: no phenopacket present.", "ERROR");
                 logger.info("Unable to run analysis: no phenopacket present.");
+            }
+            String genomeBuild = pgProperties.getProperty("genome.build");
+            String exomiserPath = pgProperties.getProperty("exomiser.variant.path");
+            String bkgFreqPath = pgProperties.getProperty("background.frequency.path");
+            File exomiserFile = new File(exomiserPath);
+            File bkgFreqFile = new File(bkgFreqPath);
+            if (!(exomiserFile.isFile() && exomiserFile.getName().contains(genomeBuild))
+                    || !(bkgFreqFile.isFile() && bkgFreqFile.getName().contains(genomeBuild))) {
+                PopUps.showInfoMessage("Genome build of Exomiser variant or background frequency file does not match the selected genome build (See File -> Show Resources Menu).",
+                        "Warning");
+                return;
             }
             OutputOptions outputOptions = createOutputOptions();
             liricalAnalysis.runAnalysis(preTestMap, phenopacketFile, outputOptions);

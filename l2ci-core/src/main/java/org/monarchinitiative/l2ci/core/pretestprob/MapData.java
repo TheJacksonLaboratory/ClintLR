@@ -46,4 +46,9 @@ public class MapData {
     }
 
     public void setFixed(boolean fixed) { this.isFixed = fixed;}
+
+    @Override
+    public String toString() {
+        return String.format("%s %s %s %.2e %.2f %s", diseaseName,mondoId,omimId,diseaseProb,sliderValue,isFixed);
+    }
 }

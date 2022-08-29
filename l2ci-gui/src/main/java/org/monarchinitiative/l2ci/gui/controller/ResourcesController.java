@@ -166,7 +166,7 @@ public final class ResourcesController {
             File bkgFreqFile = new File(bkgFreqPath);
             if (!(exomiserFile.isFile() && exomiserFile.getName().contains(newVal.toString()))
                     || !(bkgFreqFile.isFile() && bkgFreqFile.getName().contains(newVal.toString()))) {
-                PopUps.showInfoMessage("Genome build of Exomiser variant or background frequency files does not match the selected genome build.", "Warning");
+                PopUps.showInfoMessage("Genome build of Exomiser variant or background frequency file does not match the selected genome build.", "Warning");
             }
         });
         HashMap<TextField, String> textFieldHashMap = new HashMap<>();
