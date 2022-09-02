@@ -17,7 +17,7 @@ public class PretestProbability {
                               List<MapData> mapDataList) {
 
         for (TermId diseaseId : diseaseToBeAdjusted) {
-            diseaseToPretestMap.merge(diseaseId, summand - 1.0, Double::sum);
+            diseaseToPretestMap.merge(diseaseId, summand, Double::sum);
         }
         // Normalize the map
         double mapSum = diseaseToPretestMap.values().stream().reduce(0.0, Double::sum);
