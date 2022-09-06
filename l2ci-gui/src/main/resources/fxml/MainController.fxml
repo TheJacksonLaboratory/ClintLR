@@ -34,8 +34,11 @@
                             <MenuItem onAction="#loadMondoFile" text="Load Local Mondo JSON File" />
                             -->
                             <MenuItem onAction="#showMondoStats" text="Show Mondo Stats" />
-                            <MenuItem onAction="#saveMapOutputFile" text="Save Map to File" />
-                            <MenuItem onAction="#showMapInterface" text="Show Map Interface" />
+                            <Menu text="Probability Map">
+                                <MenuItem onAction="#loadMapOutputFile" text="Load Map from File" />
+                                <MenuItem onAction="#saveMapOutputFile" text="Save Map to File" />
+                                <MenuItem onAction="#showMapInterface" text="Show Map Interface" />
+                            </Menu>
                             <MenuItem mnemonicParsing="false" onAction="#close" text="Close" />
                         </items>
                      </Menu>
