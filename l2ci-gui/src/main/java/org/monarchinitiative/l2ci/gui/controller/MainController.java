@@ -23,7 +23,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.text.Text;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
@@ -35,12 +34,13 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.controlsfx.control.textfield.AutoCompletionBinding;
+import org.controlsfx.control.textfield.TextFields;
 import org.monarchinitiative.l2ci.core.LiricalAnalysis;
 import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.core.io.MondoDescendantsMapFileWriter;
@@ -59,6 +59,7 @@ import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.output.*;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.io.OntologyLoader;
+import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
 import org.monarchinitiative.phenol.ontology.data.Dbxref;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
@@ -347,7 +348,8 @@ public class MainController {
                         makeMondoNDescendantsMap();
                         logger.info("Activating Ontology Tree.");
                         activateOntologyTree();
-                        WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
+                        AutoCompletionBinding<TermId> omimBinding = TextFields.bindAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
+                        omimBinding .prefWidthProperty().bind(autocompleteOmimTextfield.widthProperty());
                         publishMessage("Finished " + taskMessage);
                     } else {
                         StringBuilder msg = new StringBuilder();
@@ -768,7 +770,9 @@ public class MainController {
             ontologyLabelsAndTermIdMap.put(term.getName(), term.id());
             ontologyLabelsAndTermIdMap.put(term.id().getValue(), term.id());
         });
-        WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
+        // TODO - tweak width, #rows
+        AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
+
 
         // show intro message in the infoWebView
         Platform.runLater(() -> {
@@ -786,7 +790,8 @@ public class MainController {
             final Ontology mondo = optionalMondoResource.getOntology();
             Platform.runLater(()->{
                 initTree(mondo, k -> System.out.println("Consumed " + k));
-                WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
+                // TODO - tweak width, #rows
+                AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
                 treeLabel.setText(pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY));
             });
         }

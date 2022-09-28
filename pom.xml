@@ -167,9 +167,13 @@
     <!-- Dependencies used in all modules  -->
     <dependencies>
       <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-logging -->
+<!--      <dependency>-->
+<!--        <groupId>org.springframework.boot</groupId>-->
+<!--        <artifactId>spring-boot-starter-logging</artifactId>-->
+<!--      </dependency>-->
       <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-logging</artifactId>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>

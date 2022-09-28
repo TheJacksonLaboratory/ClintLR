@@ -12,11 +12,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
-import javax.swing.*;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Optional;
 
 @Component
 public class StageInitializer implements ApplicationListener<MainApp.StageReadyEvent> {

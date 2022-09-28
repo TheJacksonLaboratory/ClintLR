@@ -1,7 +1,5 @@
 package org.monarchinitiative.l2ci.core.io;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDiseases;
 import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoader;
@@ -114,13 +112,11 @@ public class DirectIndirectHpoAnnotationParser {
             }
         }
         // When we get here, we transform the sets into an immutable, sorted list
-        ImmutableMap.Builder<TermId, List<HpoDisease>> mapbuilder = new ImmutableMap.Builder<>();
+        Map<TermId, List<HpoDisease>> mapbuilder = new HashMap<>();
         for (TermId key : tempmap.keySet()) {
-            ImmutableList.Builder<HpoDisease> listbuilder = new ImmutableList.Builder<>();
-            listbuilder.addAll(tempmap.get(key));
-            mapbuilder.put(key, listbuilder.build());
+            mapbuilder.put(key, List.copyOf(tempmap.get(key)));
         }
-        this.totalAnnotationMap = mapbuilder.build();
+        this.totalAnnotationMap = Map.copyOf(mapbuilder);
     }
 
 }
