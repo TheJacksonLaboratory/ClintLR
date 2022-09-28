@@ -342,10 +342,27 @@ public class MainController {
                     Ontology hpoOnt = optionalHpoResource.getOntology();
                     boolean hpoaEmpty = optionalHpoaResource.getDirectAnnotMap().isEmpty();
                     if (mondoOnt != null && hpoOnt != null && !hpoaEmpty) {
-                        logger.info("Making Omim to Mondo Map.");
-                        makeOmimMap();
-                        logger.info("Making Mondo descendants Map.");
-                        makeMondoNDescendantsMap();
+                        String homeDir = new File(".").getAbsolutePath();
+                        String[] dir = {homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "omim2mondoMap.txt"};
+                        String path = String.join(File.separator, dir);
+                        File omimMapFile = new File(path);
+                        if (!omimMapFile.isFile()) {
+                            logger.info("Making Omim to Mondo Map.");
+                            makeOmimMap();
+                            saveOmimMapToFile(omimMapFile);
+                        } else {
+                            loadOmimMapFile(omimMapFile);
+                        }
+                        dir = new String[]{homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "mondoNDescMap.txt"};
+                        path = String.join(File.separator, dir);
+                        File mondoNDescMapFile = new File(path);
+                        if (!mondoNDescMapFile.isFile()) {
+                            logger.info("Making Mondo descendants Map.");
+                            makeMondoNDescendantsMap();
+                            saveMondoNDescMapToFile(mondoNDescMapFile);
+                        } else {
+                            loadMondoNDescMapFile(mondoNDescMapFile);
+                        }
                         logger.info("Activating Ontology Tree.");
                         activateOntologyTree();
                         AutoCompletionBinding<TermId> omimBinding = TextFields.bindAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
@@ -377,6 +394,7 @@ public class MainController {
                         liricalButton.setDisable(false);
                         publishMessage("Finished " + taskMessage);
                     } else {
+                        System.out.println(task.getException().toString());
                         publishMessage("Failed " + taskMessage + ". LIRICAL instance is null.", MessageType.ERROR);
                     }
                     window.close();
@@ -822,70 +840,32 @@ public class MainController {
         }
     }
 
-    private void saveOmimMapToFile() {
-        String homeDir = new File(".").getAbsolutePath();
-        String[] dir = {homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "omim2mondoMap.txt"};
-        String path = String.join(File.separator, dir);
-        File file = new File(path);
-        new OmimMapFileWriter(omimToMondoMap, file.getAbsolutePath());
+    private void saveOmimMapToFile(File omimMapFile) {
+        new OmimMapFileWriter(omimToMondoMap, omimMapFile.getAbsolutePath());
     }
 
-    //TO-DO: Rewrite method to load Omim Map
-    private void loadOmimMapFile() {
-        mapDataList.clear();
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Read Map File");
-        File file = fileChooser.showOpenDialog(MainApp.mainStage);
-        if (file != null) {
-            logger.info("Reading Map from " + file.getAbsolutePath());
-            try (InputStream is = Files.newInputStream(file.toPath())) {
-                Set<Double> probSet = new HashSet<>();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                List<String> lines = reader.lines().toList();
-                for (String line : lines) {
-                    String[] lineItems = line.split(",");
-                    if (lineItems[1].contains("Probability")) {
-                        continue;
-                    }
-                    probSet.add(Double.parseDouble(lineItems[1]));
+    private void loadOmimMapFile(File omimMapFile) {
+        logger.info("Reading Omim to Mondo Map from " + omimMapFile.getAbsolutePath());
+        try (InputStream is = Files.newInputStream(omimMapFile.toPath())) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            List<String> lines = reader.lines().toList();
+            for (String line : lines) {
+                List<TermId> mondoList = new ArrayList<>();
+                String[] lineItems = line.split(",");
+                if (lineItems[1].contains("Mondo Terms")) {
+                    continue;
                 }
-                Set<Double> probSorted = probSet.stream().sorted().collect(Collectors.toCollection(LinkedHashSet::new));
-                boolean addNonSelected = true;
-                Ontology ontology = optionalMondoResource.getOntology();
-                for (String line : lines) {
-                    String[] lineItems = line.split(",");
-                    if (lineItems[1].contains("Probability")) {
-                        continue;
-                    }
-                    Double prob = Double.parseDouble(lineItems[1]);
-                    TermId omimID = null;
-                    if (lineItems[0].contains("OMIM:")) {
-                        Term omimTerm = Term.of(lineItems[0], lineItems[0]);
-                        omimID = omimTerm.id();
-                    }
-                    TermId mondoID = null;
-                    if (omimID != null && omimToMondoMap.get(omimID) != null) {
-                        mondoID = omimToMondoMap.get(omimID).get(0);
-                    }
-                    Double prob0 = probSorted.stream().toList().get(0);
-                    if (prob.equals(prob0) && addNonSelected) {
-                        addToMapData(null, null, null, prob, 0.0, false);
-                        addNonSelected = false;
-                    } else if (!prob.equals(prob0)) {
-                        Double sliderValue = prob/prob0 - 1;
-                        addToMapData(ontology, mondoID, omimID, prob, sliderValue, true);
+                for (String item : lineItems) {
+                    if (item.contains("MONDO")) {
+                        mondoList.add(Term.of(item, item).id());
                     }
                 }
-                reader.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
+                TermId omimId = Term.of(lineItems[0], lineItems[0]).id();
+                omimToMondoMap.put(omimId, mondoList);
             }
-        }
-        for (MapData mapData : mapDataList) {
-            if (mapData.getMondoId() != null) {
-                goToTerm(mapData.getMondoId());
-                break;
-            }
+            reader.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -941,12 +921,27 @@ public class MainController {
         }
     }
 
-    private void saveMondoNDescMapToFile() {
-        String homeDir = new File(".").getAbsolutePath();
-        String[] dir = {homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "mondoNDescMap.txt"};
-        String path = String.join(File.separator, dir);
-        File file = new File(path);
-        new MondoDescendantsMapFileWriter(mondoNDescendantsMap, file.getAbsolutePath());
+    private void saveMondoNDescMapToFile(File mondoNDescMapFile) {
+        new MondoDescendantsMapFileWriter(mondoNDescendantsMap, mondoNDescMapFile.getAbsolutePath());
+    }
+
+    private void loadMondoNDescMapFile(File mondoNDescMapFile) {
+        logger.info("Reading Mondo No. Descendants Map from " + mondoNDescMapFile.getAbsolutePath());
+        try (InputStream is = Files.newInputStream(mondoNDescMapFile.toPath())) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            List<String> lines = reader.lines().toList();
+            for (String line : lines) {
+                String[] lineItems = line.split(",");
+                if (lineItems[1].contains("Descendants")) {
+                    continue;
+                }
+                TermId omimId = Term.of(lineItems[0], lineItems[0]).id();
+                mondoNDescendantsMap.put(omimId, Integer.parseInt(lineItems[1]));
+            }
+            reader.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     private HashMap<TermId, TermId> makeDescendentsMap(TermId mondoId, Set<TermId> omimIDs) {

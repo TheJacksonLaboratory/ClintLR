@@ -29,7 +29,10 @@ public class OmimMapFileWriter {
             Set<Map.Entry<TermId, List<TermId>>> entries = map.entrySet();
             for (Map.Entry e : entries) {
                 printer.print(e.getKey());
-                printer.print(e.getValue());
+                List<TermId> mondoIds = (List<TermId>) e.getValue();
+                for (TermId mondoId : mondoIds) {
+                    printer.print(mondoId);
+                }
                 printer.println();
             }
             writer.flush();
