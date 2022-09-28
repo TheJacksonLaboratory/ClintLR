@@ -133,7 +133,7 @@ public final class StartupTask extends Task<Void> {
                 } else {
                     setOntology(type, null, "");
                 }
-                LOGGER.info("Finished loading ontology resources.");
+                LOGGER.info("Finished loading " + type + " ontology.");
             } else {
                 String msg = "Need to set path to " + type + " file (See File -> Show Resources menu)";
                 updateMessage(msg);

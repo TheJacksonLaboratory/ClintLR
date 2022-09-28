@@ -12,7 +12,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.JavaFXBuilderFactory;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -44,6 +43,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang.ArrayUtils;
 import org.monarchinitiative.l2ci.core.LiricalAnalysis;
 import org.monarchinitiative.l2ci.core.Relation;
+import org.monarchinitiative.l2ci.core.io.MondoDescendantsMapFileWriter;
+import org.monarchinitiative.l2ci.core.io.OmimMapFileWriter;
 import org.monarchinitiative.l2ci.core.pretestprob.MapData;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.io.MapFileWriter;
@@ -166,6 +167,8 @@ public class MainController {
 
 
     private final Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
+
+    private final Map<TermId, Integer> mondoNDescendantsMap = new HashMap<>();
 
     public static double sliderValue;
 
@@ -338,7 +341,11 @@ public class MainController {
                     Ontology hpoOnt = optionalHpoResource.getOntology();
                     boolean hpoaEmpty = optionalHpoaResource.getDirectAnnotMap().isEmpty();
                     if (mondoOnt != null && hpoOnt != null && !hpoaEmpty) {
+                        logger.info("Making Omim to Mondo Map.");
                         makeOmimMap();
+                        logger.info("Making Mondo descendants Map.");
+                        makeMondoNDescendantsMap();
+                        logger.info("Activating Ontology Tree.");
                         activateOntologyTree();
                         WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
                         publishMessage("Finished " + taskMessage);
@@ -492,7 +499,7 @@ public class MainController {
         try {
             ResourcesController controller = new ResourcesController(optionalHpoResource, optionalHpoaResource,
                     optionalMondoResource, pgProperties, executor);
-            Parent parent = FXMLLoader.load(Objects.requireNonNull(ResourcesController.class.getResource("/fxml/ResourcesView.fxml")),
+            Parent parent = FXMLLoader.load(Objects.requireNonNull(ResourcesController.class.getResource("/org/monarchinitiative/l2ci/gui/controller/ResourcesView.fxml")),
                     null, new JavaFXBuilderFactory(), clazz -> controller);
             Stage stage = new Stage();
             stage.setTitle("Initialize L4CI resources");
@@ -678,7 +685,6 @@ public class MainController {
         TreeItem<OntologyTermWrapper> diseasesTreeItem = root.getChildren().get(0);
 //        diseasesTreeItem.getChildren().remove(1, diseasesTreeItem.getChildren().size());
         List<TreeItem<OntologyTermWrapper>> mendelianDiseases = diseasesTreeItem.getChildren().get(0).getChildren();
-        HashMap<TermId, Integer> nDescendentsMap = new HashMap<>();
         Set<TermId> omimIDs = omimToMondoMap.keySet();
 //        for (TreeItem<OntologyTermWrapper> item : mendelianDiseases) {
 //            Term mondoTerm = item.getValue().term;
@@ -714,19 +720,19 @@ public class MainController {
                 if (!empty || item != null) {
                     Term mondoTerm = item.term;
                     setText(mondoTerm.getName());
+                    if (mondoNDescendantsMap.get(mondoTerm.id()) != null) {
+                        int nDescendants = mondoNDescendantsMap.get(mondoTerm.id()) - 1;
+                        if (nDescendants > 0) {
+                            setText("(" + nDescendants + ") " + mondoTerm.getName());
+                        }
+                    }
                     if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
                         updateTreeIcons(item, omimPSIcon, omimPSSelectedIcon);
-                        int nDescendents = getNDescendents(mondoTerm.id(), omimIDs)-1;
-                        if (nDescendents > 0) {
-                            setText("(" + nDescendents + ") " + mondoTerm.getName());
-                        }
+//                        int nDescendents = getNDescendents(mondoTerm.id(), omimIDs)-1;
                     } else if (mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
                         if (!mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
                             updateTreeIcons(item, omimIcon, selectedIcon);
-                            int nDescendents = getNDescendents(mondoTerm.id(), omimIDs)-1;
-                            if (nDescendents > 0) {
-                                setText("(" + nDescendents + ") " + mondoTerm.getName());
-                            }
+//                            int nDescendents = getNDescendents(mondoTerm.id(), omimIDs)-1;
                         } else {
                             updateTreeIcons(item, null, null);
                         }
@@ -811,6 +817,133 @@ public class MainController {
         }
     }
 
+    private void saveOmimMapToFile() {
+        String homeDir = new File(".").getAbsolutePath();
+        String[] dir = {homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "omim2mondoMap.txt"};
+        String path = String.join(File.separator, dir);
+        File file = new File(path);
+        new OmimMapFileWriter(omimToMondoMap, file.getAbsolutePath());
+    }
+
+    //TO-DO: Rewrite method to load Omim Map
+    private void loadOmimMapFile() {
+        mapDataList.clear();
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Read Map File");
+        File file = fileChooser.showOpenDialog(MainApp.mainStage);
+        if (file != null) {
+            logger.info("Reading Map from " + file.getAbsolutePath());
+            try (InputStream is = Files.newInputStream(file.toPath())) {
+                Set<Double> probSet = new HashSet<>();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                List<String> lines = reader.lines().toList();
+                for (String line : lines) {
+                    String[] lineItems = line.split(",");
+                    if (lineItems[1].contains("Probability")) {
+                        continue;
+                    }
+                    probSet.add(Double.parseDouble(lineItems[1]));
+                }
+                Set<Double> probSorted = probSet.stream().sorted().collect(Collectors.toCollection(LinkedHashSet::new));
+                boolean addNonSelected = true;
+                Ontology ontology = optionalMondoResource.getOntology();
+                for (String line : lines) {
+                    String[] lineItems = line.split(",");
+                    if (lineItems[1].contains("Probability")) {
+                        continue;
+                    }
+                    Double prob = Double.parseDouble(lineItems[1]);
+                    TermId omimID = null;
+                    if (lineItems[0].contains("OMIM:")) {
+                        Term omimTerm = Term.of(lineItems[0], lineItems[0]);
+                        omimID = omimTerm.id();
+                    }
+                    TermId mondoID = null;
+                    if (omimID != null && omimToMondoMap.get(omimID) != null) {
+                        mondoID = omimToMondoMap.get(omimID).get(0);
+                    }
+                    Double prob0 = probSorted.stream().toList().get(0);
+                    if (prob.equals(prob0) && addNonSelected) {
+                        addToMapData(null, null, null, prob, 0.0, false);
+                        addNonSelected = false;
+                    } else if (!prob.equals(prob0)) {
+                        Double sliderValue = prob/prob0 - 1;
+                        addToMapData(ontology, mondoID, omimID, prob, sliderValue, true);
+                    }
+                }
+                reader.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+        for (MapData mapData : mapDataList) {
+            if (mapData.getMondoId() != null) {
+                goToTerm(mapData.getMondoId());
+                break;
+            }
+        }
+    }
+
+    private void makeMondoNDescendantsMap() {
+        Ontology ontology = optionalMondoResource.getOntology();
+        List<Term> mondoTerms = ontology.getTerms().stream().toList();
+        Set<TermId> omimIDs = omimToMondoMap.keySet();
+        String[] probMondos = {"MONDO:0000001","MONDO:0000252","MONDO:0000257","MONDO:0000432","MONDO:0000888","MONDO:0000916", "MONDO:0001517","MONDO:0001673",
+                "MONDO:0002051", "MONDO:0002081","MONDO:0002269","MONDO:0002320","MONDO:0002334","MONDO:0002525","MONDO:0002602", "MONDO:0003847","MONDO:0003939",
+                "MONDO:0004095","MONDO:0004335","MONDO:0004805", "MONDO:0005020", "MONDO:0005027","MONDO:0005046","MONDO:0005062","MONDO:0005066","MONDO:0005070","MONDO:0005071","MONDO:0005093",
+                "MONDO:0005157","MONDO:0005218","MONDO:0005550","MONDO:0005559","MONDO:0005560","MONDO:0005570","MONDO:0005579","MONDO:0006547", "MONDO:0008945","MONDO:0011876", "MONDO:0013598",
+                "MONDO:0015286","MONDO:0015650","MONDO:0015757","MONDO:0019044","MONDO:0019052","MONDO:0019117","MONDO:0020573","MONDO:0020579","MONDO:0020683", "MONDO:0021125","MONDO:0021152",
+                "MONDO:0021166","MONDO:0024237", "MONDO:0042489","MONDO:0043424","MONDO:0044881", "MONDO:0100062","MONDO:0100079","MONDO:0100135","MONDO:0100455", "MONDO:0700092"};
+        Integer[] probMondoNDesc = {1,27,27,4,54,27,27,16,2582,1190,55,1088,253,353,3853,1,940,28,731,116,266,631,1109,54,4433,1640,13134,2006,87,5,222,971,2562,1092,115,
+                                    2,1,2,1,311,336,59,84,2202,4460,1,55,71,1,1,226,553,1,29,133,98,1,1,20,237};
+        Map<String, Integer> probMondoDescMap = new HashMap<>();
+        for (int t=0; t<probMondos.length; t++) {
+            probMondoDescMap.put(probMondos[t], probMondoNDesc[t]);
+        }
+
+        for (Term mondoTerm : mondoTerms) {
+            TermId mondoID = mondoTerm.id();
+//            System.out.println("Mondo term " + mondoTerms.indexOf(mondoTerm) + " of " + mondoTerms.size());
+            boolean doRefs = true;
+            if (probMondoDescMap.containsKey(mondoID.toString())) {// && !mondoID.toString().contains("MONDO:0005071")) {
+//                System.out.println(mondoID + ": " + mondoTerm.getName());
+//                System.out.println(mondoID + " idx = " + probMondos.indexOf(mondoID.toString()));
+                mondoNDescendantsMap.put(mondoID, probMondoDescMap.get(mondoID.toString()));
+                doRefs = false;
+            }
+            if (doRefs) {
+//                System.out.println(mondoTerm.id());
+                List<Dbxref> mondoTermXRefs = mondoTerm.getXrefs();
+                for (Dbxref ref : mondoTermXRefs) {
+
+                    Set<Term> descendents = getTermRelations(mondoID, Relation.DESCENDENT);
+                    int nDescendents = 0;
+                    if (descendents.size() > 1) {
+                        for (Term descendent : descendents) {
+                            for (TermId omimID2 : omimIDs) {
+                                List<TermId> mondoIDs2 = omimToMondoMap.get(omimID2);
+                                if (mondoIDs2.contains(descendent.id())) {
+                                    nDescendents++;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    mondoNDescendantsMap.put(mondoID, nDescendents);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void saveMondoNDescMapToFile() {
+        String homeDir = new File(".").getAbsolutePath();
+        String[] dir = {homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "mondoNDescMap.txt"};
+        String path = String.join(File.separator, dir);
+        File file = new File(path);
+        new MondoDescendantsMapFileWriter(mondoNDescendantsMap, file.getAbsolutePath());
+    }
+
     private HashMap<TermId, TermId> makeDescendentsMap(TermId mondoId, Set<TermId> omimIDs) {
         HashMap<TermId, TermId> selectedTerms = new HashMap<>();
         for (TermId omimID : omimIDs) {
@@ -831,27 +964,6 @@ public class MainController {
         return selectedTerms;
     }
 
-    private int getNDescendents(TermId mondoId, Set<TermId> omimIDs) {
-        int nDescendents = 0;
-        for (TermId omimID : omimIDs) {
-            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
-            if (mondoIDs.contains(mondoId)) {
-                Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT);
-                if (descendents.size() > 1) {
-                    for (Term descendent : descendents) {
-                        for (TermId omimID2 : omimIDs) {
-                            List<TermId> mondoIDs2 = omimToMondoMap.get(omimID2);
-                            if (mondoIDs2.contains(descendent.id())) {
-                                nDescendents++;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return nDescendents;
-    }
 
     public Map<TermId, Double> makeSelectedDiseaseMap(double adjProb) {
         Map<TermId, Double> diseaseMap = new HashMap<>();

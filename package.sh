@@ -89,15 +89,17 @@ function build_for_class_path() {
     # setup OSX CLI
     jpackage --name "${APP_NAME}" \
     --input "${PACKAGE_DIR}" \
+    --type "pkg" \
     --main-jar "${JAR_NAME}" \
-    --main-class "${MAIN_CLASS}" \
     --app-version "${VERSION}" \
     --description "${DESCRIPTION}" \
     --mac-package-name "${CMD_NAME}" \
     --vendor "${VENDOR}" \
-    --copyright "${COPYRIGHT}"
+    --copyright "${COPYRIGHT}" \
+    --verbose
 #    --license-file LICENSE \
 #    --icon "${ICON}.icns" \
+#    --main-class "${MAIN_CLASS}" \
   elif [[ "$PLATFORM" == "Windows" ]]; then
      # setup OSX CLI
         jpackage --name "${APP_NAME}" \
@@ -128,7 +130,7 @@ PACKAGE="classpath"
 
 # 1. Build
 printf "Building l4ci-gui\n"
-mvn clean package
+#mvn clean package
 
 
 # 2. Prepare packaging folder

@@ -153,6 +153,12 @@
           <groupId>org.monarchinitiative.lirical</groupId>
           <artifactId>lirical-configuration</artifactId>
           <version>${lirical.version}</version>
+          <exclusions>
+            <exclusion>
+              <groupId>commons-logging</groupId>
+              <artifactId>commons-logging</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
 
       </dependencies>
