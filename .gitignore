@@ -12,6 +12,8 @@
 
 # Package Files #
 *.jar
+# But not the Maven Wrapper
+!maven-wrapper.jar
 *.war
 *.nar
 *.ear
