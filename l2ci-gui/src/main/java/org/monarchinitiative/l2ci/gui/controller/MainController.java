@@ -862,6 +862,7 @@ public class MainController {
                 }
                 TermId omimId = Term.of(lineItems[0], lineItems[0]).id();
                 omimToMondoMap.put(omimId, mondoList);
+                omimLabelsAndMondoTermIdMap.put(omimId.toString(), mondoList.get(0));
             }
             reader.close();
         } catch (IOException ex) {
