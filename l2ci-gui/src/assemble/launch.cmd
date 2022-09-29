@@ -1,7 +1,7 @@
 @ECHO OFF
 
 :: ================================================================================================================== ::
-::            Launch L4CI app either by double-clicking on the batch script script in the file browser.               ::
+::                  Launch L4CI app by double-clicking on the batch script in the file browser.                       ::
 :: ================================================================================================================== ::
 
 %JAVA_HOME%\bin\java^
