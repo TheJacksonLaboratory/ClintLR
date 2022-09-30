@@ -12,7 +12,7 @@ the packaging must be done on Linux, using the Linux JDK.
 
 Run the following to create a deb installer (for Debian, Ubuntu, and related systems).
 
-```aidl
+```shell
 bash package.sh
 ```
 
@@ -20,7 +20,7 @@ This will create a deb file called ``l4ci-gui_0.0.1_amd64.deb``. On some
 systems, the file can be installed with a right-click. From the command line,
 the following installs the package
 
-```aidl
+```shell
 sudo dpkg -i l4ci-gui_0.0.1_amd64.deb
 ```
 
@@ -28,18 +28,18 @@ This command will have the effect of installing the application in ``/opt/l4ci-g
 The application will not be on the system path unless you add it manually, but you should be able to start the app via
 the ``Show Applications`` or ``Main Menu`` apps. Alternatively, the app can be started
 with
-```aidl
+```shell
  /opt/l4ci-gui/bin/l4ci-gui 
 ```
 to remove the app, enter the following command
-```aidl
+```shell
 sudo dpkg remove l4ci-gui_0.0.1_amd64.deb
 ```
 
 ## Mac
 
 The command
-```aidl
+```shell
 bash package.sh
 ```
 will generate a file called ``l4ci-gui-0.0.1.dmg``. This file can

@@ -76,8 +76,31 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <!-- As of now, there are binary & non-binary data files in the resources.
+                    We must configure the filtering to exclude the resource files.
+                    We should NOT bundle the resources in the JAR, the user should be instructed to download the resources.
+                    This configuration stays here until the download feature is implemented.  -->
+                    <!-- TODO - remove after the data are removed from resources. -->
+                    <nonFilteredFileExtensions>
 
+                        <nonFilteredFileExtension>ser</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>json</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>hpoa</nonFilteredFileExtension>
+                        <nonFilteredFileExtension>tsv</nonFilteredFileExtension>
+                    </nonFilteredFileExtensions>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
