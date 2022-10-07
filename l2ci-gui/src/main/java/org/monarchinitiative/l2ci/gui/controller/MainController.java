@@ -688,18 +688,6 @@ public class MainController {
         TreeItem<OntologyTermWrapper> diseasesTreeItem = root.getChildren().get(0);
 //        diseasesTreeItem.getChildren().remove(1, diseasesTreeItem.getChildren().size());
         List<TreeItem<OntologyTermWrapper>> mendelianDiseases = diseasesTreeItem.getChildren().get(0).getChildren();
-        Set<TermId> omimIDs = omimToMondoMap.keySet();
-//        for (TreeItem<OntologyTermWrapper> item : mendelianDiseases) {
-//            Term mondoTerm = item.getValue().term;
-//            if (!mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty() ||
-//                    !mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
-//                int nDescendents = getNDescendents(mondoTerm.id(), omimIDs);
-//                if (nDescendents > 1) {
-//                    nDescendentsMap.put(mondoTerm.id(), nDescendents);
-//                    System.out.println(nDescendentsMap.size() + ": " + nDescendentsMap.get(mondoTerm.id()));
-//                }
-//            }
-//        }
         ontologyTreeView.setCellFactory(tv -> new TreeCell<OntologyTermWrapper>() {
             private void updateTreeIcons(OntologyTermWrapper item, ImageView icon1, ImageView icon2) {
                 setGraphic(icon1);
@@ -723,19 +711,21 @@ public class MainController {
                 if (!empty || item != null) {
                     Term mondoTerm = item.term;
                     setText(mondoTerm.getName());
+                    int nDescendants = 0;
                     if (mondoNDescendantsMap.get(mondoTerm.id()) != null) {
-                        int nDescendants = mondoNDescendantsMap.get(mondoTerm.id()) - 1;
+                        nDescendants = mondoNDescendantsMap.get(mondoTerm.id());
                         if (nDescendants > 0) {
                             setText("(" + nDescendants + ") " + mondoTerm.getName());
                         }
                     }
                     if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
                         updateTreeIcons(item, omimPSIcon, omimPSSelectedIcon);
-//                        int nDescendents = getNDescendents(mondoTerm.id(), omimIDs)-1;
                     } else if (mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
                         if (!mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
                             updateTreeIcons(item, omimIcon, selectedIcon);
-//                            int nDescendents = getNDescendents(mondoTerm.id(), omimIDs)-1;
+                            if (nDescendants > 1) {
+                                setText("(" + (nDescendants-1) + ") " + mondoTerm.getName());
+                            }
                         } else {
                             updateTreeIcons(item, null, null);
                         }
