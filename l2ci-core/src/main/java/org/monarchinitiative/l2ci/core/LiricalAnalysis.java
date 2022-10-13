@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
+import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbabilities;
 import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
 import org.monarchinitiative.lirical.core.io.VariantParser;
 import org.monarchinitiative.lirical.core.io.VariantParserFactory;
@@ -41,8 +42,8 @@ public class LiricalAnalysis {
         this.pgProperties = pgProperties;
     }
 
-    public void runAnalysis(Map<TermId, Double> preTestMap, String phenopacketFile, OutputOptions outputOptions) throws Exception {
-        AnalysisData analysisData = prepareAnalysisData(lirical, phenopacketFile);
+    public void runAnalysis(Map<TermId, Double> preTestMap, String phenopacketFile, String vcfFile, OutputOptions outputOptions) throws Exception {
+        AnalysisData analysisData = prepareAnalysisData(lirical, phenopacketFile, vcfFile);
         AnalysisOptions analysisOptions = AnalysisOptions.of(false, PretestDiseaseProbability.of(preTestMap));
         LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
         AnalysisResults results = analysisRunner.run(analysisData, analysisOptions);
@@ -66,7 +67,7 @@ public class LiricalAnalysis {
                 .process(outputOptions);
     }
 
-    protected AnalysisData prepareAnalysisData(Lirical lirical, String phenopacketFile) throws Exception {
+    protected AnalysisData prepareAnalysisData(Lirical lirical, String phenopacketFile, String vcfFile) throws Exception {
         Path phenopacketPath = Path.of(phenopacketFile);
         logger.info("Reading phenopacket from {}.", phenopacketPath.toAbsolutePath());
 
@@ -95,7 +96,11 @@ public class LiricalAnalysis {
 
         // Read VCF file.
         GenesAndGenotypes genes = GenesAndGenotypes.empty();
-        Path vcfPath = data.getVcfPath().orElse(null);
+//        Path vcfPath = data.getVcfPath().orElse(null);
+        Path vcfPath = null;
+        if (new File(vcfFile).isFile()) {
+            vcfPath = Path.of(vcfFile);
+        }
         String sampleId = data.getSampleId();
         if (vcfPath != null && lirical.variantParserFactory().isPresent()) {
             genes = readVariantsFromVcfFile(sampleId, vcfPath, lirical.variantParserFactory().get());
@@ -105,7 +110,7 @@ public class LiricalAnalysis {
         return AnalysisData.of(sampleId, data.getAge().orElse(null), data.getSex().orElse(null), presentTerms, excludedTerms, genes);
     }
 
-    protected static GenesAndGenotypes readVariantsFromVcfFile(String sampleId,
+    protected GenesAndGenotypes readVariantsFromVcfFile(String sampleId,
                                                                Path vcfPath,
                                                                VariantParserFactory parserFactory) throws LiricalParseException {
         if (parserFactory == null) {
@@ -114,8 +119,8 @@ public class LiricalAnalysis {
         }
         try (VariantParser variantParser = parserFactory.forPath(vcfPath)) {
             // Ensure the VCF file contains the sample
-            if (!variantParser.sampleNames().contains(sampleId))
-                throw new LiricalParseException("The sample " + sampleId + " is not present in VCF at '" + vcfPath.toAbsolutePath() + '\'');
+//            if (!variantParser.sampleNames().contains(sampleId))
+//                throw new LiricalParseException("The sample " + sampleId + " is not present in VCF at '" + vcfPath.toAbsolutePath() + '\'');
             logger.debug("Found sample {} in the VCF file at {}", sampleId, vcfPath.toAbsolutePath());
 
             // Read variants
