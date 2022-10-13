@@ -229,9 +229,9 @@
                                     <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
                                  </HBox.margin>
                               </Button>
-                              <Button fx:id="liricalButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#liricalButtonAction" styleClass="Button" stylesheets="@style.css" text="Run LIRICAL" textOverrun="CLIP">
+                              <Button fx:id="vcfButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#vcfButtonAction" styleClass="Button" stylesheets="@style.css" text="Load VCF" textOverrun="CLIP">
                                  <tooltip>
-                                    <Tooltip text="Run LIRICAL" />
+                                    <Tooltip text="Load VCF" />
                                  </tooltip>
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
@@ -239,6 +239,14 @@
                               </Button>
                            </children>
                         </HBox>
+                         <Button fx:id="liricalButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#liricalButtonAction" styleClass="Button" stylesheets="@style.css" text="Run LIRICAL" textOverrun="CLIP">
+                             <tooltip>
+                                 <Tooltip text="Run LIRICAL" />
+                             </tooltip>
+                             <HBox.margin>
+                                 <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
+                             </HBox.margin>
+                         </Button>
                      </children>
                   </VBox>
                </children>
@@ -256,6 +264,19 @@
                   </Label>
                </children>
             </HBox>
+                  <HBox>
+                      <children>
+                          <Label minWidth="80.0" text="Background VCF: ">
+                              <HBox.margin>
+                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                              </HBox.margin></Label>
+                          <Label fx:id="vcfLabel" minWidth="300.0" >
+                              <HBox.margin>
+                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                              </HBox.margin>
+                          </Label>
+                      </children>
+                  </HBox>
                   <HBox>
                <Label minWidth="50.0" text="Ontology File: ">
                   <HBox.margin>

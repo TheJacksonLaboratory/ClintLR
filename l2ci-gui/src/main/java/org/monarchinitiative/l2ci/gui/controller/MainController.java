@@ -43,8 +43,6 @@ import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.controlsfx.control.textfield.TextFields;
 import org.monarchinitiative.l2ci.core.LiricalAnalysis;
 import org.monarchinitiative.l2ci.core.Relation;
-import org.monarchinitiative.l2ci.core.io.MondoDescendantsMapFileWriter;
-import org.monarchinitiative.l2ci.core.io.OmimMapFileWriter;
 import org.monarchinitiative.l2ci.core.pretestprob.MapData;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.io.MapFileWriter;
@@ -59,8 +57,6 @@ import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.output.*;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
-import org.monarchinitiative.phenol.ontology.data.Dbxref;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -171,6 +167,8 @@ public class MainController {
 
     public final Map<TermId, Integer> mondoNDescendantsMap = new HashMap<>();
 
+    public final Map<TermId, Map<TermId, TermId>> mondoDescendantsMap = new HashMap<>();
+
     public static double sliderValue;
 
     private Map<TermId, Double> pretestMap;
@@ -181,6 +179,8 @@ public class MainController {
 
     @FXML
     private Label phenopacketLabel;
+    @FXML
+    private Label vcfLabel;
 
     private Image redIcon;
 
@@ -724,7 +724,7 @@ public class MainController {
                         if (!mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
                             updateTreeIcons(item, omimIcon, selectedIcon);
                             if (nDescendants > 1) {
-                                setText("(" + (nDescendants-1) + ") " + mondoTerm.getName());
+                                setText("(" + nDescendants + ") " + mondoTerm.getName());
                             }
                         } else {
                             updateTreeIcons(item, null, null);
@@ -795,8 +795,8 @@ public class MainController {
     private HashMap<TermId, TermId> makeDescendentsMap(TermId mondoId, Set<TermId> omimIDs) {
         HashMap<TermId, TermId> selectedTerms = new HashMap<>();
         for (TermId omimID : omimIDs) {
-            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
-            if (mondoIDs.contains(mondoId)) {
+//            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
+//            if (mondoIDs.contains(mondoId)) {
                 Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT);
                 for (Term descendent : descendents) {
                     for (TermId omimID2 : omimIDs) {
@@ -807,7 +807,7 @@ public class MainController {
                         }
                     }
                 }
-            }
+//            }
         }
         return selectedTerms;
     }
@@ -831,7 +831,7 @@ public class MainController {
         mapDataList.removeIf(mapData -> !mapData.isFixed());
         Set<TermId> omimIDs = omimToMondoMap.keySet();
         if (selectedTerm != null) {
-            HashMap<TermId, TermId> selectedTerms = makeDescendentsMap(selectedTerm.id(), omimIDs);
+            Map<TermId, TermId> selectedTerms = mondoDescendantsMap.get(selectedTerm.id()).isEmpty() ? makeDescendentsMap(selectedTerm.id(), omimIDs) : mondoDescendantsMap.get(selectedTerm.id());
             Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb, mapDataList);
             boolean addNonSelected = true;
             for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
@@ -1018,6 +1018,17 @@ public class MainController {
         }
     }
 
+    public void vcfButtonAction() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose Background VCF File");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Background VCF File", "*.vcf"));
+        Stage stage = MainApp.mainStage;
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            vcfLabel.setText(file.getAbsolutePath());
+        }
+    }
+
     private void updateLimits(Slider slider, double min, double max) {
         slider.setMin(min);
         slider.setMax(max);
@@ -1060,6 +1071,7 @@ public class MainController {
         if (selectedTerm != null) {
             Map<TermId, Double> preTestMap = makeSelectedDiseaseMap(sliderValue);
             String phenopacketFile = phenopacketLabel.getText();
+            String vcfFile = vcfLabel.getText();
             if (!new File(phenopacketFile).isFile()) {
                 PopUps.showInfoMessage("Error: Unable to run analysis: no phenopacket present.", "ERROR");
                 logger.info("Unable to run analysis: no phenopacket present.");
@@ -1076,7 +1088,7 @@ public class MainController {
                 return;
             }
             OutputOptions outputOptions = createOutputOptions();
-            liricalAnalysis.runAnalysis(preTestMap, phenopacketFile, outputOptions);
+            liricalAnalysis.runAnalysis(preTestMap, phenopacketFile, vcfFile, outputOptions);
             String outFileName = outputOptions.prefix() + "." + outputOptions.outputFormats().iterator().next().name().toLowerCase();
             File outFile = new File(String.join(File.separator, outputOptions.outputDirectory().toString(), outFileName));
             if (outFile.isFile()) {

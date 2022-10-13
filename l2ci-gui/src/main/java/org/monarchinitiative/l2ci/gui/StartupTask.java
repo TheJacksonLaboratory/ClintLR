@@ -4,6 +4,7 @@ import javafx.concurrent.Task;
 import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.l2ci.core.io.MondoDescendantsMapFileWriter;
+import org.monarchinitiative.l2ci.core.io.MondoNDescendantsMapFileWriter;
 import org.monarchinitiative.l2ci.core.io.OmimMapFileWriter;
 import org.monarchinitiative.l2ci.gui.controller.MainController;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
@@ -19,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -154,15 +154,20 @@ public final class StartupTask extends Task<Void> {
             loadOmimMapFile(omimMapFile);
         }
         updateProgress(0.8, 1);
-        dir = new String[]{homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "mondoNDescMap.txt"};
+        dir = new String[]{homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "mondoDescMap.txt"};
         path = String.join(File.separator, dir);
-        File mondoNDescMapFile = new File(path);
-        if (!mondoNDescMapFile.isFile()) {
+        String[] nDir = new String[]{homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "mondoNDescMap.txt"};
+        String nPath = String.join(File.separator, nDir);
+        File mondoDescMapFile = new File(path);
+        File mondoNDescMapFile = new File(nPath);
+        if (!mondoDescMapFile.isFile()) {
             String msg = "Making Mondo descendants Map.";
             updateMessage(msg);
-            makeMondoNDescendantsMap();
+            makeMondoDescendantsMaps();
+            saveMondoDescMapToFile(mondoDescMapFile);
             saveMondoNDescMapToFile(mondoNDescMapFile);
         } else {
+            loadMondoDescMapFile(mondoDescMapFile);
             loadMondoNDescMapFile(mondoNDescMapFile);
         }
         updateProgress(1, 1);
@@ -242,7 +247,7 @@ public final class StartupTask extends Task<Void> {
         }
     }
 
-    private void makeMondoNDescendantsMap() {
+    private void makeMondoDescendantsMaps() {
         Ontology ontology = optionalMondoResource.getOntology();
         List<Term> mondoTerms = ontology.getTerms().stream().toList();
         Set<TermId> omimIDs = mainController.omimToMondoMap.keySet();
@@ -260,12 +265,10 @@ public final class StartupTask extends Task<Void> {
         }
 
         for (Term mondoTerm : mondoTerms) {
+            Map<TermId, TermId> selectedTerms = new HashMap<>();
             TermId mondoID = mondoTerm.id();
-//            System.out.println("Mondo term " + mondoTerms.indexOf(mondoTerm) + " of " + mondoTerms.size());
             boolean doRefs = true;
-            if (probMondoDescMap.containsKey(mondoID.toString())) {// && !mondoID.toString().contains("MONDO:0005071")) {
-//                System.out.println(mondoID + ": " + mondoTerm.getName());
-//                System.out.println(mondoID + " idx = " + probMondos.indexOf(mondoID.toString()));
+            if (probMondoDescMap.containsKey(mondoID.toString())) {
                 mainController.mondoNDescendantsMap.put(mondoID, probMondoDescMap.get(mondoID.toString()));
                 doRefs = false;
             }
@@ -273,17 +276,17 @@ public final class StartupTask extends Task<Void> {
 //                System.out.println(mondoTerm.id());
                 List<Dbxref> mondoTermXRefs = mondoTerm.getXrefs();
                 for (Dbxref ref : mondoTermXRefs) {
-
                     Set<Term> descendents = mainController.getTermRelations(mondoID, Relation.DESCENDENT);
                     int nDescendents = 0;
-                    if (descendents.size() > 1) {
-                        for (Term descendent : descendents) {
-                            for (TermId omimID2 : omimIDs) {
-                                List<TermId> mondoIDs2 = mainController.omimToMondoMap.get(omimID2);
-                                if (mondoIDs2.contains(descendent.id())) {
+                    for (Term descendent : descendents) {
+                        for (TermId omimID : omimIDs) {
+                            List<TermId> mondoIDs = mainController.omimToMondoMap.get(omimID);
+                            if (mondoIDs.contains(descendent.id())) {
+                                selectedTerms.put(omimID, descendent.id());
+                                if (!descendent.id().equals(mondoID)) {
                                     nDescendents++;
-                                    break;
                                 }
+                                break;
                             }
                         }
                     }
@@ -291,11 +294,47 @@ public final class StartupTask extends Task<Void> {
                     break;
                 }
             }
+            mainController.mondoDescendantsMap.put(mondoID, selectedTerms);
+        }
+    }
+
+    private void saveMondoDescMapToFile(File mondoDescMapFile) {
+        new MondoDescendantsMapFileWriter(mainController.mondoDescendantsMap, mondoDescMapFile.getAbsolutePath());
+    }
+
+    private void loadMondoDescMapFile(File mondoDescMapFile) {
+        LOGGER.info("Reading Mondo Descendants Map from " + mondoDescMapFile.getAbsolutePath());
+        try (InputStream is = Files.newInputStream(mondoDescMapFile.toPath())) {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            List<String> lines = reader.lines().toList();
+            for (String line : lines) {
+                if (line.contains("Descendants")) {
+                    continue;
+                }
+                Map<TermId, TermId> descMap = new HashMap<>();
+                String[] lineItems = line.split(",");
+                if (lineItems.length == 0) {
+                    lineItems = new String[]{line};
+                }
+                for (String item : lineItems) {
+                    if (item.contains("OMIM") & item.contains("MONDO")) {
+                        String[] itemSplit = item.split(": ");
+                        Term omimTerm = Term.of(itemSplit[0], itemSplit[0]);
+                        Term mondoTerm = Term.of(itemSplit[1], itemSplit[1]);
+                        descMap.put(omimTerm.id(), mondoTerm.id());
+                    }
+                }
+                TermId mondoId = Term.of(lineItems[0], lineItems[0]).id();
+                mainController.mondoDescendantsMap.put(mondoId, descMap);
+            }
+            reader.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
     }
 
     private void saveMondoNDescMapToFile(File mondoNDescMapFile) {
-        new MondoDescendantsMapFileWriter(mainController.mondoNDescendantsMap, mondoNDescMapFile.getAbsolutePath());
+        new MondoNDescendantsMapFileWriter(mainController.mondoNDescendantsMap, mondoNDescMapFile.getAbsolutePath());
     }
 
     private void loadMondoNDescMapFile(File mondoNDescMapFile) {
