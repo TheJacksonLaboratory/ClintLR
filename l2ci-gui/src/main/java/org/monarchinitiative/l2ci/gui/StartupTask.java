@@ -142,7 +142,8 @@ public final class StartupTask extends Task<Void> {
             }
         }
         String homeDir = new File(".").getAbsolutePath();
-        String[] dir = {homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "omim2mondoMap.txt"};
+        String home = homeDir.substring(0, homeDir.length() - 2);
+        String[] dir = {home, "l2ci-gui", "src", "main", "resources", "omim2mondoMap.txt"};
         String path = String.join(File.separator, dir);
         File omimMapFile = new File(path);
         if (!omimMapFile.isFile()) {
@@ -154,9 +155,9 @@ public final class StartupTask extends Task<Void> {
             loadOmimMapFile(omimMapFile);
         }
         updateProgress(0.8, 1);
-        dir = new String[]{homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "mondoDescMap.txt"};
+        dir = new String[]{home, "l2ci-gui", "src", "main", "resources", "mondoDescMap.txt"};
         path = String.join(File.separator, dir);
-        String[] nDir = new String[]{homeDir.substring(0, homeDir.length() - 2), "l2ci-gui", "src", "main", "resources", "mondoNDescMap.txt"};
+        String[] nDir = new String[]{home, "l2ci-gui", "src", "main", "resources", "mondoNDescMap.txt"};
         String nPath = String.join(File.separator, nDir);
         File mondoDescMapFile = new File(path);
         File mondoNDescMapFile = new File(nPath);
@@ -203,12 +204,12 @@ public final class StartupTask extends Task<Void> {
                     if (refName.contains("OMIM:")) {
                         Term omimTerm = Term.of(refName, refName);
                         TermId omimID = omimTerm.id();
-                        if (!mainController.omimToMondoMap.containsKey(omimID)) {
-                            mainController.omimToMondoMap.put(omimID, new ArrayList<>());
+                        if (!MainController.omimToMondoMap.containsKey(omimID)) {
+                            MainController.omimToMondoMap.put(omimID, new ArrayList<>());
                         }
-                        List<TermId> termList = mainController.omimToMondoMap.get(omimID);
+                        List<TermId> termList = MainController.omimToMondoMap.get(omimID);
                         termList.add(mondoTerm.id());
-                        mainController.omimToMondoMap.put(omimID, termList);
+                        MainController.omimToMondoMap.put(omimID, termList);
                         mainController.omimLabelsAndMondoTermIdMap.put(omimTerm.id().toString(), mondoTerm.id());
                         break;
                     }
@@ -218,7 +219,7 @@ public final class StartupTask extends Task<Void> {
     }
 
     private void saveOmimMapToFile(File omimMapFile) {
-        new OmimMapFileWriter(mainController.omimToMondoMap, omimMapFile.getAbsolutePath());
+        new OmimMapFileWriter(MainController.omimToMondoMap, omimMapFile.getAbsolutePath());
     }
 
     private void loadOmimMapFile(File omimMapFile) {
@@ -238,7 +239,7 @@ public final class StartupTask extends Task<Void> {
                     }
                 }
                 TermId omimId = Term.of(lineItems[0], lineItems[0]).id();
-                mainController.omimToMondoMap.put(omimId, mondoList);
+                MainController.omimToMondoMap.put(omimId, mondoList);
                 mainController.omimLabelsAndMondoTermIdMap.put(omimId.toString(), mondoList.get(0));
             }
             reader.close();
@@ -250,28 +251,28 @@ public final class StartupTask extends Task<Void> {
     private void makeMondoDescendantsMaps() {
         Ontology ontology = optionalMondoResource.getOntology();
         List<Term> mondoTerms = ontology.getTerms().stream().toList();
-        Set<TermId> omimIDs = mainController.omimToMondoMap.keySet();
-        String[] probMondos = {"MONDO:0000001","MONDO:0000252","MONDO:0000257","MONDO:0000432","MONDO:0000888","MONDO:0000916", "MONDO:0001517","MONDO:0001673",
-                "MONDO:0002051", "MONDO:0002081","MONDO:0002269","MONDO:0002320","MONDO:0002334","MONDO:0002525","MONDO:0002602", "MONDO:0003847","MONDO:0003939",
-                "MONDO:0004095","MONDO:0004335","MONDO:0004805", "MONDO:0005020", "MONDO:0005027","MONDO:0005046","MONDO:0005062","MONDO:0005066","MONDO:0005070","MONDO:0005071","MONDO:0005093",
-                "MONDO:0005157","MONDO:0005218","MONDO:0005550","MONDO:0005559","MONDO:0005560","MONDO:0005570","MONDO:0005579","MONDO:0006547", "MONDO:0008945","MONDO:0011876", "MONDO:0013598",
-                "MONDO:0015286","MONDO:0015650","MONDO:0015757","MONDO:0019044","MONDO:0019052","MONDO:0019117","MONDO:0020573","MONDO:0020579","MONDO:0020683", "MONDO:0021125","MONDO:0021152",
-                "MONDO:0021166","MONDO:0024237", "MONDO:0042489","MONDO:0043424","MONDO:0044881", "MONDO:0100062","MONDO:0100079","MONDO:0100135","MONDO:0100455", "MONDO:0700092"};
-        Integer[] probMondoNDesc = {0,27,27,4,54,27,27,16,2582,1190,55,1088,253,353,3853,0,940,28,731,116,266,631,1109,54,4433,1640,13134,2006,87,5,222,971,2562,1092,115,
-                1,0,1,0,311,336,59,84,2202,4460,0,55,71,0,0,226,553,0,29,133,98,0,0,20,237};
-        Map<String, Integer> probMondoDescMap = new HashMap<>();
-        for (int t=0; t<probMondos.length; t++) {
-            probMondoDescMap.put(probMondos[t], probMondoNDesc[t]);
-        }
+        Set<TermId> omimIDs = MainController.omimToMondoMap.keySet();
+//        String[] probMondos = {"MONDO:0000001","MONDO:0000252","MONDO:0000257","MONDO:0000432","MONDO:0000888","MONDO:0000916", "MONDO:0001517","MONDO:0001673",
+//                "MONDO:0002051", "MONDO:0002081","MONDO:0002269","MONDO:0002320","MONDO:0002334","MONDO:0002525","MONDO:0002602", "MONDO:0003847","MONDO:0003939",
+//                "MONDO:0004095","MONDO:0004335","MONDO:0004805", "MONDO:0005020", "MONDO:0005027","MONDO:0005046","MONDO:0005062","MONDO:0005066","MONDO:0005070","MONDO:0005071","MONDO:0005093",
+//                "MONDO:0005157","MONDO:0005218","MONDO:0005550","MONDO:0005559","MONDO:0005560","MONDO:0005570","MONDO:0005579","MONDO:0006547", "MONDO:0008945","MONDO:0011876", "MONDO:0013598",
+//                "MONDO:0015286","MONDO:0015650","MONDO:0015757","MONDO:0019044","MONDO:0019052","MONDO:0019117","MONDO:0020573","MONDO:0020579","MONDO:0020683", "MONDO:0021125","MONDO:0021152",
+//                "MONDO:0021166","MONDO:0024237", "MONDO:0042489","MONDO:0043424","MONDO:0044881", "MONDO:0100062","MONDO:0100079","MONDO:0100135","MONDO:0100455", "MONDO:0700092"};
+//        Integer[] probMondoNDesc = {0,27,27,4,54,27,27,16,2582,1190,55,1088,253,353,3853,0,940,28,731,116,266,631,1109,54,4433,1640,13134,2006,87,5,222,971,2562,1092,115,
+//                1,0,1,0,311,336,59,84,2202,4460,0,55,71,0,0,226,553,0,29,133,98,0,0,20,237};
+//        Map<String, Integer> probMondoDescMap = new HashMap<>();
+//        for (int t=0; t<probMondos.length; t++) {
+//            probMondoDescMap.put(probMondos[t], probMondoNDesc[t]);
+//        }
 
         for (Term mondoTerm : mondoTerms) {
             Map<TermId, TermId> selectedTerms = new HashMap<>();
             TermId mondoID = mondoTerm.id();
             boolean doRefs = true;
-            if (probMondoDescMap.containsKey(mondoID.toString())) {
-                mainController.mondoNDescendantsMap.put(mondoID, probMondoDescMap.get(mondoID.toString()));
-                doRefs = false;
-            }
+//            if (probMondoDescMap.containsKey(mondoID.toString())) {
+//                mainController.mondoNDescendantsMap.put(mondoID, probMondoDescMap.get(mondoID.toString()));
+//                doRefs = false;
+//            }
             if (doRefs) {
 //                System.out.println(mondoTerm.id());
                 List<Dbxref> mondoTermXRefs = mondoTerm.getXrefs();
@@ -280,7 +281,7 @@ public final class StartupTask extends Task<Void> {
                     int nDescendents = 0;
                     for (Term descendent : descendents) {
                         for (TermId omimID : omimIDs) {
-                            List<TermId> mondoIDs = mainController.omimToMondoMap.get(omimID);
+                            List<TermId> mondoIDs = MainController.omimToMondoMap.get(omimID);
                             if (mondoIDs.contains(descendent.id())) {
                                 selectedTerms.put(omimID, descendent.id());
                                 if (!descendent.id().equals(mondoID)) {
@@ -290,16 +291,16 @@ public final class StartupTask extends Task<Void> {
                             }
                         }
                     }
-                    mainController.mondoNDescendantsMap.put(mondoID, nDescendents);
+                    MainController.mondoNDescendantsMap.put(mondoID, nDescendents);
                     break;
                 }
             }
-            mainController.mondoDescendantsMap.put(mondoID, selectedTerms);
+            MainController.mondoDescendantsMap.put(mondoID, selectedTerms);
         }
     }
 
     private void saveMondoDescMapToFile(File mondoDescMapFile) {
-        new MondoDescendantsMapFileWriter(mainController.mondoDescendantsMap, mondoDescMapFile.getAbsolutePath());
+        new MondoDescendantsMapFileWriter(MainController.mondoDescendantsMap, mondoDescMapFile.getAbsolutePath());
     }
 
     private void loadMondoDescMapFile(File mondoDescMapFile) {
@@ -325,7 +326,7 @@ public final class StartupTask extends Task<Void> {
                     }
                 }
                 TermId mondoId = Term.of(lineItems[0], lineItems[0]).id();
-                mainController.mondoDescendantsMap.put(mondoId, descMap);
+                MainController.mondoDescendantsMap.put(mondoId, descMap);
             }
             reader.close();
         } catch (IOException ex) {
@@ -334,7 +335,7 @@ public final class StartupTask extends Task<Void> {
     }
 
     private void saveMondoNDescMapToFile(File mondoNDescMapFile) {
-        new MondoNDescendantsMapFileWriter(mainController.mondoNDescendantsMap, mondoNDescMapFile.getAbsolutePath());
+        new MondoNDescendantsMapFileWriter(MainController.mondoNDescendantsMap, mondoNDescMapFile.getAbsolutePath());
     }
 
     private void loadMondoNDescMapFile(File mondoNDescMapFile) {
@@ -348,7 +349,7 @@ public final class StartupTask extends Task<Void> {
                     continue;
                 }
                 TermId omimId = Term.of(lineItems[0], lineItems[0]).id();
-                mainController.mondoNDescendantsMap.put(omimId, Integer.parseInt(lineItems[1]));
+                MainController.mondoNDescendantsMap.put(omimId, Integer.parseInt(lineItems[1]));
             }
             reader.close();
         } catch (IOException ex) {

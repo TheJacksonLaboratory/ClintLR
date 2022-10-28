@@ -1,6 +1,7 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -41,6 +42,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang.ArrayUtils;
 import org.controlsfx.control.textfield.AutoCompletionBinding;
 import org.controlsfx.control.textfield.TextFields;
+import org.monarchinitiative.biodownload.BioDownloader;
+import org.monarchinitiative.biodownload.BioDownloaderBuilder;
 import org.monarchinitiative.l2ci.core.LiricalAnalysis;
 import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.core.pretestprob.MapData;
@@ -163,11 +166,11 @@ public class MainController {
     private CheckBox variantsCheckbox = new CheckBox();
 
 
-    public final Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
+    public static final Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
 
-    public final Map<TermId, Integer> mondoNDescendantsMap = new HashMap<>();
+    public static final Map<TermId, Integer> mondoNDescendantsMap = new HashMap<>();
 
-    public final Map<TermId, Map<TermId, TermId>> mondoDescendantsMap = new HashMap<>();
+    public static final Map<TermId, Map<TermId, TermId>> mondoDescendantsMap = new HashMap<>();
 
     public static double sliderValue;
 
@@ -723,9 +726,6 @@ public class MainController {
                     } else if (mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
                         if (!mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
                             updateTreeIcons(item, omimIcon, selectedIcon);
-                            if (nDescendants > 1) {
-                                setText("(" + nDescendants + ") " + mondoTerm.getName());
-                            }
                         } else {
                             updateTreeIcons(item, null, null);
                         }
@@ -782,7 +782,7 @@ public class MainController {
             Platform.runLater(()->{
                 initTree(mondo, k -> System.out.println("Consumed " + k));
                 // TODO - tweak width, #rows
-                AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
+//                AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
                 treeLabel.setText(pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY));
             });
         }
@@ -829,19 +829,19 @@ public class MainController {
             }
         }
         mapDataList.removeIf(mapData -> !mapData.isFixed());
-        Set<TermId> omimIDs = omimToMondoMap.keySet();
         if (selectedTerm != null) {
-            Map<TermId, TermId> selectedTerms = mondoDescendantsMap.get(selectedTerm.id()).isEmpty() ? makeDescendentsMap(selectedTerm.id(), omimIDs) : mondoDescendantsMap.get(selectedTerm.id());
+            Map<TermId, TermId> selectedTerms = mondoDescendantsMap.get(selectedTerm.id()).isEmpty() ? new HashMap<>() : mondoDescendantsMap.get(selectedTerm.id());
             Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb, mapDataList);
             boolean addNonSelected = true;
             for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
                 TermId omimID = entry.getKey();
+                Double probValue = entry.getValue();
                 if (selectedTerms.containsKey(omimID)) {
                     TermId mondoID = selectedTerms.get(omimID);
-                    addToMapData(ontology, mondoID, omimID, entry.getValue(), adjProb, false);
+                    addToMapData(ontology, mondoID, omimID, probValue, adjProb, false);
                 } else if (!selectedTerms.containsKey(omimID) && addNonSelected) {
                     if (omimToMondoMap.get(omimID) != null) {
-                        addToMapData(null, null, null, entry.getValue(), 0.0, false);
+                        addToMapData(null, null, null, probValue, 0.0, false);
                         addNonSelected = false;
                     }
                 }
@@ -849,8 +849,9 @@ public class MainController {
             return newMap;
         } else {
             TermId omimId = diseaseMap.keySet().iterator().next();
+            Double probValue = diseaseMap.get(omimId);
             if (omimToMondoMap.get(omimId) != null) {
-                addToMapData(null, null, null, diseaseMap.get(omimId), 0.0, false);
+                addToMapData(null, null, null, probValue, 0.0, false);
             }
             return diseaseMap;
         }

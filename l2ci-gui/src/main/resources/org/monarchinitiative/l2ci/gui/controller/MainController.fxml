@@ -112,7 +112,7 @@
                               </Button>
                            </children>
                         </HBox>
-                        <Label styleClass="bluelabel" text="Pretest Multiplier">
+                        <Label styleClass="bluelabel" text="Pretest Adjustment">
                            <VBox.margin>
                               <Insets bottom="5.0" left="15.0" top="5.0" />
                            </VBox.margin>
@@ -266,7 +266,7 @@
             </HBox>
                   <HBox>
                       <children>
-                          <Label minWidth="80.0" text="Background VCF: ">
+                          <Label minWidth="80.0" text="VCF: ">
                               <HBox.margin>
                                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                               </HBox.margin></Label>
