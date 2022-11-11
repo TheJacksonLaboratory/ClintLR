@@ -26,8 +26,8 @@
       <maven.compiler.source>${java.version}</maven.compiler.source>
       <maven.compiler.target>${java.version}</maven.compiler.target>
       <javafx.version>18</javafx.version>
-      <phenol.version>2.0.0-RC3</phenol.version>
-      <lirical.version>2.0.0-SNAPSHOT</lirical.version>
+      <phenol.version>2.0.0-RC4</phenol.version>
+      <lirical.version>2.0.0-RC2-SNAPSHOT</lirical.version>
       <phenopacket.version>2.0.0</phenopacket.version>
       <protobuf.version>3.19.4</protobuf.version>
       <jackson.fasterxml.version>2.11.4</jackson.fasterxml.version>

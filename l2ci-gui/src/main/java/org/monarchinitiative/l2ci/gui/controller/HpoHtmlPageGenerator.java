@@ -1,19 +1,15 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
 import com.google.common.collect.ImmutableList;
-import org.monarchinitiative.phenol.annotations.base.temporal.Age;
+import org.monarchinitiative.phenol.annotations.base.temporal.PointInTime;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDiseaseAnnotation;
-import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDiseaseAnnotationMetadata;
 import org.monarchinitiative.phenol.annotations.formats.hpo.category.HpoCategory;
 import org.monarchinitiative.phenol.annotations.formats.hpo.category.HpoCategoryMap;
 import org.monarchinitiative.phenol.ontology.data.*;
 
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -143,16 +139,20 @@ class HpoHtmlPageGenerator {
         String definition = term.getDefinition() != null ? term.getDefinition() : "";
         // try to get whatever we have in terms of frequency or modifiers
         String fr = String.format("Frequency=%.1f%%",annot.frequency());
-        List<TermId> modifiers = annot.metadata().map(HpoDiseaseAnnotationMetadata::modifiers).toList().get(0).stream().toList();
-        Age onset = annot.earliestOnset().get();
+
+//        List<TermId> modifiers = annot.metadata().map(HpoDiseaseAnnotationMetadata::modifiers).toList().get(0).stream().toList();
+        List<TermId> modifiers = annot.modifiers();
+        Optional<PointInTime> eo = annot.earliestOnset();
+        PointInTime pit = eo.get();
+//        Age onset = annot.earliestOnset().get();
         StringBuilder sb = new StringBuilder();
         sb.append(fr);
         if (modifiers.size()>0) {
             List<String> names=getTermsNamesFromIds(modifiers,ontology);
             sb.append("</br>Modifiers: ").append(String.join("; ",names));
         }
-        if (onset != null) {
-            sb.append("</br>").append(onset);
+        if (pit != null) {
+            sb.append("</br>").append(pit.completeYears());
         }
 //        sb.append("</br>Source: ").append(String.join("; ",annot.getCitations()));
         return String.format("""

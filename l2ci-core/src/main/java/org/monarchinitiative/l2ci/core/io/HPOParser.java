@@ -1,9 +1,9 @@
 package org.monarchinitiative.l2ci.core.io;
 
 import org.monarchinitiative.phenol.io.OntologyLoader;
+import org.monarchinitiative.phenol.io.utils.CurieUtil;
 import org.monarchinitiative.phenol.io.utils.CurieUtilBuilder;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
-import org.prefixcommons.CurieUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -39,6 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.monarchinitiative.l2ci.core.LiricalAnalysis;
@@ -675,7 +676,7 @@ public class MainController {
         ontologyTreeView.setRoot(root);
         root.getChildren().remove(1, root.getChildren().size());
         TreeItem<OntologyTermWrapper> diseasesTreeItem = root.getChildren().get(0);
-        diseasesTreeItem.getChildren().remove(1, diseasesTreeItem.getChildren().size());
+//        diseasesTreeItem.getChildren().remove(1, diseasesTreeItem.getChildren().size());
         List<TreeItem<OntologyTermWrapper>> mendelianDiseases = diseasesTreeItem.getChildren().get(0).getChildren();
         HashMap<TermId, Integer> nDescendentsMap = new HashMap<>();
         Set<TermId> omimIDs = omimToMondoMap.keySet();
@@ -749,9 +750,9 @@ public class MainController {
                         w = newValue.getValue();
                     }
                     TreeItem<OntologyTermWrapper> item = new OntologyTermTreeItem(w);
+                    selectedTerm = item.getValue().term;
                     pretestMap = makeSelectedDiseaseMap(sliderValue);
                     updateDescription(item);
-                    selectedTerm = item.getValue().term;
                     if (mapDisplay != null) {
                         mapDisplay.updateTable();
                     }
@@ -880,7 +881,7 @@ public class MainController {
                     addToMapData(ontology, mondoID, omimID, entry.getValue(), adjProb, false);
                 } else if (!selectedTerms.containsKey(omimID) && addNonSelected) {
                     if (omimToMondoMap.get(omimID) != null) {
-                        addToMapData(null, null, null, entry.getValue(), 1.0, false);
+                        addToMapData(null, null, null, entry.getValue(), 0.0, false);
                         addNonSelected = false;
                     }
                 }
@@ -889,7 +890,7 @@ public class MainController {
         } else {
             TermId omimId = diseaseMap.keySet().iterator().next();
             if (omimToMondoMap.get(omimId) != null) {
-                addToMapData(null, null, null, diseaseMap.get(omimId), 1.0, false);
+                addToMapData(null, null, null, diseaseMap.get(omimId), 0.0, false);
             }
             return diseaseMap;
         }
@@ -902,7 +903,71 @@ public class MainController {
         } else if (ontology == null) {
             name = "other diseases"; //optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
         }
-        mapDataList.add(new MapData(name, mondoID, omimID, probValue, sliderValue, isFixed));
+        List<TermId> mapMondoIds = new ArrayList<>();
+        for (MapData mapData : mapDataList) {
+            mapMondoIds.add(mapData.getMondoId());
+        }
+        if (!mapMondoIds.contains(mondoID)) {
+            mapDataList.add(new MapData(name, mondoID, omimID, probValue, sliderValue, isFixed));
+        }
+    }
+    @FXML
+    private void loadMapOutputFile() {
+        mapDataList.clear();
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Read Map File");
+        File file = fileChooser.showOpenDialog(MainApp.mainStage);
+        if (file != null) {
+            logger.info("Reading Map from " + file.getAbsolutePath());
+            try (InputStream is = Files.newInputStream(file.toPath())) {
+                Set<Double> probSet = new HashSet<>();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                List<String> lines = reader.lines().toList();
+                for (String line : lines) {
+                    String[] lineItems = line.split(",");
+                    if (lineItems[1].contains("Probability")) {
+                        continue;
+                    }
+                    probSet.add(Double.parseDouble(lineItems[1]));
+                }
+                Set<Double> probSorted = probSet.stream().sorted().collect(Collectors.toCollection(LinkedHashSet::new));
+                boolean addNonSelected = true;
+                Ontology ontology = optionalMondoResource.getOntology();
+                for (String line : lines) {
+                    String[] lineItems = line.split(",");
+                    if (lineItems[1].contains("Probability")) {
+                        continue;
+                    }
+                    Double prob = Double.parseDouble(lineItems[1]);
+                    TermId omimID = null;
+                    if (lineItems[0].contains("OMIM:")) {
+                        Term omimTerm = Term.of(lineItems[0], lineItems[0]);
+                        omimID = omimTerm.id();
+                    }
+                    TermId mondoID = null;
+                    if (omimID != null && omimToMondoMap.get(omimID) != null) {
+                        mondoID = omimToMondoMap.get(omimID).get(0);
+                    }
+                    Double prob0 = probSorted.stream().toList().get(0);
+                    if (prob.equals(prob0) && addNonSelected) {
+                        addToMapData(null, null, null, prob, 0.0, false);
+                        addNonSelected = false;
+                    } else if (!prob.equals(prob0)) {
+                        Double sliderValue = prob/prob0 - 1;
+                        addToMapData(ontology, mondoID, omimID, prob, sliderValue, true);
+                    }
+                }
+                reader.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+        for (MapData mapData : mapDataList) {
+            if (mapData.getMondoId() != null) {
+                goToTerm(mapData.getMondoId());
+                break;
+            }
+        }
     }
 
     /**
@@ -1038,6 +1103,17 @@ public class MainController {
             if (!new File(phenopacketFile).isFile()) {
                 PopUps.showInfoMessage("Error: Unable to run analysis: no phenopacket present.", "ERROR");
                 logger.info("Unable to run analysis: no phenopacket present.");
+            }
+            String genomeBuild = pgProperties.getProperty("genome.build");
+            String exomiserPath = pgProperties.getProperty("exomiser.variant.path");
+            String bkgFreqPath = pgProperties.getProperty("background.frequency.path");
+            File exomiserFile = new File(exomiserPath);
+            File bkgFreqFile = new File(bkgFreqPath);
+            if (!(exomiserFile.isFile() && exomiserFile.getName().contains(genomeBuild))
+                    || !(bkgFreqFile.isFile() && bkgFreqFile.getName().contains(genomeBuild))) {
+                PopUps.showInfoMessage("Genome build of Exomiser variant or background frequency file does not match the selected genome build (See File -> Show Resources Menu).",
+                        "Warning");
+                return;
             }
             OutputOptions outputOptions = createOutputOptions();
             liricalAnalysis.runAnalysis(preTestMap, phenopacketFile, outputOptions);
