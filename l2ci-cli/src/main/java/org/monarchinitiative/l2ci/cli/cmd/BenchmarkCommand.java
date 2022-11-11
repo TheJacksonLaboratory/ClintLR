@@ -203,7 +203,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 System.out.print("Starting " + type);
                 try (BufferedWriter writer = openWriter(outputPaths.get(type)); CSVPrinter printer = CSVFormat.DEFAULT.print(writer)) {
                     printer.printRecord("phenopacket", "background_vcf", "selected_mondo_term", "selected_omim_term", "multiplier", "input_pretest_prob", "benchmark_pretest_prob", "sample_id", "rank",
-                            "is_causal", "disease_id", "post_test_proba"); // header
+                            "is_causal", "disease_id", "post_test_proba", "LR", "numerator", "denominator"); // header
 
                     for (Path phenopacketPath : phenopacketPaths) {
                         System.out.println(phenopacketPaths.indexOf(phenopacketPath) + " of " + phenopacketPaths.size() + ": " + type + " " + multiplier + " " + phenopacketPath);
@@ -570,6 +570,9 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                         printer.print(result.diseaseId().equals(benchmarkData.diseaseId()));
                         printer.print(result.diseaseId());
                         printer.print(result.posttestProbability());
+                        printer.print(result.observedResults().get(0).lr());
+                        printer.print(result.observedResults().get(0).numerator());
+                        printer.print(result.observedResults().get(0).denominator());
                         printer.println();
                     } catch (IOException e) {
                         LOGGER.error("Error writing results for {}: {}", result.diseaseId(), e.getMessage(), e);

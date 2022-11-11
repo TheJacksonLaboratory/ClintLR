@@ -26,7 +26,7 @@
       <maven.compiler.source>${java.version}</maven.compiler.source>
       <maven.compiler.target>${java.version}</maven.compiler.target>
       <javafx.version>18</javafx.version>
-      <phenol.version>2.0.0-RC4</phenol.version>
+      <phenol.version>2.0.0-RC6-SNAPSHOT</phenol.version>
       <lirical.version>2.0.0-RC2-SNAPSHOT</lirical.version>
       <phenopacket.version>2.0.0</phenopacket.version>
       <protobuf.version>3.19.4</protobuf.version>
@@ -153,6 +153,12 @@
           <groupId>org.monarchinitiative.lirical</groupId>
           <artifactId>lirical-configuration</artifactId>
           <version>${lirical.version}</version>
+          <exclusions>
+            <exclusion>
+              <groupId>commons-logging</groupId>
+              <artifactId>commons-logging</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
 
       </dependencies>
@@ -161,9 +167,13 @@
     <!-- Dependencies used in all modules  -->
     <dependencies>
       <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-logging -->
+<!--      <dependency>-->
+<!--        <groupId>org.springframework.boot</groupId>-->
+<!--        <artifactId>spring-boot-starter-logging</artifactId>-->
+<!--      </dependency>-->
       <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-logging</artifactId>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
       </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>

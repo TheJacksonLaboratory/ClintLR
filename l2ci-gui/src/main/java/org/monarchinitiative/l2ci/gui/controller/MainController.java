@@ -1,6 +1,7 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -12,7 +13,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.JavaFXBuilderFactory;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -24,7 +24,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.text.Text;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
@@ -36,12 +35,15 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.controlsfx.control.textfield.AutoCompletionBinding;
+import org.controlsfx.control.textfield.TextFields;
+import org.monarchinitiative.biodownload.BioDownloader;
+import org.monarchinitiative.biodownload.BioDownloaderBuilder;
 import org.monarchinitiative.l2ci.core.LiricalAnalysis;
 import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.core.pretestprob.MapData;
@@ -58,7 +60,6 @@ import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.output.*;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.ontology.data.Dbxref;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -126,7 +127,7 @@ public class MainController {
      * Key: a term name such as "Myocardial infarction"; value: the corresponding Mondo id as a {@link TermId}.
      */
     private final Map<String, TermId> ontologyLabelsAndTermIdMap = new HashMap<>();
-    private final Map<String, TermId> omimLabelsAndMondoTermIdMap = new HashMap<>();
+    public final Map<String, TermId> omimLabelsAndMondoTermIdMap = new HashMap<>();
     /**
      * WebView for displaying details of the Term that is selected in the {@link #ontologyTreeView}.
      */
@@ -165,7 +166,11 @@ public class MainController {
     private CheckBox variantsCheckbox = new CheckBox();
 
 
-    private final Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
+    public static final Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
+
+    public static final Map<TermId, Integer> mondoNDescendantsMap = new HashMap<>();
+
+    public static final Map<TermId, Map<TermId, TermId>> mondoDescendantsMap = new HashMap<>();
 
     public static double sliderValue;
 
@@ -177,6 +182,8 @@ public class MainController {
 
     @FXML
     private Label phenopacketLabel;
+    @FXML
+    private Label vcfLabel;
 
     private Image redIcon;
 
@@ -240,8 +247,8 @@ public class MainController {
         outputFileTypeLabel.setText("." + pgProperties.getProperty("output.formats"));
         StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
         LiricalBuildTask liricalTask = new LiricalBuildTask(pgProperties);
-        showProgress(task, "startup", "loading resources");
         showProgress(liricalTask, "lirical", "initializing LIRICAL");
+        showProgress(task, "startup", "loading resources");
         String ver = MainController.getVersion();
         copyrightLabel.setText("L4CI, v. " + ver + ", \u00A9 Monarch Initiative 2022");
         probSlider.setMin(1);
@@ -332,21 +339,28 @@ public class MainController {
         window.toFront();
         window.setAlwaysOnTop(true);
         switch (type) {
-            case "startup":
+            case "startup" -> {
+                Label progressLabel = (Label) window.getScene().getRoot().getChildrenUnmodifiable().get(0);
+                progressLabel.setMaxWidth(325);
+                progressLabel.setWrapText(true);
+                task.messageProperty().addListener((observable, oldValue, newValue) -> {
+                    progressLabel.setText(newValue);
+                });
                 task.setOnSucceeded(e -> {
                     Ontology mondoOnt = optionalMondoResource.getOntology();
                     Ontology hpoOnt = optionalHpoResource.getOntology();
                     boolean hpoaEmpty = optionalHpoaResource.getDirectAnnotMap().isEmpty();
                     if (mondoOnt != null && hpoOnt != null && !hpoaEmpty) {
-                        makeOmimMap();
+                        logger.info("Activating Ontology Tree.");
                         activateOntologyTree();
-                        WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
+                        AutoCompletionBinding<TermId> omimBinding = TextFields.bindAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
+                        omimBinding.prefWidthProperty().bind(autocompleteOmimTextfield.widthProperty());
                         publishMessage("Finished " + taskMessage);
                     } else {
                         StringBuilder msg = new StringBuilder();
                         Ontology[] ontologies = {mondoOnt, hpoOnt};
                         String[] ontTypes = {"Mondo", "HPO"};
-                        for (int i=0; i<ontologies.length; i++) {
+                        for (int i = 0; i < ontologies.length; i++) {
                             Ontology ontology = ontologies[i];
                             String ontType = ontTypes[i];
                             if (ontology == null) {
@@ -360,19 +374,18 @@ public class MainController {
                     }
                     window.close();
                 });
-                break;
-            case "lirical":
-                task.setOnSucceeded(e -> {
-                    if (lirical != null) {
-                        liricalAnalysis = new LiricalAnalysis(lirical, pgProperties);
-                        liricalButton.setDisable(false);
-                        publishMessage("Finished " + taskMessage);
-                    } else {
-                        publishMessage("Failed " + taskMessage + ". LIRICAL instance is null.", MessageType.ERROR);
-                    }
-                    window.close();
-                });
-                break;
+            }
+            case "lirical" -> task.setOnSucceeded(e -> {
+                if (lirical != null) {
+                    liricalAnalysis = new LiricalAnalysis(lirical, pgProperties);
+                    liricalButton.setDisable(false);
+                    publishMessage("Finished " + taskMessage);
+                } else {
+                    System.out.println(task.getException().toString());
+                    publishMessage("Failed " + taskMessage + ". LIRICAL instance is null.", MessageType.ERROR);
+                }
+                window.close();
+            });
         }
         task.setOnFailed(e -> {
             String msg = "Failed " + taskMessage;
@@ -492,7 +505,7 @@ public class MainController {
         try {
             ResourcesController controller = new ResourcesController(optionalHpoResource, optionalHpoaResource,
                     optionalMondoResource, pgProperties, executor);
-            Parent parent = FXMLLoader.load(Objects.requireNonNull(ResourcesController.class.getResource("/fxml/ResourcesView.fxml")),
+            Parent parent = FXMLLoader.load(Objects.requireNonNull(ResourcesController.class.getResource("/org/monarchinitiative/l2ci/gui/controller/ResourcesView.fxml")),
                     null, new JavaFXBuilderFactory(), clazz -> controller);
             Stage stage = new Stage();
             stage.setTitle("Initialize L4CI resources");
@@ -678,19 +691,6 @@ public class MainController {
         TreeItem<OntologyTermWrapper> diseasesTreeItem = root.getChildren().get(0);
 //        diseasesTreeItem.getChildren().remove(1, diseasesTreeItem.getChildren().size());
         List<TreeItem<OntologyTermWrapper>> mendelianDiseases = diseasesTreeItem.getChildren().get(0).getChildren();
-        HashMap<TermId, Integer> nDescendentsMap = new HashMap<>();
-        Set<TermId> omimIDs = omimToMondoMap.keySet();
-//        for (TreeItem<OntologyTermWrapper> item : mendelianDiseases) {
-//            Term mondoTerm = item.getValue().term;
-//            if (!mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty() ||
-//                    !mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
-//                int nDescendents = getNDescendents(mondoTerm.id(), omimIDs);
-//                if (nDescendents > 1) {
-//                    nDescendentsMap.put(mondoTerm.id(), nDescendents);
-//                    System.out.println(nDescendentsMap.size() + ": " + nDescendentsMap.get(mondoTerm.id()));
-//                }
-//            }
-//        }
         ontologyTreeView.setCellFactory(tv -> new TreeCell<OntologyTermWrapper>() {
             private void updateTreeIcons(OntologyTermWrapper item, ImageView icon1, ImageView icon2) {
                 setGraphic(icon1);
@@ -714,19 +714,18 @@ public class MainController {
                 if (!empty || item != null) {
                     Term mondoTerm = item.term;
                     setText(mondoTerm.getName());
+                    int nDescendants = 0;
+                    if (mondoNDescendantsMap.get(mondoTerm.id()) != null) {
+                        nDescendants = mondoNDescendantsMap.get(mondoTerm.id());
+                        if (nDescendants > 0) {
+                            setText("(" + nDescendants + ") " + mondoTerm.getName());
+                        }
+                    }
                     if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
                         updateTreeIcons(item, omimPSIcon, omimPSSelectedIcon);
-                        int nDescendents = getNDescendents(mondoTerm.id(), omimIDs)-1;
-                        if (nDescendents > 0) {
-                            setText("(" + nDescendents + ") " + mondoTerm.getName());
-                        }
                     } else if (mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
                         if (!mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
                             updateTreeIcons(item, omimIcon, selectedIcon);
-                            int nDescendents = getNDescendents(mondoTerm.id(), omimIDs)-1;
-                            if (nDescendents > 0) {
-                                setText("(" + nDescendents + ") " + mondoTerm.getName());
-                            }
                         } else {
                             updateTreeIcons(item, null, null);
                         }
@@ -762,7 +761,9 @@ public class MainController {
             ontologyLabelsAndTermIdMap.put(term.getName(), term.id());
             ontologyLabelsAndTermIdMap.put(term.id().getValue(), term.id());
         });
-        WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
+        // TODO - tweak width, #rows
+        AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
+
 
         // show intro message in the infoWebView
         Platform.runLater(() -> {
@@ -780,42 +781,22 @@ public class MainController {
             final Ontology mondo = optionalMondoResource.getOntology();
             Platform.runLater(()->{
                 initTree(mondo, k -> System.out.println("Consumed " + k));
-                WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
+                // TODO - tweak width, #rows
+//                AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
                 treeLabel.setText(pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY));
             });
         }
     }
 
-    private void makeOmimMap() {
-        Ontology ontology = optionalMondoResource.getOntology();
-        if (ontology == null) {
-            logger.error("makeOmimMap: ontology is null.");
-        } else {
-            for (Term mondoTerm : ontology.getTerms()) {
-                for (Dbxref ref : mondoTerm.getXrefs()) {
-                    String refName = ref.getName();
-                    if (refName.contains("OMIM:")) {
-                        Term omimTerm = Term.of(refName, refName);
-                        TermId omimID = omimTerm.id();
-                        if (!omimToMondoMap.containsKey(omimID)) {
-                            omimToMondoMap.put(omimID, new ArrayList<>());
-                        }
-                        List<TermId> termList = omimToMondoMap.get(omimID);
-                        termList.add(mondoTerm.id());
-                        omimToMondoMap.put(omimID, termList);
-                        omimLabelsAndMondoTermIdMap.put(omimTerm.id().toString(), mondoTerm.id());
-                        break;
-                    }
-                }
-            }
-        }
-    }
+
+
+
 
     private HashMap<TermId, TermId> makeDescendentsMap(TermId mondoId, Set<TermId> omimIDs) {
         HashMap<TermId, TermId> selectedTerms = new HashMap<>();
         for (TermId omimID : omimIDs) {
-            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
-            if (mondoIDs.contains(mondoId)) {
+//            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
+//            if (mondoIDs.contains(mondoId)) {
                 Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT);
                 for (Term descendent : descendents) {
                     for (TermId omimID2 : omimIDs) {
@@ -826,32 +807,11 @@ public class MainController {
                         }
                     }
                 }
-            }
+//            }
         }
         return selectedTerms;
     }
 
-    private int getNDescendents(TermId mondoId, Set<TermId> omimIDs) {
-        int nDescendents = 0;
-        for (TermId omimID : omimIDs) {
-            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
-            if (mondoIDs.contains(mondoId)) {
-                Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT);
-                if (descendents.size() > 1) {
-                    for (Term descendent : descendents) {
-                        for (TermId omimID2 : omimIDs) {
-                            List<TermId> mondoIDs2 = omimToMondoMap.get(omimID2);
-                            if (mondoIDs2.contains(descendent.id())) {
-                                nDescendents++;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return nDescendents;
-    }
 
     public Map<TermId, Double> makeSelectedDiseaseMap(double adjProb) {
         Map<TermId, Double> diseaseMap = new HashMap<>();
@@ -869,19 +829,19 @@ public class MainController {
             }
         }
         mapDataList.removeIf(mapData -> !mapData.isFixed());
-        Set<TermId> omimIDs = omimToMondoMap.keySet();
         if (selectedTerm != null) {
-            HashMap<TermId, TermId> selectedTerms = makeDescendentsMap(selectedTerm.id(), omimIDs);
+            Map<TermId, TermId> selectedTerms = mondoDescendantsMap.get(selectedTerm.id()).isEmpty() ? new HashMap<>() : mondoDescendantsMap.get(selectedTerm.id());
             Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb, mapDataList);
             boolean addNonSelected = true;
             for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
                 TermId omimID = entry.getKey();
+                Double probValue = entry.getValue();
                 if (selectedTerms.containsKey(omimID)) {
                     TermId mondoID = selectedTerms.get(omimID);
-                    addToMapData(ontology, mondoID, omimID, entry.getValue(), adjProb, false);
+                    addToMapData(ontology, mondoID, omimID, probValue, adjProb, false);
                 } else if (!selectedTerms.containsKey(omimID) && addNonSelected) {
                     if (omimToMondoMap.get(omimID) != null) {
-                        addToMapData(null, null, null, entry.getValue(), 0.0, false);
+                        addToMapData(null, null, null, probValue, 0.0, false);
                         addNonSelected = false;
                     }
                 }
@@ -889,8 +849,9 @@ public class MainController {
             return newMap;
         } else {
             TermId omimId = diseaseMap.keySet().iterator().next();
+            Double probValue = diseaseMap.get(omimId);
             if (omimToMondoMap.get(omimId) != null) {
-                addToMapData(null, null, null, diseaseMap.get(omimId), 0.0, false);
+                addToMapData(null, null, null, probValue, 0.0, false);
             }
             return diseaseMap;
         }
@@ -1058,6 +1019,17 @@ public class MainController {
         }
     }
 
+    public void vcfButtonAction() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose Background VCF File");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Background VCF File", "*.vcf"));
+        Stage stage = MainApp.mainStage;
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            vcfLabel.setText(file.getAbsolutePath());
+        }
+    }
+
     private void updateLimits(Slider slider, double min, double max) {
         slider.setMin(min);
         slider.setMax(max);
@@ -1100,6 +1072,7 @@ public class MainController {
         if (selectedTerm != null) {
             Map<TermId, Double> preTestMap = makeSelectedDiseaseMap(sliderValue);
             String phenopacketFile = phenopacketLabel.getText();
+            String vcfFile = vcfLabel.getText();
             if (!new File(phenopacketFile).isFile()) {
                 PopUps.showInfoMessage("Error: Unable to run analysis: no phenopacket present.", "ERROR");
                 logger.info("Unable to run analysis: no phenopacket present.");
@@ -1116,7 +1089,7 @@ public class MainController {
                 return;
             }
             OutputOptions outputOptions = createOutputOptions();
-            liricalAnalysis.runAnalysis(preTestMap, phenopacketFile, outputOptions);
+            liricalAnalysis.runAnalysis(preTestMap, phenopacketFile, vcfFile, outputOptions);
             String outFileName = outputOptions.prefix() + "." + outputOptions.outputFormats().iterator().next().name().toLowerCase();
             File outFile = new File(String.join(File.separator, outputOptions.outputDirectory().toString(), outFileName));
             if (outFile.isFile()) {
@@ -1231,7 +1204,7 @@ public class MainController {
      * @param relation Relation of interest (ancestor, descendent, child, parent)
      * @return relations of term (not including term itself).
      */
-    private Set<Term> getTermRelations(TermId termId, Relation relation) {
+    public Set<Term> getTermRelations(TermId termId, Relation relation) {
         Ontology ontology = optionalMondoResource.getOntology();
         if (ontology == null) {
             logger.error("Ontology null");

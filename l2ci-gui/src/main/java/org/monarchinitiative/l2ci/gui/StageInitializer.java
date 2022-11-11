@@ -3,7 +3,6 @@ package org.monarchinitiative.l2ci.gui;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +12,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
-import javax.swing.*;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Optional;
 
 @Component
 public class StageInitializer implements ApplicationListener<MainApp.StageReadyEvent> {
@@ -38,7 +33,7 @@ public class StageInitializer implements ApplicationListener<MainApp.StageReadyE
     @Override
     public void onApplicationEvent(MainApp.StageReadyEvent event) {
         try {
-            ClassPathResource l4ciResource = new ClassPathResource("fxml/MainController.fxml");
+            ClassPathResource l4ciResource = new ClassPathResource("org/monarchinitiative/l2ci/gui/controller/MainController.fxml");
             FXMLLoader fxmlLoader = new FXMLLoader(l4ciResource.getURL());
             fxmlLoader.setControllerFactory(applicationContext::getBean);
             Parent parent = fxmlLoader.load();

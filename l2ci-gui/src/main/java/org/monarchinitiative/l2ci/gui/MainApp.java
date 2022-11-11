@@ -107,4 +107,7 @@ public class MainApp  extends Application {
         fadeOut.setOnFinished((e) -> splashStage.close());
     }
 
+    public static void main(String[] args) {
+        Application.launch(MainApp.class, args);
+    }
 }

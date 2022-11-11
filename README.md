@@ -29,5 +29,5 @@ To complete setup, download the LIRICAL resources and compile.
 
 ```
 $ java -jar lirical-cli/target/lirical-cli-2.0.0-SNAPSHOT.jar download
-$ /.mvnw clean compile
+$ ./mvnw clean compile
 ```
