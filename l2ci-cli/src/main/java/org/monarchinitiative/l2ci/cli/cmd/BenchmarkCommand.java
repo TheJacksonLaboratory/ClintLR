@@ -571,8 +571,10 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                         printer.print(result.diseaseId());
                         printer.print(result.posttestProbability());
                         printer.print(result.observedResults().get(0).lr());
+                        /**
                         printer.print(result.observedResults().get(0).numerator());
                         printer.print(result.observedResults().get(0).denominator());
+                         */
                         printer.println();
                     } catch (IOException e) {
                         LOGGER.error("Error writing results for {}: {}", result.diseaseId(), e.getMessage(), e);
