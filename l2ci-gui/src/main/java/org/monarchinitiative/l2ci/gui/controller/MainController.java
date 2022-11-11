@@ -12,6 +12,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.JavaFXBuilderFactory;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -239,7 +240,7 @@ public class MainController {
         StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
         LiricalBuildTask liricalTask = new LiricalBuildTask(pgProperties);
         showProgress(task, "startup", "loading resources");
-        showProgress(liricalTask, "lirical", "building LIRICAL");
+        showProgress(liricalTask, "lirical", "initializing LIRICAL");
         String ver = MainController.getVersion();
         copyrightLabel.setText("L4CI, v. " + ver + ", \u00A9 Monarch Initiative 2022");
         probSlider.setMin(1);
@@ -337,6 +338,7 @@ public class MainController {
                     boolean hpoaEmpty = optionalHpoaResource.getDirectAnnotMap().isEmpty();
                     if (mondoOnt != null && hpoOnt != null && !hpoaEmpty) {
                         makeOmimMap();
+                        activateOntologyTree();
                         WidthAwareTextFields.bindWidthAwareAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
                         publishMessage("Finished " + taskMessage);
                     } else {
@@ -561,7 +563,7 @@ public class MainController {
     }
 
     private void activateIfResourcesAvailable() {
-        if (optionalMondoResource.getOntology() != null) { // mondo JSON file is missing
+        if (optionalMondoResource.getOntology() != null && !omimToMondoMap.isEmpty()) { // mondo JSON file is missing
             activateOntologyTree();
         } else {
             logger.error("Could not activate resource");
@@ -671,20 +673,36 @@ public class MainController {
         root.setExpanded(true);
         ontologyTreeView.setShowRoot(false);
         ontologyTreeView.setRoot(root);
-
+        root.getChildren().remove(1, root.getChildren().size());
+        TreeItem<OntologyTermWrapper> diseasesTreeItem = root.getChildren().get(0);
+        diseasesTreeItem.getChildren().remove(1, diseasesTreeItem.getChildren().size());
+        List<TreeItem<OntologyTermWrapper>> mendelianDiseases = diseasesTreeItem.getChildren().get(0).getChildren();
+        HashMap<TermId, Integer> nDescendentsMap = new HashMap<>();
+        Set<TermId> omimIDs = omimToMondoMap.keySet();
+//        for (TreeItem<OntologyTermWrapper> item : mendelianDiseases) {
+//            Term mondoTerm = item.getValue().term;
+//            if (!mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty() ||
+//                    !mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
+//                int nDescendents = getNDescendents(mondoTerm.id(), omimIDs);
+//                if (nDescendents > 1) {
+//                    nDescendentsMap.put(mondoTerm.id(), nDescendents);
+//                    System.out.println(nDescendentsMap.size() + ": " + nDescendentsMap.get(mondoTerm.id()));
+//                }
+//            }
+//        }
         ontologyTreeView.setCellFactory(tv -> new TreeCell<OntologyTermWrapper>() {
-
             private void updateTreeIcons(OntologyTermWrapper item, ImageView icon1, ImageView icon2) {
                 setGraphic(icon1);
                 if (mapDataList != null) {
                     for (MapData mapData : mapDataList) {
-                        if (mapData != null && mapData.getMondoId() != null && mapData.getMondoId().equals(item.term.id()) && mapData.getSliderValue() > 1.0) {
+                        TermId mapMondoId = mapData.getMondoId();
+                        TermId treeMondoId = item.term.id();
+                        if (mapMondoId != null && mapMondoId.equals(treeMondoId) && mapData.getSliderValue() > 1.0) {
                             setGraphic(icon2);
                         }
                     }
                 }
             }
-
             @Override
             protected void updateItem(OntologyTermWrapper item, boolean empty) {
                 ImageView omimPSIcon = new ImageView(redIcon);
@@ -694,21 +712,27 @@ public class MainController {
                 super.updateItem(item, empty);
                 if (!empty || item != null) {
                     Term mondoTerm = item.term;
-                    int nDescendents = makeDescendentsMap(mondoTerm.id()).size();
-                    if (nDescendents > 1) {
-                        setText("(" + nDescendents + ") " + mondoTerm.getName());
-                    } else {
-                        setText(mondoTerm.getName());
-                    }
+                    setText(mondoTerm.getName());
                     if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
                         updateTreeIcons(item, omimPSIcon, omimPSSelectedIcon);
-                    } else if (item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
-                        if (!item.term.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
+                        int nDescendents = getNDescendents(mondoTerm.id(), omimIDs)-1;
+                        if (nDescendents > 0) {
+                            setText("(" + nDescendents + ") " + mondoTerm.getName());
+                        }
+                    } else if (mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIMPS:")).toList().isEmpty()) {
+                        if (!mondoTerm.getXrefs().stream().filter(r -> r.getName().contains("OMIM:")).toList().isEmpty()) {
                             updateTreeIcons(item, omimIcon, selectedIcon);
+                            int nDescendents = getNDescendents(mondoTerm.id(), omimIDs)-1;
+                            if (nDescendents > 0) {
+                                setText("(" + nDescendents + ") " + mondoTerm.getName());
+                            }
                         } else {
                             updateTreeIcons(item, null, null);
                         }
                     }
+                } else {
+                    setText(null);
+                    setGraphic(null);
                 }
             }
 
@@ -786,26 +810,46 @@ public class MainController {
         }
     }
 
-    private HashMap<TermId, TermId> makeDescendentsMap(TermId mondoId) {
+    private HashMap<TermId, TermId> makeDescendentsMap(TermId mondoId, Set<TermId> omimIDs) {
         HashMap<TermId, TermId> selectedTerms = new HashMap<>();
-        omimToMondoMap.forEach((omimID, mondoIDs) -> {
-            for (TermId mondoID : mondoIDs) {
-                if (mondoID.equals(mondoId) && omimID != null) {
-                    Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT);
-                    for (Term descendent : descendents) {
-                        omimToMondoMap.forEach((omimID2, mondoIDs2) -> {
-                            for (TermId mondoID2 : mondoIDs2) {
-                                if (mondoID2.equals(descendent.id())) {
-                                    selectedTerms.put(omimID2, mondoID2);
-                                    break;
-                                }
-                            }
-                        });
+        for (TermId omimID : omimIDs) {
+            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
+            if (mondoIDs.contains(mondoId)) {
+                Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT);
+                for (Term descendent : descendents) {
+                    for (TermId omimID2 : omimIDs) {
+                        List<TermId> mondoIDs2 = omimToMondoMap.get(omimID2);
+                        if (mondoIDs2.contains(descendent.id())) {
+                            selectedTerms.put(omimID2, descendent.id());
+                            break;
+                        }
                     }
                 }
             }
-        });
+        }
         return selectedTerms;
+    }
+
+    private int getNDescendents(TermId mondoId, Set<TermId> omimIDs) {
+        int nDescendents = 0;
+        for (TermId omimID : omimIDs) {
+            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
+            if (mondoIDs.contains(mondoId)) {
+                Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT);
+                if (descendents.size() > 1) {
+                    for (Term descendent : descendents) {
+                        for (TermId omimID2 : omimIDs) {
+                            List<TermId> mondoIDs2 = omimToMondoMap.get(omimID2);
+                            if (mondoIDs2.contains(descendent.id())) {
+                                nDescendents++;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return nDescendents;
     }
 
     public Map<TermId, Double> makeSelectedDiseaseMap(double adjProb) {
@@ -824,8 +868,9 @@ public class MainController {
             }
         }
         mapDataList.removeIf(mapData -> !mapData.isFixed());
+        Set<TermId> omimIDs = omimToMondoMap.keySet();
         if (selectedTerm != null) {
-            HashMap<TermId, TermId> selectedTerms = makeDescendentsMap(selectedTerm.id());
+            HashMap<TermId, TermId> selectedTerms = makeDescendentsMap(selectedTerm.id(), omimIDs);
             Map<TermId, Double> newMap = PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb, mapDataList);
             boolean addNonSelected = true;
             for (Map.Entry<TermId, Double> entry : newMap.entrySet()) {
