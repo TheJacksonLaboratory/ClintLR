@@ -20,6 +20,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.web.WebView?>
 
+<?import org.monarchinitiative.l2ci.gui.controller.AutoCompleteOntologyTextField?>
 <BorderPane prefHeight="1000.0" prefWidth="1200.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.MainController">
      <top>
         <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
@@ -75,11 +76,11 @@
                         </Label>
                         <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
                            <children>
-                              <TextField fx:id="autocompleteTextfield" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="300.0" promptText="autocomplete Mondo term...">
+                              <AutoCompleteOntologyTextField fx:id="autocompleteTextfield" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="300.0" promptText="autocomplete Mondo term...">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
-                              </TextField>
+                              </AutoCompleteOntologyTextField>
                               <Button minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#goButtonAction" styleClass="Button" stylesheets="@style.css" text="Go" textOverrun="CLIP">
                                  <tooltip>
                                     <Tooltip text="tell me what to do" />
@@ -97,11 +98,11 @@
                         </Label>
                         <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
                            <children>
-                              <TextField fx:id="autocompleteOmimTextfield" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="300.0" promptText="autocomplete OMIM term...">
+                              <AutoCompleteOntologyTextField fx:id="autocompleteOmimTextfield" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="300.0" promptText="autocomplete OMIM term...">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
-                              </TextField>
+                              </AutoCompleteOntologyTextField>
                               <Button fx:id="omimButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#omimButtonAction" styleClass="Button" text="Go" textOverrun="CLIP">
                                  <tooltip>
                                     <Tooltip text="tell me what to do" />
