@@ -1,26 +1,19 @@
 package org.monarchinitiative.l2ci.gui;
 
-import javafx.concurrent.Task;
-import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
-import org.monarchinitiative.l2ci.core.io.MondoDescendantsMapFileWriter;
-import org.monarchinitiative.l2ci.core.io.MondoNDescendantsMapFileWriter;
-import org.monarchinitiative.l2ci.core.io.OmimMapFileWriter;
-import org.monarchinitiative.l2ci.gui.controller.MainController;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
 import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
 import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.ontology.data.Dbxref;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
-import org.monarchinitiative.phenol.ontology.data.Term;
-import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.ApplicationListener;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Initialization of the GUI resources is being done here. Information from {@link Properties} parsed from
@@ -36,9 +29,8 @@ import java.util.*;
  * @version 2.0.0
  * @since 0.0
  */
-public final class StartupTask extends Task<Void> {
+public final class StartupTask implements ApplicationListener<ApplicationStartedEvent>, Runnable {
 
-    private final MainController mainController = MainController.getController();
     private static final Logger LOGGER = LoggerFactory.getLogger(StartupTask.class);
 
     private final OptionalHpoResource optionalHpoResource;
@@ -82,10 +74,9 @@ public final class StartupTask extends Task<Void> {
      * <li>HPO ontology</li>
      * </ul>
      *
-     * @return nothing
      */
     @Override
-    protected Void call() {
+    public void run() {
         /*
         This is the place where we deserialize HPO ontology if we know path to the OBO file.
         We need to make sure to set ontology property of `optionalResources` to null if loading fails.
@@ -95,7 +86,7 @@ public final class StartupTask extends Task<Void> {
         String hpoJsonPath = pgProperties.getProperty(OptionalHpoResource.HP_JSON_PATH_PROPERTY);
         String hpoAnnotPath = pgProperties.getProperty(OptionalHpoaResource.HPOA_PATH_PROPERTY);
         String mondoJsonPath = pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY);
-        updateProgress(0.02, 1);
+
         String[] paths = {mondoJsonPath, hpoJsonPath, hpoAnnotPath};
         Type[] types = {Type.Mondo, Type.HPO, Type.HPOA};
         for (int i = 0; i < paths.length; i++) {
@@ -105,7 +96,7 @@ public final class StartupTask extends Task<Void> {
                 File file = new File(path);
                 if (file.isFile()) {
                     String msg = String.format("Loading " + type + " from file '%s'", file.getAbsoluteFile());
-                    updateMessage(msg);
+//                    updateMessage(msg);
                     LOGGER.info(msg);
                     switch (type) {
                         case Mondo:
@@ -122,27 +113,27 @@ public final class StartupTask extends Task<Void> {
                         case HPOA:
                             if (optionalHpoResource.getOntology() == null) {
                                 LOGGER.error("Cannot load phenotype.hpoa because HP ontology not loaded");
-                                return null;
+//                                return null;
                             }
                             setOntology(type, optionalHpoResource.getOntology(), path);
                             LOGGER.info("Loaded annotation maps");
                             break;
                         }
-                    updateProgress((double) (i+1)/paths.length, 1);
-                    updateMessage(type + " loaded");
+//                    updateProgress((double) (i+1)/paths.length, 1);
+//                    updateMessage(type + " loaded");
                 } else {
                     setOntology(type, null, "");
                 }
                 LOGGER.info("Finished loading " + type + " ontology.");
             } else {
                 String msg = "Need to set path to " + type + " file (See File -> Show Resources menu)";
-                updateMessage(msg);
+//                updateMessage(msg);
                 LOGGER.info(msg);
                 setOntology(type, null, "");
             }
         }
-        updateProgress(1, 1);
-        return null;
+//        updateProgress(1, 1);
+//        return null;
     }
 
     void setOntology(Type type, Ontology ont, String path) {
@@ -164,4 +155,9 @@ public final class StartupTask extends Task<Void> {
     }
 
 
+    @Override
+    public void onApplicationEvent(ApplicationStartedEvent event) {
+        ExecutorService executorService = event.getApplicationContext().getBean(ExecutorService.class);
+        executorService.submit(this);
+    }
 }

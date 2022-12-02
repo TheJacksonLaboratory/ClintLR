@@ -40,8 +40,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.controlsfx.control.textfield.AutoCompletionBinding;
-import org.controlsfx.control.textfield.TextFields;
 import org.monarchinitiative.biodownload.BioDownloader;
 import org.monarchinitiative.biodownload.BioDownloaderBuilder;
 import org.monarchinitiative.l2ci.core.LiricalAnalysis;
@@ -245,10 +243,11 @@ public class MainController {
         variantsCheckbox.setSelected(false);
         outputFileTextField.setText("lirical_results");
         outputFileTypeLabel.setText("." + pgProperties.getProperty("output.formats"));
-        StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
+        // TODO(ielis) - address
+//        StartupTask task = new StartupTask(optionalHpoResource, optionalHpoaResource, optionalMondoResource, pgProperties);
         LiricalBuildTask liricalTask = new LiricalBuildTask(pgProperties);
         showProgress(liricalTask, "lirical", "initializing LIRICAL");
-        showProgress(task, "startup", "loading resources");
+//        showProgress(task, "startup", "loading resources");
         String ver = MainController.getVersion();
         copyrightLabel.setText("L4CI, v. " + ver + ", \u00A9 Monarch Initiative 2022");
         probSlider.setMin(1);

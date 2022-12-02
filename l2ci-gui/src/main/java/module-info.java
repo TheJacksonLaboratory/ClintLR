@@ -14,8 +14,6 @@ module l2ci.gui {
     requires javafx.fxml;
     requires javafx.web;
 
-    requires org.controlsfx.controls;
-
     requires commons.lang;
     requires org.slf4j;
     requires spring.core;

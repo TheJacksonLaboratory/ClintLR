@@ -3,13 +3,15 @@ package org.monarchinitiative.l2ci.gui;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.application.HostServices;
-import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -21,7 +23,10 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.Properties;
 
+@SpringBootApplication
 public class MainApp  extends Application {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MainApp.class);
 
     private ConfigurableApplicationContext applicationContext;
 
@@ -42,8 +47,10 @@ public class MainApp  extends Application {
 
     @Override
     public void init() {
-
-        applicationContext = new SpringApplicationBuilder(StockUIApp.class).run();
+        String[] args = getParameters().getRaw().toArray(String[]::new);
+        applicationContext = new SpringApplicationBuilder(MainApp.class)
+                .headless(false)
+                .run(args);
     }
 
     /**
@@ -57,8 +64,9 @@ public class MainApp  extends Application {
         try (OutputStream os = Files.newOutputStream(configFile.toPath())) {
             pgProperties.store(os, "L4CI properties");
         }
-        Platform.exit();
+        LOGGER.debug("Shutting down...");
         applicationContext.close();
+        LOGGER.info("Bye!");
     }
 
 
