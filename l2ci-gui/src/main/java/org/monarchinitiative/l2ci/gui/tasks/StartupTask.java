@@ -64,14 +64,17 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
         // Mondo
         String mondoJsonPath = pgProperties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY);
         if (mondoJsonPath != null)
+            // TODO(mabeckwith) - check if the path is a file, if it ends with *.json, if it is readable, etc.
             optionalResources.ontologyResources().setMondoPath(Path.of(mondoJsonPath));
 
         // Lirical
         String liricalDataPath = pgProperties.getProperty(LiricalResources.LIRICAL_DATA_PROPERTY);
         if (liricalDataPath != null)
+            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
             optionalResources.liricalResources().setDataDirectory(Path.of(liricalDataPath));
 
 
+        // TODO(mabeckwith) - set the remaining LIRICAL properties to LiricalResources
 
         // TODO - set the remaining paths if present in the properties
 

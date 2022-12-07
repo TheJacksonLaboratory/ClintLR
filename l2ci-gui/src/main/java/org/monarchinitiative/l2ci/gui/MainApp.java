@@ -65,7 +65,6 @@ public class MainApp  extends Application {
         super.stop();
         serializeResourceState(
                 context.getBean(OptionalResources.class),
-                context.getBean("configProperties", Properties.class),
                 context.getBean("configFilePath", File.class));
 
         LOGGER.debug("Shutting down...");
@@ -74,8 +73,8 @@ public class MainApp  extends Application {
     }
 
     private static void serializeResourceState(OptionalResources optionalResources,
-                                               Properties resourceProperties,
                                                File target) throws IOException {
+        Properties resourceProperties = new Properties();
         // Serialize LIRICAL resources
         LiricalResources liricalResources = optionalResources.liricalResources();
         if (liricalResources.getDataDirectory() != null)
@@ -86,6 +85,8 @@ public class MainApp  extends Application {
         if (ontologyResources.getMondoPath() != null)
             resourceProperties.setProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY, ontologyResources.getMondoPath().toAbsolutePath().toString());
 
+
+        // TODO(mabeckwith) - serialize the paths or parameters
 
         try (OutputStream os = Files.newOutputStream(target.toPath())) {
             resourceProperties.store(os, "L4CI properties");
