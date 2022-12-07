@@ -64,7 +64,7 @@ public class PopUps {
      * @param title            - Title of PopUp window
      * @return
      */
-    public static File selectFileToOpen(Stage ownerWindow, File initialDirectory, String title) {
+    public static File selectFileToOpen(Window ownerWindow, File initialDirectory, String title) {
         final FileChooser filechooser = new FileChooser();
         filechooser.setInitialDirectory(initialDirectory);
         filechooser.setTitle(title);
@@ -79,7 +79,7 @@ public class PopUps {
      * @param title            Title of PopUp window
      * @return
      */
-    public static File selectFileToSave(Stage ownerWindow, File initialDirectory, String title, String initialFileName) {
+    public static File selectFileToSave(Window ownerWindow, File initialDirectory, String title, String initialFileName) {
         final FileChooser filechooser = new FileChooser();
         filechooser.setInitialDirectory(initialDirectory);
         filechooser.setInitialFileName(initialFileName);
@@ -95,7 +95,7 @@ public class PopUps {
      * @param title            - Title of PopUp window
      * @return
      */
-    public static File selectDirectory(Stage ownerWindow, File initialDirectory, String title) {
+    public static File selectDirectory(Window ownerWindow, File initialDirectory, String title) {
         final DirectoryChooser dirchooser = new DirectoryChooser();
         dirchooser.setInitialDirectory(initialDirectory);
         dirchooser.setTitle(title);

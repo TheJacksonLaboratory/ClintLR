@@ -1,17 +1,22 @@
 package org.monarchinitiative.l2ci.gui.resources;
 
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 
+/**
+ * @deprecated use {@link OptionalResources} and {@link OntologyResources} instead.
+ */
+@Deprecated(forRemoval = true)
 public interface OptionalOntologyResource {
-
-    BooleanBinding ontologyResourceMissing();
 
     ObjectProperty<Ontology> ontologyProperty();
 
-    Ontology getOntology();
+    default Ontology getOntology() {
+        return ontologyProperty().get();
+    }
 
-    void setOntology(Ontology ontology);
+    default void setOntology(Ontology ontology) {
+        ontologyProperty().set(ontology);
+    }
 }
 

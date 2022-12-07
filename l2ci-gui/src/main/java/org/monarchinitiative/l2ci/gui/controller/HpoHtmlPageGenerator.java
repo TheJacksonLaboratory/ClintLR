@@ -1,6 +1,5 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
-import com.google.common.collect.ImmutableList;
 import org.monarchinitiative.phenol.annotations.base.temporal.PointInTime;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDiseaseAnnotation;
@@ -20,7 +19,7 @@ import java.util.stream.Collectors;
  */
 class HpoHtmlPageGenerator {
     /**@return A String with the HTML for representing one HPO term and the diseases it is annotated to. */
-    static String getHTML(Term term, List<HpoDisease> annotatedDiseases, Map<TermId, Double> pretestMap) {
+    static String getHTML(Term term, List<HpoDisease> annotatedDiseases, Double pretestProba) {
 
         String termID = term.id().getValue();
         String synonyms = (term.getSynonyms() == null) ? "" : term.getSynonyms().stream().map(TermSynonym::getValue)
@@ -30,18 +29,19 @@ class HpoHtmlPageGenerator {
         String diseaseTable = getDiseaseTableHTML(annotatedDiseases, termID);
         List<SimpleXref> pmids=term.getPmidXrefs();
         List<Dbxref> xrefs = term.getXrefs();
-        Double pretestProb = 1.0;
-        for (Dbxref xref : xrefs) {
-            String name = xref.getName();
-            if (name.contains("OMIM")) {
-                termID += " (" + name + ")";
-                TermId omimTermId = Term.of(name, name).id();
-                if (pretestMap.keySet().contains(omimTermId)) {
-                    pretestProb = pretestMap.get(omimTermId);
-                    break;
-                }
-            }
-        }
+        // TODO - Is it kosher to just use the probability directly?
+//        Double pretestProb = 1.0;
+        //        for (Dbxref xref : xrefs) {
+//            String name = xref.getName();
+//            if (name.contains("OMIM")) {
+//                termID += " (" + name + ")";
+//                TermId omimTermId = Term.of(name, name).id();
+//                if (pretestProba.keySet().contains(omimTermId)) {
+//                    pretestProb = pretestProba.get(omimTermId);
+//                    break;
+//                }
+//            }
+//        }
         String pmidList;
         if (pmids.isEmpty())
             pmidList="-";
@@ -52,7 +52,7 @@ class HpoHtmlPageGenerator {
             xrefList="-";
         else
             xrefList= xrefs.stream().map(Dbxref::getName).collect(Collectors.joining(", "));
-        return String.format(HTML_TEMPLATE, CSS, term.getName(), termID, definition, comment, synonyms, pmidList, xrefList, pretestProb, diseaseTable);
+        return String.format(HTML_TEMPLATE, CSS, term.getName(), termID, definition, comment, synonyms, pmidList, xrefList, pretestProba, diseaseTable);
     }
 
     /**
@@ -110,7 +110,7 @@ class HpoHtmlPageGenerator {
 
 
     private static List<Term> getTerms(List<TermId> ids, Ontology ontology) {
-        ImmutableList.Builder<Term> builder = new ImmutableList.Builder<>();
+        List<Term> builder = new ArrayList<>();
         for (TermId tid : ids){
             Term term = ontology.getTermMap().get(tid);
             if (term==null) {
@@ -119,16 +119,16 @@ class HpoHtmlPageGenerator {
             }
             builder.add(term);
         }
-        return builder.build();
+        return List.copyOf(builder);
     }
 
     private static List<String> getTermsNamesFromIds(List<TermId> tids, Ontology ontology) {
-        ImmutableList.Builder<String> builder = new ImmutableList.Builder<>();
+        List<String> builder = new ArrayList<>();
         for (TermId id : tids) {
             Term t = ontology.getTermMap().get(id);
             builder.add(t.getName());
         }
-        return builder.build();
+        return List.copyOf(builder);
     }
 
     /** @return String representing an HTML table row for one disease annotation. */

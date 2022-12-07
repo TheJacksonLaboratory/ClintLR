@@ -1,5 +1,7 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -21,15 +23,18 @@ import java.util.*;
  */
 public class AutoCompleteOntologyTextField extends TextField {
 
-    /** The maximum mnumber of autocomplete entries to show (default 10). */
+
+    private final ObjectProperty<Ontology> ontology = new SimpleObjectProperty<>();
+    /** The maximum number of autocomplete entries to show (default 10). */
     private final int maxEntries;
-    /** We pass this to the constructor of {@link #ontologyLabels} to make sure it sorts in a case-insensitive way.*/
-    final Comparator<String> caseInsensitiveComparator = Comparator.comparing(String::toLowerCase);
-    /** The existing autocomplete entries (ontology term labels and synonyms). */
-    private final SortedSet<String> ontologyLabels;
+    /**
+     * The existing autocomplete entries (ontology term labels and synonyms).
+     * We sort the entries in a case-insensitive way.
+     */
+    private final SortedSet<String> ontologyLabels = new TreeSet<>(Comparator.comparing(String::toLowerCase));
     /** Key: an ontology term label or synonym label; value: the corresponding termid. This is used
      * to return the TermId of the selected item rather than a String*/
-    private final Map<String, TermId> labelToTermMap;
+    private final Map<String, TermId> labelToTermMap = new HashMap<>();
     /** The popup used to select an entry. */
     private final ContextMenu entriesPopup;
 
@@ -42,9 +47,7 @@ public class AutoCompleteOntologyTextField extends TextField {
     public AutoCompleteOntologyTextField(int maximumEntriesToShow) {
         super();
         this.maxEntries = maximumEntriesToShow;
-        this.labelToTermMap = new HashMap<>();
-        ontologyLabels = new TreeSet<>(caseInsensitiveComparator);
-        entriesPopup = new ContextMenu();
+        this.entriesPopup = new ContextMenu();
         textProperty().addListener(new ChangeListener<>() {
             @Override
             public void changed(ObservableValue<? extends String> observableValue, String s, String s2) {
@@ -70,25 +73,30 @@ public class AutoCompleteOntologyTextField extends TextField {
                 entriesPopup.hide();
             }
         });
+
+        ontology.addListener((obs, old, novel) -> {
+            if (novel == null) {
+                labelToTermMap.clear();
+                ontologyLabels.clear();
+            } else {
+                for (var tid : novel.getNonObsoleteTermIds()) {
+                    Term term = novel.getTermMap().get(tid);
+                    labelToTermMap.put(term.getName(), tid);
+                    term.getSynonyms()
+                            .forEach(synonym -> labelToTermMap.put(synonym.getValue(), tid));
+                }
+                ontologyLabels.addAll(labelToTermMap.keySet());
+            }
+        });
     }
 
     public Optional<TermId> getSelectedId() {
         String selected = getText();
-        return Optional.ofNullable(this.labelToTermMap.get(selected));
+        return Optional.ofNullable(labelToTermMap.get(selected));
     }
 
-    /**
-     * Update this autocomplete functionality with the non-obsolete terms (labels, synonyms) of an ontology
-     * @param ontology A phenol ontology object
-     */
-    public void setOntology(Ontology ontology) {
-        this.labelToTermMap.clear();
-        for (var tid : ontology.getNonObsoleteTermIds()) {
-            Term term = ontology.getTermMap().get(tid);
-            this.labelToTermMap.put(term.getName(), tid);
-            term.getSynonyms().forEach(s -> labelToTermMap.put(s.getValue(), tid));
-        }
-        this.ontologyLabels.addAll(labelToTermMap.keySet());
+    public ObjectProperty<Ontology> ontologyProperty() {
+        return ontology;
     }
 
     /**
@@ -97,9 +105,9 @@ public class AutoCompleteOntologyTextField extends TextField {
      */
     public void setOmimMap(Map<String, TermId> omimMap) {
         this.labelToTermMap.clear();
-        for (Map.Entry entry : omimMap.entrySet()) {
-            String omimLabel = entry.getKey().toString();
-            TermId mondoID = (TermId) entry.getValue();
+        for (Map.Entry<String, TermId> entry : omimMap.entrySet()) {
+            String omimLabel = entry.getKey();
+            TermId mondoID = entry.getValue();
             this.labelToTermMap.put(omimLabel, mondoID);
         }
         this.ontologyLabels.addAll(labelToTermMap.keySet());
@@ -126,8 +134,7 @@ public class AutoCompleteOntologyTextField extends TextField {
             });
             menuItems.add(item);
         }
-        entriesPopup.getItems().clear();
-        entriesPopup.getItems().addAll(menuItems);
+        entriesPopup.getItems().setAll(menuItems);
     }
 
 

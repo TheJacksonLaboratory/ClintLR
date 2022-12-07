@@ -17,6 +17,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * @deprecated use {@link OptionalResources} and {@link OntologyResources} instead.
+ */
+@Deprecated(forRemoval = true)
 public class OptionalHpoaResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(OptionalHpoaResource.class);
     private final BooleanBinding hpoaResourceIsMissing;

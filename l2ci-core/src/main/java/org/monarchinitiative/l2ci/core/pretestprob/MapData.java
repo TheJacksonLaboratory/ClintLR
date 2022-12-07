@@ -4,13 +4,12 @@ import org.monarchinitiative.phenol.ontology.data.TermId;
 
 public class MapData {
 
-    String diseaseName;
-    TermId mondoId;
-    TermId omimId;
-    Double diseaseProb;
-    Double sliderValue;
-
-    boolean isFixed;
+    private final String diseaseName;
+    private final TermId mondoId;
+    private final TermId omimId;
+    private final Double diseaseProb;
+    private final Double sliderValue;
+    private boolean isFixed;
 
     public MapData(String name, TermId mondoId, TermId omimId, Double probability, Double sliderVal, boolean fixed) {
         this.diseaseName = name;

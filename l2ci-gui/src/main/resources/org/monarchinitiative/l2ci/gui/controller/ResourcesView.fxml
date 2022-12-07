@@ -16,9 +16,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox minHeight="500.0" minWidth="1200.0" prefHeight="500.0" prefWidth="1200.0" style="-fx-background-color: #ffffff;" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.ResourcesController">
+<VBox fx:id="contentBox" minHeight="500.0" minWidth="1200.0" prefHeight="500.0" prefWidth="1200.0" style="-fx-background-color: #ffffff;" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.ResourcesController">
     <children>
-        <Button fx:id="closeButton" onAction="#close" text="Close"/>
+        <Button onAction="#close" text="Close"/>
         <Label contentDisplay="CENTER" minWidth="100.0" text="Initialize L4CI resources:" textAlignment="CENTER">
             <font>
                 <Font name="System Bold" size="24.0" />

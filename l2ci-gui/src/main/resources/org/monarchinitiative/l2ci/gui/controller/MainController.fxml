@@ -12,7 +12,6 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
-<?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -21,7 +20,9 @@
 <?import javafx.scene.web.WebView?>
 
 <?import org.monarchinitiative.l2ci.gui.controller.AutoCompleteOntologyTextField?>
-<BorderPane prefHeight="1000.0" prefWidth="1200.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.MainController">
+<?import org.monarchinitiative.l2ci.gui.ui.MondoTreeView?>
+<BorderPane prefHeight="1000.0" prefWidth="1200.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.MainController"
+            fx:id="contentPane">
      <top>
         <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
            <children>
@@ -34,7 +35,7 @@
                             <MenuItem onAction="#downloadMondoFile" text="Download Mondo JSON File" />
                             <MenuItem onAction="#loadMondoFile" text="Load Local Mondo JSON File" />
                             -->
-                            <MenuItem onAction="#showMondoStats" text="Show Mondo Stats" />
+                            <MenuItem fx:id="showMondoStats" onAction="#showMondoStatsAction" text="Show Mondo Stats" />
                             <Menu text="Probability Map">
                                 <MenuItem onAction="#loadMapOutputFile" text="Load Map from File" />
                                 <MenuItem onAction="#saveMapOutputFile" text="Save Map to File" />
@@ -45,10 +46,6 @@
                      </Menu>
                      <Menu mnemonicParsing="false" text="Edit">
                         <items>
-                            <!--
-                            <MenuItem onAction="#setLiricalDataDirectory" text="Set LIRICAL Data Directory" />
-                            <MenuItem onAction="#setExomiserVariantFile" text="Set Path to Exomiser Variant File" />
-                            -->
                             <MenuItem mnemonicParsing="false" text="Delete" />
                         </items>
                      </Menu>
@@ -76,7 +73,7 @@
                         </Label>
                         <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
                            <children>
-                              <AutoCompleteOntologyTextField fx:id="autocompleteTextfield" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="300.0" promptText="autocomplete Mondo term...">
+                              <AutoCompleteOntologyTextField fx:id="autocompleteTextField" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="300.0" promptText="autocomplete Mondo term...">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
@@ -98,7 +95,7 @@
                         </Label>
                         <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
                            <children>
-                              <AutoCompleteOntologyTextField fx:id="autocompleteOmimTextfield" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="300.0" promptText="autocomplete OMIM term...">
+                              <AutoCompleteOntologyTextField fx:id="autocompleteOmimTextField" maxHeight="30.0" maxWidth="1.7976931348623157E308" minHeight="30.0" minWidth="300.0" promptText="autocomplete OMIM term...">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
@@ -120,7 +117,7 @@
                         </Label>
                         <HBox>
                            <children>
-                              <Slider fx:id="probSlider" prefWidth="200">
+                              <Slider fx:id="pretestProbaSlider" prefWidth="200" min="1" max="10" value="1" majorTickUnit="2" showTickLabels="true" showTickMarks="true">
                                  <VBox.margin>
                                     <Insets bottom="5.0" left="15.0" top="5.0" />
                                  </VBox.margin>
@@ -128,7 +125,7 @@
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
                               </Slider>
-                              <TextField fx:id="sliderTextField" prefWidth="50.0">
+                              <TextField fx:id="pretestProbaTextField" prefWidth="50.0">
                                  <VBox.margin>
                                     <Insets bottom="5.0" left="15.0" top="5.0" />
                                  </VBox.margin>
@@ -154,7 +151,7 @@
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
                               </Label>
-                              <TextField fx:id="lrThresholdTextField" prefWidth="80.0">
+                              <TextField fx:id="lrThresholdTextField" prefWidth="80.0" text="0.05">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin></TextField>
@@ -208,7 +205,7 @@
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
                               </Label>
-                              <TextField fx:id="outputFileTextField" prefWidth="100.0">
+                              <TextField fx:id="outputFileTextField" prefWidth="100.0" text="lirical_results">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
@@ -289,11 +286,11 @@
                           </HBox.margin>
                       </Label>
                   </HBox>
-                  <TreeView fx:id="ontologyTreeView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                  <MondoTreeView fx:id="mondoTreeView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
                       <VBox.margin>
                           <Insets left="5.0" right="5.0" top="5.0" />
                       </VBox.margin>
-                  </TreeView>
+                  </MondoTreeView>
               </VBox>
 
               <AnchorPane>

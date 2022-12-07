@@ -2,18 +2,21 @@ package org.monarchinitiative.l2ci.gui;
 
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
-import javafx.application.HostServices;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import org.monarchinitiative.l2ci.gui.config.AppProperties;
+import org.monarchinitiative.l2ci.gui.controller.MainController;
+import org.monarchinitiative.l2ci.gui.resources.LiricalResources;
+import org.monarchinitiative.l2ci.gui.resources.OntologyResources;
+import org.monarchinitiative.l2ci.gui.resources.OptionalResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 
@@ -28,29 +31,30 @@ public class MainApp  extends Application {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MainApp.class);
 
-    private ConfigurableApplicationContext applicationContext;
-
-    static public final String L4CI_NAME_KEY = "l4ci.name";
-
-    static public final String L4CI_VERSION_PROP_KEY = "l4ci.version";
-
-    static public Stage mainStage;
-
-    public static HostServices host;
-
-
-    @Override
-    public void start(Stage stage) {
-        applicationContext.publishEvent(new StageReadyEvent(stage));
-        host = getHostServices();
-    }
+    private ConfigurableApplicationContext context;
 
     @Override
     public void init() {
         String[] args = getParameters().getRaw().toArray(String[]::new);
-        applicationContext = new SpringApplicationBuilder(MainApp.class)
+        context = new SpringApplicationBuilder(MainApp.class)
                 .headless(false)
                 .run(args);
+    }
+
+    @Override
+    public void start(Stage stage) throws Exception {
+        FXMLLoader loader = new FXMLLoader(MainController.class.getResource("MainController.fxml"));
+        loader.setControllerFactory(context::getBean);
+
+        context.getBean(HostServicesUrlBrowser.class).setHostServices(getHostServices());
+        AppProperties properties = context.getBean(AppProperties.class);
+
+        Scene scene = new Scene(loader.load(), 1200, 900);
+        stage.setTitle(properties.getApplicationUiTitle().concat(" :: ").concat(properties.getVersion()));
+        stage.setResizable(true);
+        stage.setScene(scene);
+//        stage.setOnCloseRequest(); // TODO(mabeckwith) - should we implement this?
+        stage.show();
     }
 
     /**
@@ -59,28 +63,37 @@ public class MainApp  extends Application {
     @Override
     public void stop() throws Exception {
         super.stop();
-        final Properties pgProperties = applicationContext.getBean("configProperties", Properties.class);
-        final File configFile = applicationContext.getBean("configFilePath", File.class);
-        try (OutputStream os = Files.newOutputStream(configFile.toPath())) {
-            pgProperties.store(os, "L4CI properties");
-        }
+        serializeResourceState(
+                context.getBean(OptionalResources.class),
+                context.getBean("configProperties", Properties.class),
+                context.getBean("configFilePath", File.class));
+
         LOGGER.debug("Shutting down...");
-        applicationContext.close();
+        context.close();
         LOGGER.info("Bye!");
     }
 
+    private static void serializeResourceState(OptionalResources optionalResources,
+                                               Properties resourceProperties,
+                                               File target) throws IOException {
+        // Serialize LIRICAL resources
+        LiricalResources liricalResources = optionalResources.liricalResources();
+        if (liricalResources.getDataDirectory() != null)
+            resourceProperties.setProperty(LiricalResources.LIRICAL_DATA_PROPERTY, liricalResources.getDataDirectory().toAbsolutePath().toString());
+
+        // MONDO path
+        OntologyResources ontologyResources = optionalResources.ontologyResources();
+        if (ontologyResources.getMondoPath() != null)
+            resourceProperties.setProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY, ontologyResources.getMondoPath().toAbsolutePath().toString());
 
 
-
-    static class StageReadyEvent extends ApplicationEvent {
-        public StageReadyEvent(Stage stage) {
-            super(stage);
+        try (OutputStream os = Files.newOutputStream(target.toPath())) {
+            resourceProperties.store(os, "L4CI properties");
         }
 
-        public Stage getStage() {
-            return ((Stage) getSource());
-        }
+        LOGGER.debug("Properties saved to `{}`", target.getAbsolutePath());
     }
+
 
     static void loadSplashScreen()  {
         Stage splashStage = new Stage();

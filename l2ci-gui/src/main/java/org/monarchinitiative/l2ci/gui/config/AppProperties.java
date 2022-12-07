@@ -4,6 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * The properties that matches {@code application.properties} that is bundled with the app.
+ * <p>
+ * Note, these properties are <em>not</em> the properties we use to serialize the user data, such as path
+ * to {@code hp.json}, LIRICAL data directory, etc.
+ */
 @Component
 public class AppProperties {
 
