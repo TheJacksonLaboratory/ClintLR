@@ -1,13 +1,13 @@
 package org.monarchinitiative.l2ci.gui.ui;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import org.monarchinitiative.l2ci.core.Relation;
-import org.monarchinitiative.l2ci.gui.model.DiseaseWithProbability;
+import org.monarchinitiative.l2ci.gui.model.DiseaseWithSliderValue;
 import org.monarchinitiative.phenol.ontology.data.Identified;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
@@ -23,20 +23,16 @@ import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.*;
 public class MondoTreeView extends TreeView<OntologyTermWrapper> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MondoTreeView.class);
-
+    private final MapProperty<TermId, Double> sliderValues = new SimpleMapProperty<>(FXCollections.observableHashMap());
     private final ObjectProperty<Ontology> mondo = new SimpleObjectProperty<>();
-    private final ObjectProperty<Map<TermId, Integer>> mondoNDescendents = new SimpleObjectProperty<>(Map.of());
+    private final MapProperty<TermId, Integer> nChildren = new SimpleMapProperty<>(FXCollections.observableHashMap());
 
     public MondoTreeView() {
         super();
         setShowRoot(false);
         getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 
-        setCellFactory(tw -> {
-            MondoTreeCell cell = new MondoTreeCell();
-            cell.mondoNDescendantsMapProperty().bind(mondoNDescendents);
-            return cell;
-        });
+        setCellFactory(tw -> new MondoTreeCell(nChildren));
         mondo.addListener(handleOntologyUpdate());
     }
 
@@ -44,8 +40,12 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
         return mondo;
     }
 
-    public ObjectProperty<Map<TermId, Integer>> mondoNDescendentsProperty() {
-        return mondoNDescendents;
+    public MapProperty<TermId, Double> sliderValuesProperty() {
+        return sliderValues;
+    }
+
+    public MapProperty<TermId, Integer> nChildrenProperty() {
+        return nChildren;
     }
 
     private ChangeListener<Ontology> handleOntologyUpdate() {
@@ -55,7 +55,7 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
             } else {
                 TermId rootId = mondo.getRootTermId();
                 Term rootTerm = mondo.getTermMap().get(rootId);
-                TreeItem<OntologyTermWrapper> root = new OntologyTermTreeItem(new OntologyTermWrapper(rootTerm), mondo);
+                TreeItem<OntologyTermWrapper> root = new MondoTreeItem(new OntologyTermWrapper(rootTerm), mondo, nChildren, sliderValues);
                 root.setExpanded(true);
                 setRoot(root);
             }
@@ -75,11 +75,11 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
             // find root -> term path through the tree
             Stack<Identified> termStack = new Stack<>();
             termStack.add(term);
-            Set<? extends Identified> parents = Relation.getTermRelations(mondo, term.id(), Relation.PARENT);
-            while (parents.size() != 0) {
-                Identified parent = parents.iterator().next();
+            Optional<? extends Identified> parents = Relation.getTermRelationsStream(mondo, term.id(), Relation.PARENT).findFirst();
+            while (parents.isPresent()) {
+                Identified parent = parents.get();
                 termStack.add(parent);
-                parents = Relation.getTermRelations(mondo, parent.id(), Relation.PARENT);
+                parents = Relation.getTermRelationsStream(mondo, parent.id(), Relation.PARENT).findFirst();
             }
 
             // expand tree nodes in top -> down direction
@@ -111,14 +111,37 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
         return existsPath(mondo, term.id(), mondo.getRootTermId());
     }
 
-    public Stream<DiseaseWithProbability> drainDiseaseProbabilities() {
+    /**
+     * Run a breadth-first traversal of the tree nodes to yield a stream of {@link DiseaseWithSliderValue} items.
+     * <p>
+     * Note, due to the fact that we use tree to display a graph, the {@code Stream} will contain non-unique elements
+     * (the items with multiple parents).
+     *
+     * @deprecated Use {@link #drainSliderValues()} to get IDs and slider values for the values that have been changed.
+     * @return a {@code Stream} with disease probabilities.
+     */
+    @Deprecated(forRemoval = true)
+    public Stream<DiseaseWithSliderValue> drainDiseaseProbabilities() {
         // A tad of recursion never killed anybody..
-        Stream.Builder<DiseaseWithProbability> builder = Stream.builder();
+        Stream.Builder<DiseaseWithSliderValue> builder = Stream.builder();
         getMapData(builder, getRoot());
         return builder.build();
     }
 
-    private static void getMapData(Stream.Builder<DiseaseWithProbability> builder, TreeItem<OntologyTermWrapper> item) {
+    public Stream<DiseaseWithSliderValue> drainSliderValues() {
+        if (mondo.get() == null) {
+            LOGGER.warn("Tried to get slider values with unset Mondo");
+            return Stream.empty();
+        }
+
+        return sliderValues.entrySet().stream()
+                .map(entry -> DiseaseWithSliderValue.of(
+                        entry.getKey(),
+                        mondo.get().getTermMap().get(entry.getKey()).getName(),
+                        entry.getValue()));
+    }
+
+    private static void getMapData(Stream.Builder<DiseaseWithSliderValue> builder, TreeItem<OntologyTermWrapper> item) {
         if (item == null)
             return;
 

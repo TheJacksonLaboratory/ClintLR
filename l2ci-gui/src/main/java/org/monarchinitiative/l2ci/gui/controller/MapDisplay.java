@@ -6,7 +6,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import org.monarchinitiative.l2ci.gui.model.DiseaseWithProbability;
+import org.monarchinitiative.l2ci.gui.model.DiseaseWithSliderValue;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.io.IOException;
@@ -14,18 +14,18 @@ import java.io.IOException;
 public class MapDisplay extends VBox {
 
     @FXML
-    private TableView<DiseaseWithProbability> tableView;
+    private TableView<DiseaseWithSliderValue> tableView;
 
     @FXML
-    private TableColumn<DiseaseWithProbability, String> diseaseName;
+    private TableColumn<DiseaseWithSliderValue, String> diseaseName;
     @FXML
-    private TableColumn<DiseaseWithProbability, String> mondoId;
+    private TableColumn<DiseaseWithSliderValue, String> mondoId;
     @FXML
-    private TableColumn<DiseaseWithProbability, String> omimId;
+    private TableColumn<DiseaseWithSliderValue, String> omimId;
 //    @FXML
 //    private TableColumn<DiseaseWithProbability, Double> diseaseProb;
     @FXML
-    private TableColumn<DiseaseWithProbability, Double> sliderValue;
+    private TableColumn<DiseaseWithSliderValue, Double> sliderValue;
 //    @FXML
 //    private TableColumn<DiseaseWithProbability, Boolean> isFixed;
 
@@ -66,7 +66,7 @@ public class MapDisplay extends VBox {
         return null;
     }
 
-    public ObservableList<DiseaseWithProbability> getItems() {
+    public ObservableList<DiseaseWithSliderValue> getItems() {
         return tableView.getItems();
     }
 

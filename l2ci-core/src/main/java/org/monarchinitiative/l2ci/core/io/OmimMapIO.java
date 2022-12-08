@@ -52,6 +52,10 @@ public class OmimMapIO {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is));
              CSVParser parser = CSV_FORMAT.parse(reader)) {
             for (CSVRecord record : parser) {
+                if (parser.getCurrentLineNumber() == 1)
+                    // Skip header
+                    continue;
+
                 TermId omim = TermId.of(record.get(0));
                 List<TermId> mondoIds = Arrays.stream(record.get(1).split("\\|"))
                         .map(TermId::of)

@@ -6,6 +6,7 @@ import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.*;
 
@@ -27,14 +28,27 @@ public enum Relation {
     }
 
     /**
-     * Get the relations of "term"
+     * Get the relations of the {@code termId}.
      *
      * @param ontology An ontology
      * @param termId   A term ID of interest
      * @param relation Relation of interest (ancestor, descendent, child, parent)
-     * @return relations of term (not including term itself).
+     * @return stream of terms with the relation of interest (not including term itself).
      */
     public static Set<Term> getTermRelations(Ontology ontology, TermId termId, Relation relation) {
+        return getTermRelationsStream(ontology, termId, relation)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Get the relations of the {@code termId}.
+     *
+     * @param ontology An ontology
+     * @param termId   A term ID of interest
+     * @param relation Relation of interest (ancestor, descendent, child, parent)
+     * @return stream of terms with the relation of interest (not including term itself).
+     */
+    public static Stream<Term> getTermRelationsStream(Ontology ontology, TermId termId, Relation relation) {
         Set<TermId> relationIds = switch (relation) {
             case ANCESTOR -> getAncestorTerms(ontology, termId, false);
             case DESCENDENT -> getDescendents(ontology, termId);
@@ -43,7 +57,6 @@ public enum Relation {
         };
 
         return relationIds.stream()
-                .map(id -> ontology.getTermMap().get(id))
-                .collect(Collectors.toSet());
+                .map(id -> ontology.getTermMap().get(id));
     }
 }

@@ -159,7 +159,7 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
                     LOGGER.debug("Mondo was loaded");
                     services.setMondo(task.getValue());
                 });
-                task.setOnFailed(e -> LOGGER.error("Could not load Mondo ontology from {}", novel.toAbsolutePath()));
+                task.setOnFailed(e -> LOGGER.error("Could not load Mondo ontology from {}", novel.toAbsolutePath(), e.getSource().getException()));
                 executor.submit(task);
             }
         };
@@ -181,7 +181,7 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
                     mmr.setOmimToMondo(mm.omimToMondo());
                     mmr.setMondoNDescendents(mm.mondoNDescendents());
                 });
-                task.setOnFailed(e -> LOGGER.error("Could not load Mondo meta"));
+                task.setOnFailed(e -> LOGGER.error("Could not load Mondo meta", e.getSource().getException()));
                 executor.submit(task);
             }
         };

@@ -2,8 +2,13 @@ package org.monarchinitiative.l2ci.gui.model;
 
 import javafx.beans.property.DoubleProperty;
 import org.monarchinitiative.phenol.ontology.data.Identified;
+import org.monarchinitiative.phenol.ontology.data.TermId;
 
-public interface DiseaseWithProbability extends Identified {
+public interface DiseaseWithSliderValue extends Identified {
+
+    static DiseaseWithSliderValue of(TermId id, String name, Double sliderValue) {
+        return new DiseaseWithSliderValueDefault(id, name, sliderValue);
+    }
 
     /**
      * @return disease name
