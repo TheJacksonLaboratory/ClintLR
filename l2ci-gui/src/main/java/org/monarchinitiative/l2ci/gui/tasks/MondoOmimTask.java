@@ -1,6 +1,7 @@
 package org.monarchinitiative.l2ci.gui.tasks;
 
 import javafx.concurrent.Task;
+import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.core.io.MondoNDescendantsMapIO;
 import org.monarchinitiative.l2ci.core.io.OmimMapIO;
 import org.monarchinitiative.phenol.ontology.data.Dbxref;
@@ -115,8 +116,8 @@ public class MondoOmimTask extends Task<MondoOmim> {
             if (doRefs) {
                 List<Dbxref> mondoTermXRefs = mondoTerm.getXrefs();
                 for (Dbxref ref : mondoTermXRefs) {
-//                    Set<Term> descendents = mainController.getTermRelations(mondoID, Relation.DESCENDENT);
-                    Set<Term> descendents = Set.of();
+                    Set<Term> descendents = Relation.getTermRelations(mondo, mondoID, Relation.DESCENDENT);
+//                    Set<Term> descendents = Set.of();
                     int nDescendents = 0;
                     for (Term descendent : descendents) {
                         for (TermId omimID : omim2Mondo.keySet()) {

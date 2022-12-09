@@ -75,7 +75,7 @@ public class MainController {
     private static final Pattern NONNEGATIVE_FLOAT = Pattern.compile("(\\d+\\.?)|(\\d*\\.\\d+)");
 
     // Default pretest probability is 1. and it must match the probability in the `MainView.fxml`.
-    private static final double DEFAULT_PRETEST_PROBABILITY = 1.;
+    private static final double DEFAULT_SLIDER_VALUE = 1.;
 
     private static final String EVENT_TYPE_CLICK = "click";
 
@@ -125,7 +125,7 @@ public class MainController {
 
     // A flag for syncing slider pretest proba updates.
     private boolean updatingPretestProba = false;
-    private final DoubleProperty sliderValue = new SimpleDoubleProperty(DEFAULT_PRETEST_PROBABILITY);
+    private final DoubleProperty sliderValue = new SimpleDoubleProperty(DEFAULT_SLIDER_VALUE);
     /**
      * Slider to adjust pretest probability before running LIRICAL
      */
@@ -192,7 +192,7 @@ public class MainController {
         showMondoStats.disableProperty().bind(optionalServices.mondoProperty().isNull());
         copyrightLabel.setText("L4CI, v. " + appProperties.getVersion() + ", © Monarch Initiative 2022");
 
-        pretestProbaFormatter = proparePretestProbabilityFormatter(pretestProbaSlider.getMin(), pretestProbaSlider.getMax(), DEFAULT_PRETEST_PROBABILITY);
+        pretestProbaFormatter = proparePretestProbabilityFormatter(pretestProbaSlider.getMin(), pretestProbaSlider.getMax(), DEFAULT_SLIDER_VALUE);
         pretestProbaTextField.setTextFormatter(pretestProbaFormatter);
 
         InvalidationListener updatePretestProba = updatePretestProbability();
@@ -668,11 +668,11 @@ public class MainController {
         Map<TermId, TermId> mondoToOmim = mm.getMondoToOmim();
 
         for (TermId omimId : mm.getOmimToMondo().keySet()) {
-            omimToPretestProbability.put(omimId, DEFAULT_PRETEST_PROBABILITY);
+            omimToPretestProbability.put(omimId, DEFAULT_SLIDER_VALUE);
         }
 
         mondoTreeView.drainDiseaseProbabilities()
-                .filter(md -> md.getSliderValue() >= DEFAULT_PRETEST_PROBABILITY)
+                .filter(md -> md.getSliderValue() >= DEFAULT_SLIDER_VALUE)
                 /*
                   Here we update OMIM -> pretest proba map.
                   However, the `mondoTreeView` provides, well, Mondo IDs. Hence, we first map

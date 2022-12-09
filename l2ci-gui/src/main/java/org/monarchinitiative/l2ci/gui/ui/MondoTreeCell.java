@@ -69,11 +69,11 @@ public class MondoTreeCell extends TreeCell<OntologyTermWrapper> {
             }
 
             // TODO - perhaps we can optimize the conditions to prevent two streams?
-            if (item.term().getXrefs().stream().anyMatch(r -> r.getName().contains("OMIMPS:"))) {
-                updateTreeIcons(item, omimPSIcon, omimPSSelectedIcon);
-            } else if (item.term().getXrefs().stream().noneMatch(r -> r.getName().contains("OMIMPS:"))) {
-                if (item.term().getXrefs().stream().anyMatch(r -> r.getName().contains("OMIM:"))) {
-                    updateTreeIcons(item, omimIcon, selectedIcon);
+            if (item.term().getXrefs().stream().anyMatch(r -> r.getName().contains("OMIM:"))) {
+                updateTreeIcons(item, omimIcon, selectedIcon);
+            } else if (item.term().getXrefs().stream().noneMatch(r -> r.getName().contains("OMIM:"))) {
+                if (item.term().getXrefs().stream().anyMatch(r -> r.getName().contains("OMIMPS:"))) {
+                    updateTreeIcons(item, omimPSIcon, omimPSSelectedIcon);
                 } else {
                     updateTreeIcons(item, null, null);
                 }
