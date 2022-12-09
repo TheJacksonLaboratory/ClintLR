@@ -74,8 +74,8 @@ public class MainController {
     // (e.g. `.1`, `.123`, `1.234`).
     private static final Pattern NONNEGATIVE_FLOAT = Pattern.compile("(\\d+\\.?)|(\\d*\\.\\d+)");
 
-    // Default pretest probability is 1. and it must match the probability in the `MainView.fxml`.
-    private static final double DEFAULT_PRETEST_PROBABILITY = 1.;
+    // Default slider value is 1. and it must match the probability in the `MainView.fxml`.
+    private static final double DEFAULT_SLIDER_VALUE = 1.;
 
     private static final String EVENT_TYPE_CLICK = "click";
 
@@ -125,7 +125,7 @@ public class MainController {
 
     // A flag for syncing slider pretest proba updates.
     private boolean updatingPretestProba = false;
-    private final DoubleProperty sliderValue = new SimpleDoubleProperty(DEFAULT_PRETEST_PROBABILITY);
+    private final DoubleProperty sliderValue = new SimpleDoubleProperty(DEFAULT_SLIDER_VALUE);
     /**
      * Slider to adjust pretest probability before running LIRICAL
      */
@@ -198,7 +198,7 @@ public class MainController {
         // TODO - setup OMIM autocompletion
 
         // ------------- Slider UI fields ------------
-        pretestProbaFormatter = proparePretestProbabilityFormatter(pretestProbaSlider.getMin(), pretestProbaSlider.getMax(), DEFAULT_PRETEST_PROBABILITY);
+        pretestProbaFormatter = proparePretestProbabilityFormatter(pretestProbaSlider.getMin(), pretestProbaSlider.getMax(), DEFAULT_SLIDER_VALUE);
         pretestProbaTextField.setTextFormatter(pretestProbaFormatter);
 
         InvalidationListener keepSliderValuesInSync = updateSliderValuesInTheUi();
@@ -217,8 +217,8 @@ public class MainController {
         // Set up the Mondo tree
         mondoTreeView.disableProperty().bind(optionalServices.mondoProperty().isNull());
         mondoTreeView.mondoProperty().bind(optionalServices.mondoProperty());
-        // Update the descendent counts when they become available
-        optionalServices.mondoOmimResources().mondoNDescendentsProperty().addListener((obs, old, novel) -> mondoTreeView.nChildrenProperty().putAll(novel));
+        // TODO - change mondoTreeView children to descendents and update the map when the data becomes available.
+//        mondoTreeView.mondoNDescendentsProperty().bind(optionalServices.mondoOmimResources().mondoNDescendentsProperty());
         mondoTreeView.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousMondoItem, newMondoItem) -> {
                     if (previousMondoItem != null)
@@ -663,6 +663,7 @@ public class MainController {
 //    }
 
 
+    // TODO(mabeckwith) - consider removing the method if it proves to have become redundant.
     private Map<TermId, Double> makeSelectedDiseaseMap() {
         Map<TermId, Double> omimToPretestProbability = new HashMap<>();
 
@@ -670,10 +671,10 @@ public class MainController {
         Map<TermId, TermId> mondoToOmim = mm.getMondoToOmim();
 
         for (TermId omimId : mm.getOmimToMondo().keySet()) {
-            omimToPretestProbability.put(omimId, DEFAULT_PRETEST_PROBABILITY);
+            omimToPretestProbability.put(omimId, DEFAULT_SLIDER_VALUE);
         }
-
         mondoTreeView.drainSliderValues()
+                .filter(md -> md.getSliderValue() >= DEFAULT_SLIDER_VALUE)
                 /*
                   Here we update OMIM -> pretest proba map.
                   However, the `mondoTreeView` provides, well, Mondo IDs. Hence, we first map

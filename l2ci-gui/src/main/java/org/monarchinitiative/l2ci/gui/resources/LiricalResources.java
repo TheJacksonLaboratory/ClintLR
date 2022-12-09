@@ -14,6 +14,22 @@ import java.nio.file.Path;
 public class LiricalResources {
     // TODO(ielis) - ensure we persist LiricalResources between sessions
     public static final String LIRICAL_DATA_PROPERTY = "lirical.data.directory";
+
+    public static final String EXOMISER_VARIANT_PROPERTY = "exomiser.variant.file";
+
+    public static final String BACKGROUND_FREQUENCY_PROPERTY = "background.frequency.file";
+
+    public static final String PATHOGENICITY_PROPERTY = "pathogenicity.threshold";
+
+    public static final String DEFAULT_VARIANT_BACKGROUND_FREQUENCY_PROPERTY = "default.variant.background.frequency";
+
+    public static final String STRICT_PROPERTY = "strict";
+
+    public static final String DEFAULT_ALLELE_PROPERTY = "default.allele.frequency";
+
+    public static final String GENOME_BUILD_PROPERTY = "genome.build";
+
+    public static final String TRANSCRIPT_DATABASE_PROPERTY = "transcript.database";
     public static final float DEFAULT_PATHOGENICITY_THRESHOLD = .8f;
     // The frequencies are as a percentage, so this is 1/1000.
     public static final double DEFAULT_VARIANT_BACKGROUND_FREQUENCY = .1;

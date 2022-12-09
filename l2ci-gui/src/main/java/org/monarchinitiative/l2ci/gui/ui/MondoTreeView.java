@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.*;
@@ -54,6 +55,11 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
                 setRoot(null);
             } else {
                 TermId rootId = mondo.getRootTermId();
+                Set<Term> children = Relation.getTermRelations(mondo, rootId, Relation.CHILD);
+                List<Term> containsDisease = children.stream().filter(r -> r.getName().contains("disease or disorder")).toList();
+                if (!containsDisease.isEmpty()) {
+                    rootId = containsDisease.get(0).id();
+                }
                 Term rootTerm = mondo.getTermMap().get(rootId);
                 TreeItem<OntologyTermWrapper> root = new MondoTreeItem(new OntologyTermWrapper(rootTerm), mondo, nChildren, sliderValues);
                 root.setExpanded(true);

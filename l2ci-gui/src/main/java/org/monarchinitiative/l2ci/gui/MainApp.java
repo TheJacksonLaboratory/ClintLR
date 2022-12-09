@@ -79,6 +79,9 @@ public class MainApp  extends Application {
         LiricalResources liricalResources = optionalResources.liricalResources();
         if (liricalResources.getDataDirectory() != null)
             resourceProperties.setProperty(LiricalResources.LIRICAL_DATA_PROPERTY, liricalResources.getDataDirectory().toAbsolutePath().toString());
+        // add property setters for other LIRICAL properties (ultimately create new utility class (private constructor)
+        if (liricalResources.getExomiserVariantDbFile() != null)
+            resourceProperties.setProperty(LiricalResources.EXOMISER_VARIANT_PROPERTY, liricalResources.getExomiserVariantDbFile().toAbsolutePath().toString());
 
         // MONDO path
         OntologyResources ontologyResources = optionalResources.ontologyResources();

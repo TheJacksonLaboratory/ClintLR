@@ -28,7 +28,7 @@
             </VBox.margin>
         </Label>
         <TabPane>
-            <Tab closable="false" text="Ontology">
+            <Tab closable="false" text="Ontology + Output">
                 <GridPane>
                     <columnConstraints>
                         <ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="180.0" />
@@ -51,7 +51,63 @@
                     </rowConstraints>
                     <children>
 
-                        <Label text="HPO json" wrapText="true" GridPane.rowIndex="1">
+<!--                        <Label text="HPO json" wrapText="true" GridPane.rowIndex="1">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                            <font>-->
+<!--                                <Font name="System Bold" size="18.0" />-->
+<!--                            </font>-->
+<!--                        </Label>-->
+<!--                        <Label fx:id="hpJsonLabel" GridPane.columnIndex="2" GridPane.rowIndex="1">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                        </Label>-->
+<!--                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setHPOFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="1">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                        </Button>-->
+<!--                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#downloadHPOFileButtonAction" text="Download" GridPane.columnIndex="4" GridPane.rowIndex="1">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                        </Button>-->
+<!--                        <ProgressIndicator fx:id="hpoProgressIndicator" progress="0.0" GridPane.columnIndex="5" GridPane.rowIndex="1">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                        </ProgressIndicator>-->
+<!--                        <Label text="HPO Annotation File" wrapText="true" GridPane.rowIndex="2">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                            <font>-->
+<!--                                <Font name="System Bold" size="18.0" />-->
+<!--                            </font>-->
+<!--                        </Label>-->
+<!--                        <Label fx:id="hpoaLabel" GridPane.columnIndex="2" GridPane.rowIndex="2">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                        </Label>-->
+<!--                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setHPOAFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="2">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                        </Button>-->
+<!--                        <Button fx:id="downloadHPOAButton" minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#downloadHPOAFileButtonAction" text="Download" GridPane.columnIndex="4" GridPane.rowIndex="2">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                        </Button>-->
+<!--                        <ProgressIndicator fx:id="hpoaProgressIndicator" progress="0.0" GridPane.columnIndex="5" GridPane.rowIndex="2">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                        </ProgressIndicator>-->
+                        <Label text="Mondo json" wrapText="true" GridPane.rowIndex="1">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -59,78 +115,22 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <Label fx:id="hpJsonLabel" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                        <Label fx:id="mondoLabel" GridPane.columnIndex="2" GridPane.rowIndex="1">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Label>
-                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setHPOFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="1">
+                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setMondoFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="1">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Button>
-                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#downloadHPOFileButtonAction" text="Download" GridPane.columnIndex="4" GridPane.rowIndex="1">
+                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#downloadMondoFileButtonAction" text="Download" GridPane.columnIndex="4" GridPane.rowIndex="1">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Button>
-                        <ProgressIndicator fx:id="hpoProgressIndicator" progress="0.0" GridPane.columnIndex="5" GridPane.rowIndex="1">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </ProgressIndicator>
-                        <Label text="HPO Annotation File" wrapText="true" GridPane.rowIndex="2">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                            <font>
-                                <Font name="System Bold" size="18.0" />
-                            </font>
-                        </Label>
-                        <Label fx:id="hpoaLabel" GridPane.columnIndex="2" GridPane.rowIndex="2">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </Label>
-                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setHPOAFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="2">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </Button>
-                        <Button fx:id="downloadHPOAButton" minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#downloadHPOAFileButtonAction" text="Download" GridPane.columnIndex="4" GridPane.rowIndex="2">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </Button>
-                        <ProgressIndicator fx:id="hpoaProgressIndicator" progress="0.0" GridPane.columnIndex="5" GridPane.rowIndex="2">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </ProgressIndicator>
-                        <Label text="Mondo json" wrapText="true" GridPane.rowIndex="3">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                            <font>
-                                <Font name="System Bold" size="18.0" />
-                            </font>
-                        </Label>
-                        <Label fx:id="mondoLabel" GridPane.columnIndex="2" GridPane.rowIndex="3">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </Label>
-                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setMondoFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="3">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </Button>
-                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#downloadMondoFileButtonAction" text="Download" GridPane.columnIndex="4" GridPane.rowIndex="3">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </Button>
-                        <ProgressIndicator fx:id="mondoProgressIndicator" progress="0.0" GridPane.columnIndex="5" GridPane.rowIndex="3">
+                        <ProgressIndicator fx:id="mondoProgressIndicator" progress="0.0" GridPane.columnIndex="5" GridPane.rowIndex="1">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -139,6 +139,24 @@
                     <VBox.margin>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                     </VBox.margin>
+                    <Label text="Output directory" wrapText="true" GridPane.rowIndex="2">
+                        <GridPane.margin>
+                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                        </GridPane.margin>
+                        <font>
+                            <Font name="System Bold" size="18.0" />
+                        </font>
+                    </Label>
+                    <Label fx:id="liricalResultsDirLabel" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                        <GridPane.margin>
+                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                        </GridPane.margin>
+                    </Label>
+                    <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setLiricalResultsDirButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="2">
+                        <GridPane.margin>
+                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                        </GridPane.margin>
+                    </Button>
                 </GridPane>
             </Tab>
             <Tab closable="false" text="LIRICAL">
@@ -183,24 +201,24 @@
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Button>
-                        <Label text="LIRICAL results directory" wrapText="true" GridPane.rowIndex="2">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                            <font>
-                                <Font name="System Bold" size="18.0" />
-                            </font>
-                        </Label>
-                        <Label fx:id="liricalResultsDirLabel" GridPane.columnIndex="2" GridPane.rowIndex="2">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </Label>
-                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setLiricalResultsDirButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="2">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                        </Button>
+<!--                        <Label text="LIRICAL results directory" wrapText="true" GridPane.rowIndex="2">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                            <font>-->
+<!--                                <Font name="System Bold" size="18.0" />-->
+<!--                            </font>-->
+<!--                        </Label>-->
+<!--                        <Label fx:id="liricalResultsDirLabel" GridPane.columnIndex="2" GridPane.rowIndex="2">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                        </Label>-->
+<!--                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setLiricalResultsDirButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="2">-->
+<!--                            <GridPane.margin>-->
+<!--                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />-->
+<!--                            </GridPane.margin>-->
+<!--                        </Button>-->
                         <Label text="Genome Build" wrapText="true" GridPane.rowIndex="3">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -318,7 +336,7 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <TextField fx:id="alleleFreqTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="11">
+                        <TextField fx:id="alleleFreqTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="60.0" GridPane.columnIndex="2" GridPane.rowIndex="11">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>

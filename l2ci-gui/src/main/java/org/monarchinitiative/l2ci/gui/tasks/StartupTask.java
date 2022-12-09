@@ -1,7 +1,10 @@
 package org.monarchinitiative.l2ci.gui.tasks;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import org.monarchinitiative.l2ci.gui.resources.*;
+import org.monarchinitiative.lirical.core.model.GenomeBuild;
+import org.monarchinitiative.lirical.core.service.TranscriptDatabase;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +80,39 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
         // TODO(mabeckwith) - set the remaining LIRICAL properties to LiricalResources
 
         // TODO - set the remaining paths if present in the properties
+        String exomiserVariantPath = pgProperties.getProperty(LiricalResources.EXOMISER_VARIANT_PROPERTY);
+        if (exomiserVariantPath != null)
+            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
+            optionalResources.liricalResources().setExomiserVariantDbFile(Path.of(exomiserVariantPath));
+
+        String backgroundFrequencyPath = pgProperties.getProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY);
+        if (backgroundFrequencyPath != null)
+            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
+            optionalResources.liricalResources().setBackgroundVariantFrequencyFile(Path.of(backgroundFrequencyPath));
+
+        String pathogenicityThreshold = pgProperties.getProperty(LiricalResources.PATHOGENICITY_PROPERTY);
+        if (pathogenicityThreshold != null)
+            optionalResources.liricalResources().setPathogenicityThreshold(Float.parseFloat(pathogenicityThreshold));
+
+        String defaultVariantBackgroundFrequency = pgProperties.getProperty(LiricalResources.DEFAULT_VARIANT_BACKGROUND_FREQUENCY_PROPERTY);
+        if (defaultVariantBackgroundFrequency != null)
+            optionalResources.liricalResources().setDefaultVariantBackgroundFrequency(Double.parseDouble(defaultVariantBackgroundFrequency));
+
+        String isStrict = pgProperties.getProperty(LiricalResources.STRICT_PROPERTY);
+        if (isStrict != null)
+            optionalResources.liricalResources().setStrict(Boolean.parseBoolean(isStrict));
+
+        String defaultAlleleFrequency = pgProperties.getProperty(LiricalResources.DEFAULT_ALLELE_PROPERTY);
+        if (defaultAlleleFrequency != null)
+            optionalResources.liricalResources().setDefaultAlleleFrequency(Float.parseFloat(defaultAlleleFrequency));
+
+        String genomeBuild = pgProperties.getProperty(LiricalResources.GENOME_BUILD_PROPERTY);
+        if (genomeBuild != null)
+            optionalResources.liricalResources().setGenomeBuild(GenomeBuild.valueOf(genomeBuild));
+
+        String transcriptDatabase = pgProperties.getProperty(LiricalResources.TRANSCRIPT_DATABASE_PROPERTY);
+        if (transcriptDatabase != null)
+            optionalResources.liricalResources().setTranscriptDatabase(TranscriptDatabase.valueOf(transcriptDatabase));
 
 //        String[] paths = {mondoJsonPath, hpoJsonPath, hpoAnnotPath};
 //        Type[] types = {Type.Mondo, Type.HPO, Type.HPOA};

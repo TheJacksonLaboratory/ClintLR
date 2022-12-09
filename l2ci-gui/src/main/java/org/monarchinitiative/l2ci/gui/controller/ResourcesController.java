@@ -117,11 +117,11 @@ public class ResourcesController {
     private void initialize() {
         // HPO/Mondo resources
         OntologyResources ontologyResources = optionalResources.ontologyResources();
-        StringBinding hpoPath = preparePathBinding(ontologyResources.hpoPathProperty(), "Unset");
-        hpJsonLabel.textProperty().bind(hpoPath);
-
-        StringBinding hpoaPath = preparePathBinding(ontologyResources.hpoaPathProperty(), "Unset");
-        hpoaLabel.textProperty().bind(hpoaPath);
+//        StringBinding hpoPath = preparePathBinding(ontologyResources.hpoPathProperty(), "Unset");
+//        hpJsonLabel.textProperty().bind(hpoPath);
+//
+//        StringBinding hpoaPath = preparePathBinding(ontologyResources.hpoaPathProperty(), "Unset");
+//        hpoaLabel.textProperty().bind(hpoaPath);
 
         StringBinding mondoPath = preparePathBinding(ontologyResources.mondoPathProperty(), "Unset");
         mondoLabel.textProperty().bind(mondoPath);
