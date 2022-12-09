@@ -1,31 +1,37 @@
 package org.monarchinitiative.l2ci.gui.controller;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.MapProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.property.SimpleMapProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import org.monarchinitiative.l2ci.gui.model.DiseaseWithProbability;
+import org.monarchinitiative.l2ci.gui.model.DiseaseWithSliderValue;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.io.IOException;
 
 public class MapDisplay extends VBox {
 
-    @FXML
-    private TableView<DiseaseWithProbability> tableView;
+    private final MapProperty<TermId, TermId> mondoToOmim = new SimpleMapProperty<>(FXCollections.observableHashMap());
 
     @FXML
-    private TableColumn<DiseaseWithProbability, String> diseaseName;
+    private TableView<DiseaseWithSliderValue> tableView;
+
     @FXML
-    private TableColumn<DiseaseWithProbability, String> mondoId;
+    private TableColumn<DiseaseWithSliderValue, String> diseaseName;
     @FXML
-    private TableColumn<DiseaseWithProbability, String> omimId;
+    private TableColumn<DiseaseWithSliderValue, String> mondoId;
+    @FXML
+    private TableColumn<DiseaseWithSliderValue, TermId> omimId;
 //    @FXML
 //    private TableColumn<DiseaseWithProbability, Double> diseaseProb;
     @FXML
-    private TableColumn<DiseaseWithProbability, Double> sliderValue;
+    private TableColumn<DiseaseWithSliderValue, Double> sliderValue;
 //    @FXML
 //    private TableColumn<DiseaseWithProbability, Boolean> isFixed;
 
@@ -44,7 +50,18 @@ public class MapDisplay extends VBox {
     private void initialize() {
         diseaseName.setCellValueFactory(cdf -> new ReadOnlyStringWrapper(cdf.getValue().getName()));
         mondoId.setCellValueFactory(cdf -> new ReadOnlyStringWrapper(cdf.getValue().id().getValue()));
-        omimId.setCellValueFactory(cdf -> new ReadOnlyStringWrapper(getOmimNames(cdf.getValue().id())));
+        omimId.setCellValueFactory(cdf -> Bindings.valueAt(mondoToOmim, cdf.getValue().id()));
+        omimId.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(TermId value, boolean empty) {
+                super.updateItem(value, empty);
+                if (value == null || empty) {
+                    setText(null);
+                } else {
+                    setText(value.getValue());
+                }
+            }
+        });
 
         sliderValue.setCellValueFactory(cdf -> cdf.getValue().sliderValueProperty().asObject());
         sliderValue.setCellFactory(tc -> new TableCell<>() {
@@ -62,11 +79,11 @@ public class MapDisplay extends VBox {
 //        isFixed.setCellFactory(CheckBoxTableCell.forTableColumn(isFixed));
     }
 
-    private String getOmimNames(TermId mondoId) {
-        return null;
+    public MapProperty<TermId, TermId> mondoToOmimProperty() {
+        return mondoToOmim;
     }
 
-    public ObservableList<DiseaseWithProbability> getItems() {
+    public ObservableList<DiseaseWithSliderValue> getItems() {
         return tableView.getItems();
     }
 

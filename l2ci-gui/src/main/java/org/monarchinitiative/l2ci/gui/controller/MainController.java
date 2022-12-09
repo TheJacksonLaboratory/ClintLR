@@ -45,7 +45,7 @@ import org.monarchinitiative.l2ci.core.mondo.MondoStats;
 import org.monarchinitiative.l2ci.gui.*;
 import org.monarchinitiative.l2ci.gui.config.AppProperties;
 import org.monarchinitiative.l2ci.gui.resources.*;
-import org.monarchinitiative.l2ci.gui.model.DiseaseWithProbability;
+import org.monarchinitiative.l2ci.gui.model.DiseaseWithSliderValue;
 import org.monarchinitiative.l2ci.gui.ui.MondoTreeView;
 import org.monarchinitiative.l2ci.gui.ui.OntologyTermWrapper;
 import org.monarchinitiative.lirical.core.Lirical;
@@ -74,7 +74,7 @@ public class MainController {
     // (e.g. `.1`, `.123`, `1.234`).
     private static final Pattern NONNEGATIVE_FLOAT = Pattern.compile("(\\d+\\.?)|(\\d*\\.\\d+)");
 
-    // Default pretest probability is 1. and it must match the probability in the `MainView.fxml`.
+    // Default slider value is 1. and it must match the probability in the `MainView.fxml`.
     private static final double DEFAULT_SLIDER_VALUE = 1.;
 
     private static final String EVENT_TYPE_CLICK = "click";
@@ -192,31 +192,19 @@ public class MainController {
         showMondoStats.disableProperty().bind(optionalServices.mondoProperty().isNull());
         copyrightLabel.setText("L4CI, v. " + appProperties.getVersion() + ", © Monarch Initiative 2022");
 
+        // ---------- Autocompletion fields ----------
+        // Mondo disease name autocomplete
+        autocompleteTextField.ontologyProperty().bind(optionalServices.mondoProperty());
+        // TODO - setup OMIM autocompletion
+
+        // ------------- Slider UI fields ------------
         pretestProbaFormatter = proparePretestProbabilityFormatter(pretestProbaSlider.getMin(), pretestProbaSlider.getMax(), DEFAULT_SLIDER_VALUE);
         pretestProbaTextField.setTextFormatter(pretestProbaFormatter);
 
-        InvalidationListener updatePretestProba = updatePretestProbability();
-        pretestProbaFormatter.valueProperty().addListener(updatePretestProba);
-        pretestProbaSlider.valueProperty().addListener(updatePretestProba);
-
-        // TODO - re-enable
-//        pretestProbability.addListener((obs, old, novel) -> {
-//            pretestMap = makeSelectedDiseaseMap(novel.doubleValue());
-//            if (mapDisplay != null) {
-//                mapDisplay.updateTable();
-//            }
-//            TreeItem<OntologyTermWrapper> treeItem = ontologyTreeView.getSelectionModel().getSelectedItem();
-//            updateDescription(treeItem);
-//        });
-
-
-        // TODO - remove when Mondo file is fixed. Thus should not be required when the app goes out.
-        if (pgProperties.getProperty("obographs.jar.path") == null) {
-            String mainDir = new File(".").getAbsolutePath();
-            String obographsPath = String.join(File.separator, mainDir.substring(0, mainDir.length()-2), "obographs-cli-0.3.0.jar");
-            pgProperties.setProperty("obographs.jar.path", obographsPath);
-        }
-        LOGGER.info("obographs jar located at " + pgProperties.getProperty("obographs.jar.path"));
+        InvalidationListener keepSliderValuesInSync = updateSliderValuesInTheUi();
+        pretestProbaFormatter.valueProperty().addListener(keepSliderValuesInSync);
+        pretestProbaSlider.valueProperty().addListener(keepSliderValuesInSync);
+        sliderValue.addListener(keepSliderValuesInSync);
 
         // Show path to Mondo file
         treeLabel.textProperty().bind(Bindings.createStringBinding(
@@ -229,25 +217,35 @@ public class MainController {
         // Set up the Mondo tree
         mondoTreeView.disableProperty().bind(optionalServices.mondoProperty().isNull());
         mondoTreeView.mondoProperty().bind(optionalServices.mondoProperty());
-        mondoTreeView.mondoNDescendentsProperty().bind(optionalServices.mondoOmimResources().mondoNDescendentsProperty());
+        // TODO - change mondoTreeView children to descendents and update the map when the data becomes available.
+//        mondoTreeView.mondoNDescendentsProperty().bind(optionalServices.mondoOmimResources().mondoNDescendentsProperty());
         mondoTreeView.getSelectionModel().selectedItemProperty()
-                .addListener((observable, oldValue, newValue) -> {
-                    // TODO - This looks like a quite expensive operation. Do we need to update upon each change?
-//                    pretestMap = makeSelectedDiseaseMap(pretestProbability.getValue());
-                    if (oldValue!= null)
-                        oldValue.getValue().sliderValueProperty().unbind();
+                .addListener((observable, previousMondoItem, newMondoItem) -> {
+                    if (previousMondoItem != null)
+                        // We must unbind the previous slider value on the tree item so that we do not update it.
+                        previousMondoItem.getValue().sliderValueProperty().unbind();
 
-                    // TODO - newValue can be null
-                    sliderValue.setValue(newValue.getValue().getSliderValue());
-                    newValue.getValue().sliderValueProperty().bind(sliderValue);
-                    updateDescription(newValue);
+                    if (newMondoItem != null) {
+                        // Next, we update the slider UI elements with the value of the new item and bind it,
+                        // to track the user activity.
+                        sliderValue.setValue(newMondoItem.getValue().getSliderValue());
+                        newMondoItem.getValue().sliderValueProperty().bind(sliderValue);
+                    }
+
+                    // Finally, we update the term description in the right panel
+                    updateDescription(newMondoItem);
                 });
-
-        // Mondo disease name autocomplete
-        autocompleteTextField.ontologyProperty().bind(optionalServices.mondoProperty());
 
         liricalButton.disableProperty().bind(optionalServices.liricalProperty().isNull());
 
+
+        // TODO - remove when Mondo file is fixed. Thus should not be required when the app goes out.
+        if (pgProperties.getProperty("obographs.jar.path") == null) {
+            String mainDir = new File(".").getAbsolutePath();
+            String obographsPath = String.join(File.separator, mainDir.substring(0, mainDir.length()-2), "obographs-cli-0.3.0.jar");
+            pgProperties.setProperty("obographs.jar.path", obographsPath);
+        }
+        LOGGER.info("obographs jar located at " + pgProperties.getProperty("obographs.jar.path"));
 
         // show intro message in the infoWebView
         // TODO - move into initialize
@@ -274,27 +272,28 @@ public class MainController {
         return new TextFormatter<>(new RoundingDoubleStringConverter(), defaultValue, filter);
     }
 
-    private InvalidationListener updatePretestProbability() {
+    private InvalidationListener updateSliderValuesInTheUi() {
         return obs -> {
             if (updatingPretestProba)
                 return;
             try {
                 updatingPretestProba = true;
-                double value;
                 if (obs.equals(pretestProbaTextField.getTextFormatter().valueProperty())) {
                     // The text field changed, we must update the slider
                     // We're practically sure the value is a valid double since we have a filter on the text formatter
                     pretestProbaSlider.setValue(pretestProbaFormatter.getValue());
-                    value = pretestProbaFormatter.getValue();
+                    sliderValue.set(pretestProbaFormatter.getValue());
                 } else if (obs.equals(pretestProbaSlider.valueProperty())) {
                     // The slider changed, we must update the text field.
                     pretestProbaFormatter.setValue(pretestProbaSlider.getValue());
-                    value = pretestProbaSlider.getValue();
+                    sliderValue.set(pretestProbaSlider.getValue());
+                } else if (obs.equals(sliderValue)) {
+                    // The sliderValue changed, we must update both the text field and the slider
+                    pretestProbaSlider.setValue(sliderValue.getValue());
+                    pretestProbaFormatter.setValue(sliderValue.getValue());
                 } else {
                     LOGGER.warn("Unknown observable changed: {}", obs);
-                    value = Double.NaN;
                 }
-                sliderValue.set(value);
             } finally {
                 updatingPretestProba = false;
             }
@@ -442,16 +441,19 @@ public class MainController {
 
     @FXML
     private void showMapInterface(ActionEvent e) {
-        ObservableList<DiseaseWithProbability> source = mondoTreeView.drainDiseaseProbabilities()
+        ObservableList<DiseaseWithSliderValue> source = mondoTreeView.drainSliderValues()
                 .collect(Collectors.toCollection(FXCollections::observableArrayList));
 
         MapDisplay mapDisplay = new MapDisplay();
+        Bindings.bindContent(mapDisplay.mondoToOmimProperty(), optionalServices.mondoOmimResources().mondoToOmimProperty());
         Bindings.bindContent(mapDisplay.getItems(), source);
         Stage stage = new Stage();
         stage.setTitle("Probability Map");
         stage.setScene(new Scene(mapDisplay));
         stage.showAndWait();
+
         Bindings.unbindContent(mapDisplay.getItems(), source);
+        Bindings.bindContent(mapDisplay.mondoToOmimProperty(), optionalServices.mondoOmimResources().mondoToOmimProperty());
         e.consume();
     }
 
@@ -661,6 +663,7 @@ public class MainController {
 //    }
 
 
+    // TODO(mabeckwith) - consider removing the method if it proves to have become redundant.
     private Map<TermId, Double> makeSelectedDiseaseMap() {
         Map<TermId, Double> omimToPretestProbability = new HashMap<>();
 
@@ -670,8 +673,7 @@ public class MainController {
         for (TermId omimId : mm.getOmimToMondo().keySet()) {
             omimToPretestProbability.put(omimId, DEFAULT_SLIDER_VALUE);
         }
-
-        mondoTreeView.drainDiseaseProbabilities()
+        mondoTreeView.drainSliderValues()
                 .filter(md -> md.getSliderValue() >= DEFAULT_SLIDER_VALUE)
                 /*
                   Here we update OMIM -> pretest proba map.
@@ -709,6 +711,10 @@ public class MainController {
     @FXML
     private void loadMapOutputFile() {
         // TODO - implement
+        // The implementation needs to update the slider values map property of the mondoTreeView.
+        // Something like..
+//        mondoTreeView.sliderValuesProperty().clear();
+//        mondoTreeView.sliderValuesProperty().putAll(Map.of());
         PopUps.showInfoMessage("Sorry, not yet implemented", "Load Pretest Probability Map from a File");
 //        FileChooser fileChooser = new FileChooser();
 //        fileChooser.setTitle("Read Map File");

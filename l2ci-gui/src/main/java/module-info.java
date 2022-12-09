@@ -22,6 +22,7 @@ module l2ci.gui {
     exports org.monarchinitiative.l2ci.gui to javafx.graphics;
     exports org.monarchinitiative.l2ci.gui.controller to javafx.fxml, spring.beans;
 //    exports org.monarchinitiative.l2ci.gui.controller;
+    exports org.monarchinitiative.l2ci.gui.model;
     exports org.monarchinitiative.l2ci.gui.resources to spring.beans;
     exports org.monarchinitiative.l2ci.gui.tasks to javafx.graphics;
     exports org.monarchinitiative.l2ci.gui.ui to javafx.fxml;

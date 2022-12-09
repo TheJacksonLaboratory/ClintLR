@@ -51,6 +51,10 @@ public class MondoNDescendantsMapIO {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(is));
              CSVParser parser = CSV_FORMAT.parse(reader)) {
             for (CSVRecord record : parser) {
+                if (parser.getCurrentLineNumber() == 1)
+                    // Skip header
+                    continue;
+
                 TermId mondoId = TermId.of(record.get(0));
                 Integer count = Integer.parseInt(record.get(1));
                 builder.put(mondoId, count);

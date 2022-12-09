@@ -1,7 +1,11 @@
 package org.monarchinitiative.l2ci.gui.resources;
 
+import javafx.beans.property.MapProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleMapProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.util.List;
@@ -11,7 +15,7 @@ public class MondoOmimResources {
     // Note: the maps below should not be modified, they should be set and unset
     // Mapping of OMIM term IDs to Mondo term IDs.
     private final ObjectProperty<Map<TermId, List<TermId>>> omimToMondo = new SimpleObjectProperty<>(Map.of());
-    private final ObjectProperty<Map<TermId, TermId>> mondoToOmim = new SimpleObjectProperty<>(Map.of());
+    private final MapProperty<TermId, TermId> mondoToOmim = new SimpleMapProperty<>(FXCollections.observableHashMap());
     // Mapping of Mondo term IDs to descendent count.
     private final ObjectProperty<Map<TermId, Integer>> mondoNDescendents = new SimpleObjectProperty<>(Map.of());
 
@@ -27,15 +31,15 @@ public class MondoOmimResources {
         this.omimToMondo.set(omimToMondo);
     }
 
-    public Map<TermId, TermId> getMondoToOmim() {
+    public ObservableMap<TermId, TermId> getMondoToOmim() {
         return mondoToOmim.get();
     }
 
-    public ObjectProperty<Map<TermId, TermId>> mondoToOmimProperty() {
+    public MapProperty<TermId, TermId> mondoToOmimProperty() {
         return mondoToOmim;
     }
 
-    public void setMondoToOmim(Map<TermId, TermId> mondoToOmim) {
+    public void setMondoToOmim(ObservableMap<TermId, TermId> mondoToOmim) {
         this.mondoToOmim.set(mondoToOmim);
     }
 
