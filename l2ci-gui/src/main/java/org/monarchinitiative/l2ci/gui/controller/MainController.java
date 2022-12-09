@@ -445,12 +445,15 @@ public class MainController {
                 .collect(Collectors.toCollection(FXCollections::observableArrayList));
 
         MapDisplay mapDisplay = new MapDisplay();
+        Bindings.bindContent(mapDisplay.mondoToOmimProperty(), optionalServices.mondoOmimResources().mondoToOmimProperty());
         Bindings.bindContent(mapDisplay.getItems(), source);
         Stage stage = new Stage();
         stage.setTitle("Probability Map");
         stage.setScene(new Scene(mapDisplay));
         stage.showAndWait();
+
         Bindings.unbindContent(mapDisplay.getItems(), source);
+        Bindings.bindContent(mapDisplay.mondoToOmimProperty(), optionalServices.mondoOmimResources().mondoToOmimProperty());
         e.consume();
     }
 

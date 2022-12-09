@@ -172,6 +172,7 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
             MondoOmimResources mmr = services.mondoOmimResources();
             if (mondo == null) {
                 mmr.setOmimToMondo(Map.of());
+                mmr.getMondoToOmim().clear();
                 mmr.setMondoNDescendents(Map.of());
             } else {
                 MondoOmimTask task = new MondoOmimTask(mondo, dataDirectory);
@@ -179,6 +180,7 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
                     LOGGER.debug("Mondo meta was loaded");
                     MondoOmim mm = task.getValue();
                     mmr.setOmimToMondo(mm.omimToMondo());
+                    mmr.getMondoToOmim().putAll(mm.mondoToOmim());
                     mmr.setMondoNDescendents(mm.mondoNDescendents());
                 });
                 task.setOnFailed(e -> LOGGER.error("Could not load Mondo meta", e.getSource().getException()));
