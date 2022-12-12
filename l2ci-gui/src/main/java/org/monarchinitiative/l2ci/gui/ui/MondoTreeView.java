@@ -16,13 +16,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.*;
 
 public class MondoTreeView extends TreeView<OntologyTermWrapper> {
 
+    // The default probability is 1.0, a no-op.
+    static final double DEFAULT_PROBABILITY_MULTIPLIER = 1.;
     private static final Logger LOGGER = LoggerFactory.getLogger(MondoTreeView.class);
     private final MapProperty<TermId, Double> sliderValues = new SimpleMapProperty<>(FXCollections.observableHashMap());
     private final ObjectProperty<Ontology> mondo = new SimpleObjectProperty<>();
@@ -47,6 +48,18 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
 
     public MapProperty<TermId, Integer> nChildrenProperty() {
         return nChildren;
+    }
+
+    /**
+     * Reset all multiplier values by setting the multipliers of the expanded elements to {@code 1.0} and clearing the
+     * {@link #sliderValuesProperty()}.
+     */
+    public void clearMultipliers() {
+        // Two steps. First, set multiplier of the expanded items to the default value.
+        // This propagates to the children thanks to the listener in `MondoTreeItem`.
+        // Next, clear the slider values.
+        getRoot().getValue().sliderValueProperty().setValue(DEFAULT_PROBABILITY_MULTIPLIER);
+        sliderValues.clear();
     }
 
     private ChangeListener<Ontology> handleOntologyUpdate() {
@@ -123,8 +136,8 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
      * Note, due to the fact that we use tree to display a graph, the {@code Stream} will contain non-unique elements
      * (the items with multiple parents).
      *
-     * @deprecated Use {@link #drainSliderValues()} to get IDs and slider values for the values that have been changed.
      * @return a {@code Stream} with disease probabilities.
+     * @deprecated Use {@link #drainSliderValues()} to get IDs and slider values for the values that have been changed.
      */
     @Deprecated(forRemoval = true)
     public Stream<DiseaseWithSliderValue> drainDiseaseProbabilities() {
@@ -134,6 +147,10 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
         return builder.build();
     }
 
+    /**
+     * Get the stream of disease ids with the multiplier values updated by the user.
+     * @return
+     */
     public Stream<DiseaseWithSliderValue> drainSliderValues() {
         if (mondo.get() == null) {
             LOGGER.warn("Tried to get slider values with unset Mondo");
@@ -141,6 +158,8 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
         }
 
         return sliderValues.entrySet().stream()
+                // The user can increase the probability multiplier
+                .filter(e -> e.getValue() > DEFAULT_PROBABILITY_MULTIPLIER)
                 .map(entry -> DiseaseWithSliderValue.of(
                         entry.getKey(),
                         mondo.get().getTermMap().get(entry.getKey()).getName(),

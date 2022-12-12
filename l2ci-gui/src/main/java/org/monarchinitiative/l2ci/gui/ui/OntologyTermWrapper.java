@@ -13,18 +13,16 @@ import org.monarchinitiative.phenol.ontology.data.TermId;
  */
 public class OntologyTermWrapper implements DiseaseWithSliderValue {
 
-    private static final double DEFAULT_PRETEST_PROBA = 1.;
-
     private final Term term;
     private final DoubleProperty sliderValue = new SimpleDoubleProperty();
 
     public OntologyTermWrapper(Term term) {
-        this(term, DEFAULT_PRETEST_PROBA);
+        this(term, null);
     }
 
-    public OntologyTermWrapper(Term term, Double sliderValue) {
+    public OntologyTermWrapper(Term term, Double initialMultiplierValue) {
         this.term = term;
-        this.sliderValue.setValue(sliderValue);
+        this.sliderValue.setValue(initialMultiplierValue);
     }
 
     public Term term() {
@@ -48,4 +46,12 @@ public class OntologyTermWrapper implements DiseaseWithSliderValue {
         return sliderValue;
     }
 
+    @Override
+    public Double getSliderValue() {
+        return sliderValue.get();
+    }
+
+    public void setSliderValue(Number sliderValue) {
+        this.sliderValue.setValue(sliderValue);
+    }
 }
