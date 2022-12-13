@@ -346,6 +346,8 @@ public class ResourcesController {
                 }
                 case MONDO -> {
                     try {
+                        // TODO - fix Mondo download
+                        LOGGER.debug("Mondo download path is " + path);
                         BioDownloader downloader = builder.mondoOwl().build();
                         updateProgress(0.25, 1);
                         downloader.download();
@@ -391,11 +393,11 @@ public class ResourcesController {
             return;
         }
 
-        boolean abort = Files.exists(target) && PopUps.getBooleanFromUser("Overwrite?",
+        boolean download = Files.exists(target) && PopUps.getBooleanFromUser("Overwrite?",
                 resource + " file already exists at " + target.toAbsolutePath(),
                 "Download " + resource + " file");
 
-        if (abort)
+        if (!download)
             // The user chose not to overwrite the folder.
             return;
 

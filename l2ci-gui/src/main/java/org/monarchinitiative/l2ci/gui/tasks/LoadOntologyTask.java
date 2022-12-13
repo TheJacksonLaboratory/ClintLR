@@ -1,7 +1,9 @@
 package org.monarchinitiative.l2ci.gui.tasks;
 
 import javafx.concurrent.Task;
+import org.monarchinitiative.l2ci.core.OntologyType;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
+import org.monarchinitiative.l2ci.gui.resources.OntologyResources;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.io.utils.CurieUtil;
 import org.monarchinitiative.phenol.io.utils.CurieUtilBuilder;
@@ -18,16 +20,23 @@ public class LoadOntologyTask extends Task<Ontology> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadOntologyTask.class);
 
     private final Path ontologyPath;
+    private final OntologyType type;
 
-    public LoadOntologyTask(Path ontologyPath) {
+    public LoadOntologyTask(Path ontologyPath, OntologyType type) {
         this.ontologyPath = ontologyPath;
+        this.type = type;
     }
 
     @Override
     protected Ontology call() {
         LOGGER.debug("Loading ontology from {}", ontologyPath.toAbsolutePath());
-        CurieUtil newCurie = CurieUtilBuilder.withDefaultsAnd(Map.of("HGNC", "http://identifiers.org/hgnc/"));
-        return OntologyLoader.loadOntology(ontologyPath.toFile(), newCurie, "MONDO");//, "HGNC");
-//        return parser.getHPO(); //OntologyLoader.loadOntology(ontologyPath.toFile(), "MONDO");
+        Ontology ont = null;
+        if (type.equals(OntologyType.MONDO)) {
+            CurieUtil newCurie = CurieUtilBuilder.withDefaultsAnd(Map.of("HGNC", "http://identifiers.org/hgnc/"));
+            ont = OntologyLoader.loadOntology(ontologyPath.toFile(), newCurie, "MONDO");
+        } else if (type.equals(OntologyType.HPO)) {
+            ont = OntologyLoader.loadOntology(ontologyPath.toFile());
+        }
+        return ont;
     }
 }

@@ -2,6 +2,7 @@ package org.monarchinitiative.l2ci.gui.ui;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import org.monarchinitiative.l2ci.core.OntologyType;
 import org.monarchinitiative.l2ci.gui.model.DiseaseWithSliderValue;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -18,13 +19,15 @@ public class OntologyTermWrapper implements DiseaseWithSliderValue {
     private final Term term;
     private final DoubleProperty sliderValue = new SimpleDoubleProperty();
 
-    public OntologyTermWrapper(Term term) {
-        this(term, DEFAULT_PRETEST_PROBA);
-    }
+    private final boolean hasOmimXref;
 
-    public OntologyTermWrapper(Term term, Double sliderValue) {
+    private final boolean hasOmimPSXref;
+
+    public OntologyTermWrapper(Term term, Double sliderValue, boolean hasOmimXref, boolean hasOmimPSXref) {
         this.term = term;
         this.sliderValue.setValue(sliderValue);
+        this.hasOmimXref = hasOmimXref;
+        this.hasOmimPSXref = hasOmimPSXref;
     }
 
     public Term term() {
@@ -46,6 +49,18 @@ public class OntologyTermWrapper implements DiseaseWithSliderValue {
      */
     public DoubleProperty sliderValueProperty() {
         return sliderValue;
+    }
+
+    public boolean hasOmimXref() {return hasOmimXref;}
+
+    public boolean hasOmimPSXref() {
+        return hasOmimPSXref;
+    }
+
+    public static OntologyTermWrapper createOmimXref(Term term, double defaultValue) {
+        boolean hasOmimXref = term.getXrefs().stream().anyMatch(r -> r.getName().startsWith("OMIM:"));
+        boolean hasOmimPSXref = term.getXrefs().stream().anyMatch(r -> r.getName().startsWith("OMIMPS:"));
+        return new OntologyTermWrapper(term, defaultValue, hasOmimXref, hasOmimPSXref);
     }
 
 }

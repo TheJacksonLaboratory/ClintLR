@@ -1,7 +1,8 @@
 package org.monarchinitiative.l2ci.gui.tasks;
 
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
+import org.monarchinitiative.l2ci.core.OntologyType;
 import org.monarchinitiative.l2ci.gui.resources.*;
 import org.monarchinitiative.lirical.core.model.GenomeBuild;
 import org.monarchinitiative.lirical.core.service.TranscriptDatabase;
@@ -12,6 +13,7 @@ import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -69,6 +71,18 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
         if (mondoJsonPath != null)
             // TODO(mabeckwith) - check if the path is a file, if it ends with *.json, if it is readable, etc.
             optionalResources.ontologyResources().setMondoPath(Path.of(mondoJsonPath));
+
+        // HPO
+        String hpoJsonPath = pgProperties.getProperty(OntologyResources.HPO_JSON_PATH_PROPERTY);
+        if (hpoJsonPath != null)
+            // TODO(mabeckwith) - check if the path is a file, if it ends with *.json, if it is readable, etc.
+            optionalResources.ontologyResources().setHpoPath(Path.of(hpoJsonPath));
+
+        // HPOA
+        String hpoaJsonPath = pgProperties.getProperty(OntologyResources.HPOA_PATH_PROPERTY);
+        if (hpoaJsonPath != null)
+            // TODO(mabeckwith) - check if the path is a file, if it ends with *.hpoa, if it is readable, etc.
+            optionalResources.ontologyResources().setHpoaPath(Path.of(hpoaJsonPath));
 
         // Lirical
         String liricalDataPath = pgProperties.getProperty(LiricalResources.LIRICAL_DATA_PROPERTY);
@@ -172,15 +186,13 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
         optionalServices.mondoProperty()
                 .addListener(loadMondoMeta(executorService, optionalServices, dataDirectory));
 
-        // Load HPO
-        // Load HpoDiseases
-        // TODO - implement or not
-//        resources.ontologyResources().hpoPathProperty()
-//                .addListener(loadOntology(executor, services::setHpo, "HPO"));
-
         // Load LIRICAL
         optionalResources.liricalResources().resourcesAreComplete()
                 .addListener(loadLirical(executorService, optionalServices, optionalResources.liricalResources()));
+
+        // Load HPO and HPOA files from LIRICAL data
+        optionalResources.liricalResources().dataDirectoryProperty().addListener(loadHpoOntology(executorService, optionalServices));
+        optionalServices.hpoProperty().addListener(loadHPOA());
 
     }
 
@@ -190,7 +202,7 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
             if (novel == null)
                 services.setMondo(null);
             else {
-                LoadOntologyTask task = new LoadOntologyTask(novel);
+                LoadOntologyTask task = new LoadOntologyTask(novel, OntologyType.MONDO);
                 task.setOnSucceeded(e -> {
                     LOGGER.debug("Mondo was loaded");
                     services.setMondo(task.getValue());
@@ -201,12 +213,48 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
         };
     }
 
+    private static ChangeListener<Path> loadHpoOntology(ExecutorService executor,
+                                                     OptionalServices services) {
+        return (obs, old, novel) -> {
+            if (novel == null)
+                services.setHpo(null);
+            else {
+                Path hpoPath = Path.of(String.join(File.separator, String.valueOf(novel.toAbsolutePath()), OptionalResources.DEFAULT_HPO_FILE_NAME));
+                LOGGER.info(hpoPath.toString());
+                LoadOntologyTask task = new LoadOntologyTask(hpoPath, OntologyType.HPO);
+                task.setOnSucceeded(e -> {
+                    LOGGER.debug("HPO was loaded");
+                    services.setHpo(task.getValue());
+                });
+                task.setOnFailed(e -> LOGGER.error("Could not load HPO ontology from {}", hpoPath.toAbsolutePath(), e.getSource().getException()));
+                executor.submit(task);
+            }
+        };
+    }
+
+    private ChangeListener<Ontology> loadHPOA() {
+        return (obs, old, novel) -> {
+            if (novel == null) {
+                optionalResources.ontologyResources().initializeWithEmptyMaps();
+                LOGGER.info("HPOA initialized with empty maps.");
+            } else {
+                Ontology hpoOnt = optionalServices.getHpo();
+                Path hpoaPath = optionalResources.liricalResources().getDataDirectory().resolve(OptionalResources.DEFAULT_HPOA_FILE_NAME);
+                LOGGER.info(hpoaPath.toString());
+                optionalResources.ontologyResources().setHpoaPath(hpoaPath);
+                optionalResources.ontologyResources().setAnnotationResources(Objects.requireNonNull(hpoaPath.toString()), Objects.requireNonNull(hpoOnt), LOGGER);
+                LOGGER.info("HPOA resources initialized.");
+            }
+        };
+    }
+
     private static ChangeListener<Ontology> loadMondoMeta(ExecutorService executor,
                                                           OptionalServices services,
                                                           Path dataDirectory) {
         return (obs, old, mondo) -> {
             MondoOmimResources mmr = services.mondoOmimResources();
             if (mondo == null) {
+                LOGGER.debug("Mondo was null. Initializing with empty Mondo metadata.");
                 mmr.setOmimToMondo(Map.of());
                 mmr.getMondoToOmim().clear();
                 mmr.setMondoNDescendents(Map.of());

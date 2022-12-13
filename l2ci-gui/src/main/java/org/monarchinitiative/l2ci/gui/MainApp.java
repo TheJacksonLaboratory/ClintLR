@@ -79,9 +79,17 @@ public class MainApp  extends Application {
         LiricalResources liricalResources = optionalResources.liricalResources();
         if (liricalResources.getDataDirectory() != null)
             resourceProperties.setProperty(LiricalResources.LIRICAL_DATA_PROPERTY, liricalResources.getDataDirectory().toAbsolutePath().toString());
-        // add property setters for other LIRICAL properties (ultimately create new utility class (private constructor)
+        // TODO create new utility class (private constructor) that combines intialization and serialization
         if (liricalResources.getExomiserVariantDbFile() != null)
             resourceProperties.setProperty(LiricalResources.EXOMISER_VARIANT_PROPERTY, liricalResources.getExomiserVariantDbFile().toAbsolutePath().toString());
+        if (liricalResources.getBackgroundVariantFrequencyFile() != null)
+            resourceProperties.setProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY, liricalResources.getBackgroundVariantFrequencyFile().toAbsolutePath().toString());
+        resourceProperties.setProperty(LiricalResources.PATHOGENICITY_PROPERTY, String.valueOf(liricalResources.getPathogenicityThreshold()));
+        resourceProperties.setProperty(LiricalResources.DEFAULT_VARIANT_BACKGROUND_FREQUENCY_PROPERTY, String.valueOf(liricalResources.getDefaultVariantBackgroundFrequency()));
+        resourceProperties.setProperty(LiricalResources.STRICT_PROPERTY, String.valueOf(liricalResources.isStrict()));
+        resourceProperties.setProperty(LiricalResources.DEFAULT_ALLELE_PROPERTY, String.valueOf(liricalResources.getDefaultAlleleFrequency()));
+        resourceProperties.setProperty(LiricalResources.GENOME_BUILD_PROPERTY, String.valueOf(liricalResources.getGenomeBuild()));
+        resourceProperties.setProperty(LiricalResources.TRANSCRIPT_DATABASE_PROPERTY, String.valueOf(liricalResources.getTranscriptDatabase()));
 
         // MONDO path
         OntologyResources ontologyResources = optionalResources.ontologyResources();
@@ -89,7 +97,6 @@ public class MainApp  extends Application {
             resourceProperties.setProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY, ontologyResources.getMondoPath().toAbsolutePath().toString());
 
 
-        // TODO(mabeckwith) - serialize the paths or parameters
 
         try (OutputStream os = Files.newOutputStream(target.toPath())) {
             resourceProperties.store(os, "L4CI properties");

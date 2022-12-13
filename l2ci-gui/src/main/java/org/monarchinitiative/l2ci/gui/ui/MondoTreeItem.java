@@ -64,7 +64,7 @@ class MondoTreeItem extends TreeItem<OntologyTermWrapper> {
                 */
                 List<MondoTreeItem> children = Relation.getTermRelationsStream(mondo, getValue().term().id(), Relation.CHILD)
                         .map(t -> {
-                            OntologyTermWrapper wrapper = new OntologyTermWrapper(t);
+                            OntologyTermWrapper wrapper = OntologyTermWrapper.createOmimXref(t, 1.0);
                             Double previousSliderValue = sliderValues.get(wrapper.id());
                             wrapper.sliderValueProperty().setValue(previousSliderValue);
                             wrapper.sliderValueProperty().addListener((o, old, novel) -> sliderValues.put(wrapper.id(), novel.doubleValue()));
