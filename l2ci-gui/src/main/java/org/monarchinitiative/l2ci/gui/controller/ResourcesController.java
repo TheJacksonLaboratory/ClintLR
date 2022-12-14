@@ -28,11 +28,8 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
-
-import static javafx.beans.binding.Bindings.when;
 
 /**
  * This class is the controller of the Set Resources dialog. The user performs initial setup of the
@@ -42,6 +39,7 @@ import static javafx.beans.binding.Bindings.when;
  */
 public class ResourcesController {
 
+    // TODO - remove unused action handlers.
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourcesController.class);
 
     private final OptionalResources optionalResources;
@@ -271,11 +269,12 @@ public class ResourcesController {
 
         // A consumer for setting the selected file.
         Consumer<Path> consumer = switch (fileType) {
-            case HPO -> optionalResources.ontologyResources()::setHpoPath;
-            case HPOA -> optionalResources.ontologyResources()::setHpoaPath;
+//            case HPO -> optionalResources.ontologyResources()::setHpoPath;
+//            case HPOA -> optionalResources.ontologyResources()::setHpoaPath;
             case MONDO -> optionalResources.ontologyResources()::setMondoPath;
             case EXOMISER -> optionalResources.liricalResources()::setExomiserVariantDbFile;
             case BACKGROUND_VARIANT_FREQUENCY -> optionalResources.liricalResources()::setBackgroundVariantFrequencyFile;
+            default -> throw new IllegalStateException("Unexpected value: " + fileType);
         };
 
         // Note that we can also unset a resource path.
@@ -420,8 +419,8 @@ public class ResourcesController {
 
     private void setResource(DownloadableResource type, Path target) {
         switch (type) {
-            case HPO -> optionalResources.ontologyResources().setHpoPath(target);
-            case HPOA -> optionalResources.ontologyResources().setHpoaPath(target);
+//            case HPO -> optionalResources.ontologyResources().setHpoPath(target);
+//            case HPOA -> optionalResources.ontologyResources().setHpoaPath(target);
             case MONDO -> optionalResources.ontologyResources().setMondoPath(target);
         }
     }
@@ -451,7 +450,11 @@ public class ResourcesController {
     }
 
     private enum DownloadableResource {
+        // We are not responsible for HPO download in L4CI as of now.
+        @Deprecated(forRemoval = true)
         HPO("hp.json"),
+        // We are not responsible for HPOA download in L4CI as of now.
+        @Deprecated(forRemoval = true)
         HPOA("phenotype.hpoa"),
         MONDO("mondo.json");
 

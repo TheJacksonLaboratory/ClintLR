@@ -79,7 +79,7 @@ public class MainApp  extends Application {
         LiricalResources liricalResources = optionalResources.liricalResources();
         if (liricalResources.getDataDirectory() != null)
             resourceProperties.setProperty(LiricalResources.LIRICAL_DATA_PROPERTY, liricalResources.getDataDirectory().toAbsolutePath().toString());
-        // TODO create new utility class (private constructor) that combines intialization and serialization
+        // TODO create new utility class (private constructor) that combines initialization and serialization
         if (liricalResources.getExomiserVariantDbFile() != null)
             resourceProperties.setProperty(LiricalResources.EXOMISER_VARIANT_PROPERTY, liricalResources.getExomiserVariantDbFile().toAbsolutePath().toString());
         if (liricalResources.getBackgroundVariantFrequencyFile() != null)

@@ -193,41 +193,6 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
         };
     }
 
-//    private static ChangeListener<Path> loadHpoOntology(ExecutorService executor,
-//                                                     OptionalServices services) {
-//        return (obs, old, novel) -> {
-//            if (novel == null)
-//                services.setHpo(null);
-//            else {
-//                Path hpoPath = Path.of(String.join(File.separator, String.valueOf(novel.toAbsolutePath()), OptionalResources.DEFAULT_HPO_FILE_NAME));
-//                LOGGER.info(hpoPath.toString());
-//                LoadOntologyTask task = new LoadOntologyTask(hpoPath, OntologyType.HPO);
-//                task.setOnSucceeded(e -> {
-//                    LOGGER.debug("HPO was loaded");
-//                    services.setHpo(task.getValue());
-//                });
-//                task.setOnFailed(e -> LOGGER.error("Could not load HPO ontology from {}", hpoPath.toAbsolutePath(), e.getSource().getException()));
-//                executor.submit(task);
-//            }
-//        };
-//    }
-
-//    private ChangeListener<Ontology> loadHPOA() {
-//        return (obs, old, novel) -> {
-//            if (novel == null) {
-//                optionalResources.ontologyResources().initializeWithEmptyMaps();
-//                LOGGER.info("HPOA initialized with empty maps.");
-//            } else {
-//                Ontology hpoOnt = optionalServices.getHpo();
-//                Path hpoaPath = optionalResources.liricalResources().getDataDirectory().resolve(OptionalResources.DEFAULT_HPOA_FILE_NAME);
-//                LOGGER.info(hpoaPath.toString());
-//                optionalResources.ontologyResources().setHpoaPath(hpoaPath);
-//                optionalResources.ontologyResources().setAnnotationResources(Objects.requireNonNull(hpoaPath.toString()), Objects.requireNonNull(hpoOnt), LOGGER);
-//                LOGGER.info("HPOA resources initialized.");
-//            }
-//        };
-//    }
-
     private static ChangeListener<Ontology> loadMondoMeta(ExecutorService executor,
                                                           OptionalServices services,
                                                           Path dataDirectory) {
