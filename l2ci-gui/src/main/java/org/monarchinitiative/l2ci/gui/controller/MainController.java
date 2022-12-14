@@ -40,7 +40,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.monarchinitiative.l2ci.core.io.PretestMapIO;
+import org.monarchinitiative.l2ci.core.io.PretestProbaAdjustmentIO;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
 import org.monarchinitiative.l2ci.gui.*;
 import org.monarchinitiative.l2ci.gui.config.AppProperties;
@@ -426,17 +426,43 @@ public class MainController {
 
     @FXML
     private void saveMapOutputFile(ActionEvent e) {
+        // Ask the user for the output file.
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save Pretest Probability Map to File");
+        fileChooser.setTitle("Save Pretest Probability Adjustments to File");
         File file = fileChooser.showSaveDialog(contentPane.getScene().getWindow());
-        if (file == null) return;
-        // TODO - we should not be saving pretest probabilities.
-        Map<TermId, Double> pretestMap = PretestProbability.of(mondoTreeView, optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_SLIDER_VALUE);
+        if (file == null)
+            // The user chose to cancel.
+            return;
+
+        // Dump the adjustments to the file.
         try {
-            PretestMapIO.write(pretestMap, file.toPath());
+            PretestProbaAdjustmentIO.write(mondoTreeView.sliderValuesProperty(), file.toPath());
         } catch (IOException ex) {
-            LOGGER.warn("Unable to write the pretest probability map to {}", file.toPath().toAbsolutePath(), ex);
-            PopUps.showException("Save Pretest Probability Map", "Unable to save the data", ex);
+            LOGGER.warn("Unable to write the pretest probability adjustments to {}", file.toPath().toAbsolutePath(), ex);
+            PopUps.showException("Save Pretest Probability Adjustments", "Unable to save the data", ex);
+        }
+        e.consume();
+    }
+
+    @FXML
+    private void loadMapOutputFile(ActionEvent e) {
+        // Ask the user for the input file.
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Load Pretest Probability Adjustments from File");
+        File file = fileChooser.showOpenDialog(contentPane.getScene().getWindow());
+        if (file == null)
+            // The user chose to cancel.
+            return;
+
+        // Reset the Mondo tree and set the loaded adjustments.
+        try {
+            // TODO - we may need more elaborate code to implement adjustment setting
+            Map<TermId, Double> adjustments = PretestProbaAdjustmentIO.read(file.toPath());
+            mondoTreeView.sliderValuesProperty().clear();
+            mondoTreeView.sliderValuesProperty().putAll(adjustments);
+        } catch (IOException ex) {
+            LOGGER.warn("Unable to load the pretest probability adjustments from {}", file.toPath().toAbsolutePath(), ex);
+            PopUps.showException("Load Pretest Probability Adjustments", "Unable to load the data", ex);
         }
         e.consume();
     }
@@ -708,71 +734,6 @@ public class MainController {
 //        if (!mapMondoIds.contains(mondoID)) {
 //            mapDataList.add(new MapData(name, mondoID, omimID, probValue, sliderValue, isFixed));
 //        }
-//    }
-
-    @FXML
-    private void loadMapOutputFile() {
-        // TODO - implement
-        // The implementation needs to update the slider values map property of the mondoTreeView.
-        // Something like..
-//        mondoTreeView.sliderValuesProperty().clear();
-//        mondoTreeView.sliderValuesProperty().putAll(Map.of());
-        PopUps.showInfoMessage("Sorry, not yet implemented", "Load Pretest Probability Map from a File");
-//        FileChooser fileChooser = new FileChooser();
-//        fileChooser.setTitle("Read Map File");
-//        File file = fileChooser.showOpenDialog(contentPane.getScene().getWindow());
-//        if (file != null) {
-//            LOGGER.info("Reading Map from " + file.getAbsolutePath());
-//            try (InputStream is = Files.newInputStream(file.toPath())) {
-//                Set<Double> probSet = new HashSet<>();
-//                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-//                List<String> lines = reader.lines().toList();
-//                for (String line : lines) {
-//                    String[] lineItems = line.split(",");
-//                    if (lineItems[1].contains("Probability")) {
-//                        continue;
-//                    }
-//                    probSet.add(Double.parseDouble(lineItems[1]));
-//                }
-//                Set<Double> probSorted = probSet.stream().sorted().collect(Collectors.toCollection(LinkedHashSet::new));
-//                boolean addNonSelected = true;
-//                Ontology ontology = optionalServices.getMondo();
-//                for (String line : lines) {
-//                    String[] lineItems = line.split(",");
-//                    if (lineItems[1].contains("Probability")) {
-//                        continue;
-//                    }
-//                    Double prob = Double.parseDouble(lineItems[1]);
-//                    TermId omimID = null;
-//                    if (lineItems[0].contains("OMIM:")) {
-//                        Term omimTerm = Term.of(lineItems[0], lineItems[0]);
-//                        omimID = omimTerm.id();
-//                    }
-//                    TermId mondoID = null;
-//                    if (omimID != null && omimToMondoMap.get(omimID) != null) {
-//                        mondoID = omimToMondoMap.get(omimID).get(0);
-//                    }
-//                    Double prob0 = probSorted.stream().toList().get(0);
-//                    if (prob.equals(prob0) && addNonSelected) {
-//                        addToMapData(null, null, null, prob, 0.0, false);
-//                        addNonSelected = false;
-//                    } else if (!prob.equals(prob0)) {
-//                        Double sliderValue = prob/prob0 - 1;
-//                        addToMapData(ontology, mondoID, omimID, prob, sliderValue, true);
-//                    }
-//                }
-//                reader.close();
-//            } catch (IOException ex) {
-//                ex.printStackTrace();
-//            }
-//        }
-//        for (MapData mapData : mapDataList) {
-//            if (mapData.getMondoId() != null) {
-//                goToTerm(mapData.getMondoId());
-//                break;
-//            }
-//        }
-    }
 
     /**
      * Update content of the {@link #infoWebView} with currently selected {@link Term}.
