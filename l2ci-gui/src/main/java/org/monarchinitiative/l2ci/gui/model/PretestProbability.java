@@ -13,6 +13,7 @@ import java.util.Map;
  */
 public class PretestProbability {
 
+    // TODO - we do not need the entire MondoTreeView, just the relevant Mondo IDs with slider values.
     public static Map<TermId, Double> of(MondoTreeView mondoTreeView,
                                          MondoOmimResources mm,
                                          Collection<TermId> knownDiseaseIds,
