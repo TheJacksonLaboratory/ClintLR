@@ -1,28 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Menu?>
-<?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.Slider?>
-<?import javafx.scene.control.Spinner?>
-<?import javafx.scene.control.SplitPane?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.Tooltip?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.web.WebView?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.*?>
+<?import org.monarchinitiative.l2ci.gui.controller.*?>
+<?import org.monarchinitiative.l2ci.gui.ui.*?>
 
-<?import org.monarchinitiative.l2ci.gui.controller.AutoCompleteOntologyTextField?>
-<?import org.monarchinitiative.l2ci.gui.ui.MondoTreeView?>
-<BorderPane prefHeight="1000.0" prefWidth="1200.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.MainController"
-            fx:id="contentPane">
+<BorderPane fx:id="contentPane" prefHeight="1000.0" prefWidth="1200.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.MainController">
      <top>
         <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
            <children>
@@ -286,11 +271,15 @@
                           </HBox.margin>
                       </Label>
                   </HBox>
-                  <MondoTreeView fx:id="mondoTreeView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
-                      <VBox.margin>
-                          <Insets left="5.0" right="5.0" top="5.0" />
-                      </VBox.margin>
-                  </MondoTreeView>
+            <VBox VBox.vgrow="ALWAYS">
+               <VBox.margin>
+                  <Insets left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+               <children>
+                   <MondoTreeView fx:id="mondoTreeView"  VBox.vgrow="ALWAYS"/>
+                   <Button fx:id="resetMultipliersButton" onAction="#resetMultipliersAction" text="Reset pretest probability multiplier values"/>
+               </children>
+            </VBox>
               </VBox>
 
               <AnchorPane>

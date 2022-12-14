@@ -45,9 +45,8 @@ class MondoTreeCell extends TreeCell<OntologyTermWrapper> {
             textProperty().bind(text);
 
             // Graphics
-            // TODO(ielis) - replace 1.0 with DEFAULT_SLIDER_VALUE variable
             // TODO - update icons of descendants as well when change the slider
-            item.sliderValueProperty().greaterThan(1.0).addListener((obs, old, sliderAboveDefault) -> {
+            item.sliderValueProperty().greaterThan(MondoTreeView.DEFAULT_PROBABILITY_ADJUSTMENT).addListener((obs, old, sliderAboveDefault) -> {
                 if (sliderAboveDefault) {
                     if (item.hasOmimXref()) {
                         ImageView omimChanged = new ImageView(BLACK_CIRCLE_UP_ARROW);

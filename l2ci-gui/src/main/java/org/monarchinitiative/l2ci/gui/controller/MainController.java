@@ -111,6 +111,9 @@ public class MainController {
     @FXML
     private AutoCompleteOntologyTextField autocompleteOmimTextField;
 
+    @FXML
+    private Button resetMultipliersButton;
+
     /**
      * WebView for displaying details of the Term that is selected in the {@link #mondoTreeView}.
      */
@@ -237,6 +240,7 @@ public class MainController {
                     updateDescription(newMondoItem);
                 });
 
+        resetMultipliersButton.disableProperty().bind(mondoTreeView.sliderValuesProperty().emptyProperty());
         // TODO - we need both lirical and known disease IDs to run this. Add the corresponding binding.
         liricalButton.disableProperty().bind(optionalServices.liricalProperty().isNull());
 
@@ -805,6 +809,13 @@ public class MainController {
             LOGGER.warn("Unable to get term id: ");
         }
         autocompleteOmimTextField.clear();
+    }
+
+    @FXML
+    private void resetMultipliersAction(ActionEvent e) {
+        LOGGER.debug("Resetting pretest probability multiplier values");
+        mondoTreeView.clearMultipliers();
+        e.consume();
     }
 
     private void goToTerm(TermId id) {
