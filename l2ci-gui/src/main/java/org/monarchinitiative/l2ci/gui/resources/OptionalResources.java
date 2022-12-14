@@ -20,6 +20,7 @@ public class OptionalResources {
      */
     public static final String DEFAULT_MONDO_FILE_NAME = "mondo.json";
 
+    public static final String DEFAULT_HPOA_FILE_NAME = "phenotype.hpoa";
     public static final String HPOA_PATH_PROPERTY = "hpoa.path";
 
 

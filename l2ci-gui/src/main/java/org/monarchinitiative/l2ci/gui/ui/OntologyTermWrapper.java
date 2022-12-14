@@ -16,13 +16,21 @@ public class OntologyTermWrapper implements DiseaseWithSliderValue {
     private final Term term;
     private final DoubleProperty sliderValue = new SimpleDoubleProperty();
 
-    public OntologyTermWrapper(Term term) {
-        this(term, null);
+    private final boolean hasOmimXref;
+
+    private final boolean hasOmimPSXref;
+
+    public static OntologyTermWrapper createOmimXref(Term term, double initialAdjustmentValue) {
+        boolean hasOmimXref = term.getXrefs().stream().anyMatch(r -> r.getName().startsWith("OMIM:"));
+        boolean hasOmimPSXref = term.getXrefs().stream().anyMatch(r -> r.getName().startsWith("OMIMPS:"));
+        return new OntologyTermWrapper(term, initialAdjustmentValue, hasOmimXref, hasOmimPSXref);
     }
 
-    public OntologyTermWrapper(Term term, Double initialMultiplierValue) {
+    public OntologyTermWrapper(Term term, Double initialAdjustmentValue, boolean hasOmimXref, boolean hasOmimPSXref) {
         this.term = term;
-        this.sliderValue.setValue(initialMultiplierValue);
+        this.sliderValue.setValue(initialAdjustmentValue);
+        this.hasOmimXref = hasOmimXref;
+        this.hasOmimPSXref = hasOmimPSXref;
     }
 
     public Term term() {
@@ -53,5 +61,11 @@ public class OntologyTermWrapper implements DiseaseWithSliderValue {
 
     public void setSliderValue(Number sliderValue) {
         this.sliderValue.setValue(sliderValue);
+    }
+
+    public boolean hasOmimXref() {return hasOmimXref;}
+
+    public boolean hasOmimPSXref() {
+        return hasOmimPSXref;
     }
 }

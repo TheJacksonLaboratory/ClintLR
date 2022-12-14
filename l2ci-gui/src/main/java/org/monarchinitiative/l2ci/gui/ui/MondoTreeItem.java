@@ -26,25 +26,24 @@ class MondoTreeItem extends TreeItem<OntologyTermWrapper> {
     /**
      * Default & only constructor for the TreeItem.
      *
-     * @param term         {@link Term} that is represented by this {@linkplain MondoTreeItem}.
-     * @param mondo        Mondo {@link Ontology}
-     * @param nChildren    A map for caching number of children of a Mondo term.
-     * @param multiplierValues A mapping from Mondo ID to pretest probability multiplier value.
+     * @param term             {@link Term} that is represented by this {@linkplain MondoTreeItem}.
+     * @param mondo            Mondo {@link Ontology}
+     * @param nChildren        A map for caching number of children of a Mondo term.
+     * @param adjustmentValues A mapping from Mondo ID to adjustment value
      */
     MondoTreeItem(OntologyTermWrapper term,
                   Ontology mondo,
                   MapProperty<TermId, Integer> nChildren,
-                  MapProperty<TermId, Double> multiplierValues) {
+                  MapProperty<TermId, Double> adjustmentValues) {
         super(term);
         this.mondo = mondo;
         this.getValue().sliderValueProperty()
                 .addListener((obs, oldProba, novelProba) -> {
-                    LOGGER.trace("Setting pretest probability of {} to {}", getValue().term().id(), novelProba);
+                    LOGGER.trace("Setting pretest probability adjustment of {} to {}", getValue().term().id(), novelProba);
                     if (!isLeaf()) {
-                        // Update the children anytime a value is set.
-                        // The update sets the multiplier to all children recursively.
+                        // Update the children anytime a value is set. Will end up setting the adjustment to all children recursively
                         Relation.getTermRelationsStream(mondo, getValue().id(), Relation.DESCENDENT)
-                                .forEach(descendent -> multiplierValues.put(descendent.id(), novelProba.doubleValue()));
+                                .forEach(descendent -> adjustmentValues.put(descendent.id(), novelProba.doubleValue()));
                     }
                 });
         // TODO - sort tree item children number of descendants.
@@ -55,27 +54,28 @@ class MondoTreeItem extends TreeItem<OntologyTermWrapper> {
             /*
               The user or code is expanding or collapsing the tree item.
               We need to get the children and set with the slider values.
-              We do not cache the children, we cache just the slider values in the `multiplierValues` map.
+              We do not cache the children, we cache just the slider values in the `adjustmentValues` map.
              */
             if (isExpanded) {
                 /*
-                 We create child tree items on the fly. We set the child multiplier values to the previous value or
+                 We create a child tree item on the fly. We set the child adjustment values to the previous value or
                  null if no previous value was set. Then, we set up a listener to keep the map updated on changes.
                  As a side product, we also cache the number of children.
                 */
                 List<MondoTreeItem> children = Relation.getTermRelationsStream(mondo, getValue().term().id(), Relation.CHILD)
-                        .map(childTerm -> {
-                            Double multiplier = multiplierValues.getOrDefault(childTerm.id(), MondoTreeView.DEFAULT_PROBABILITY_MULTIPLIER);
-                            OntologyTermWrapper wrapper = new OntologyTermWrapper(childTerm, multiplier);
-                            wrapper.sliderValueProperty().addListener((o, old, novel) -> multiplierValues.put(wrapper.id(), novel.doubleValue()));
-                            return new MondoTreeItem(wrapper, mondo, nChildren, multiplierValues);
+                        .map(t -> {
+                            OntologyTermWrapper wrapper = OntologyTermWrapper.createOmimXref(t, MondoTreeView.DEFAULT_PROBABILITY_MULTIPLIER);
+                            Double previousSliderValue = adjustmentValues.get(wrapper.id());
+                            wrapper.sliderValueProperty().setValue(previousSliderValue);
+                            wrapper.sliderValueProperty().addListener((o, old, novel) -> adjustmentValues.put(wrapper.id(), novel.doubleValue()));
+                            return new MondoTreeItem(wrapper, mondo, nChildren, adjustmentValues);
                         })
                         .sorted(comparator)
                         .toList();
                 nChildren.put(getValue().term().id(), children.size());
                 getChildren().setAll(children);
             } else
-                // The item is being collapsed. We clear the children to free up some memory. Note, we keep the multiplier values in the `multiplierValues` map!
+                // The item is being collapsed. We clear the children to free up some memory. Note, we keep the adjustment values in the `adjustmentValues` map!
                 getChildren().clear();
         });
     }
