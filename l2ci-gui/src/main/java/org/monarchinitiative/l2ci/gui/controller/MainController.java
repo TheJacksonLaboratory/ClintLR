@@ -44,6 +44,7 @@ import org.monarchinitiative.l2ci.core.io.PretestProbabilityMultiplierIO;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
 import org.monarchinitiative.l2ci.gui.*;
 import org.monarchinitiative.l2ci.gui.config.AppProperties;
+import org.monarchinitiative.l2ci.gui.model.PretestProbability;
 import org.monarchinitiative.l2ci.gui.resources.*;
 import org.monarchinitiative.l2ci.gui.model.DiseaseWithSliderValue;
 import org.monarchinitiative.l2ci.gui.ui.MondoTreeView;
@@ -236,6 +237,7 @@ public class MainController {
                     updateDescription(newMondoItem);
                 });
 
+        // TODO - we need both lirical and known disease IDs to run this. Add the corresponding binding.
         liricalButton.disableProperty().bind(optionalServices.liricalProperty().isNull());
 
 
@@ -426,18 +428,18 @@ public class MainController {
     private void saveMapOutputFile(ActionEvent e) {
         // Ask the user for the output file.
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Save Pretest Probability Multipliers to File");
+        fileChooser.setTitle("Save Pretest Probability Adjustments to File");
         File file = fileChooser.showSaveDialog(contentPane.getScene().getWindow());
         if (file == null)
             // The user chose to cancel.
             return;
 
-        // Dump the multipliers to the file.
+        // Dump the adjustments to the file.
         try {
             PretestProbabilityMultiplierIO.write(mondoTreeView.sliderValuesProperty(), file.toPath());
         } catch (IOException ex) {
-            LOGGER.warn("Unable to write the pretest probability multipliers to {}", file.toPath().toAbsolutePath(), ex);
-            PopUps.showException("Save Pretest Probability Multipliers", "Unable to save the data", ex);
+            LOGGER.warn("Unable to write the pretest probability adjustments to {}", file.toPath().toAbsolutePath(), ex);
+            PopUps.showException("Save Pretest Probability Adjustments", "Unable to save the data", ex);
         }
         e.consume();
     }
@@ -446,20 +448,21 @@ public class MainController {
     private void loadMapOutputFile(ActionEvent e) {
         // Ask the user for the input file.
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Load Pretest Probability Multipliers from File");
+        fileChooser.setTitle("Load Pretest Probability Adjustments from File");
         File file = fileChooser.showOpenDialog(contentPane.getScene().getWindow());
         if (file == null)
             // The user chose to cancel.
             return;
 
-        // Reset the Mondo tree and set the loaded multipliers.
+        // Reset the Mondo tree and set the loaded adjustments.
         try {
-            Map<TermId, Double> multipliers = PretestProbabilityMultiplierIO.read(file.toPath());
+            // TODO - we may need more elaborate code to implement adjustment setting
+            Map<TermId, Double> adjustments = PretestProbabilityMultiplierIO.read(file.toPath());
             mondoTreeView.sliderValuesProperty().clear();
-            mondoTreeView.sliderValuesProperty().putAll(multipliers);
+            mondoTreeView.sliderValuesProperty().putAll(adjustments);
         } catch (IOException ex) {
-            LOGGER.warn("Unable to load the pretest probability multipliers from {}", file.toPath().toAbsolutePath(), ex);
-            PopUps.showException("Load Pretest Probability Multipliers", "Unable to load the data", ex);
+            LOGGER.warn("Unable to load the pretest probability adjustments from {}", file.toPath().toAbsolutePath(), ex);
+            PopUps.showException("Load Pretest Probability Adjustments", "Unable to load the data", ex);
         }
         e.consume();
     }
@@ -689,33 +692,33 @@ public class MainController {
 
 
     // TODO(mabeckwith) - consider removing the method if it proves to have become redundant.
-    private Map<TermId, Double> makeSelectedDiseaseMap() {
-        Map<TermId, Double> omimToPretestProbability = new HashMap<>();
-
-        MondoOmimResources mm = optionalServices.mondoOmimResources();
-        Map<TermId, TermId> mondoToOmim = mm.getMondoToOmim();
-
-        for (TermId omimId : mm.getOmimToMondo().keySet()) {
-            omimToPretestProbability.put(omimId, DEFAULT_SLIDER_VALUE);
-        }
-        mondoTreeView.drainSliderValues()
-                .filter(md -> md.getSliderValue() >= DEFAULT_SLIDER_VALUE)
-                /*
-                  Here we update OMIM -> pretest proba map.
-                  However, the `mondoTreeView` provides, well, Mondo IDs. Hence, we first map
-                  to the corresponding OMIM (if any) and set the pretest probability found on a tree node.
-                 */
-                .forEach(d -> {
-                    TermId omimId = mondoToOmim.get(d.id());
-                    if (omimId != null) {
-                        omimToPretestProbability.compute(omimId,
-                                (OMIM_ID, defaultProba) -> d.getSliderValue()
-                        );
-                    }
-                });
-
-        return omimToPretestProbability;
-    }
+//    private Map<TermId, Double> makeSelectedDiseaseMap() {
+//        Map<TermId, Double> omimToPretestProbability = new HashMap<>();
+//
+//        MondoOmimResources mm = optionalServices.mondoOmimResources();
+//        Map<TermId, TermId> mondoToOmim = mm.getMondoToOmim();
+//
+//        for (TermId omimId : mm.getOmimToMondo().keySet()) {
+//            omimToPretestProbability.put(omimId, DEFAULT_SLIDER_VALUE);
+//        }
+//        mondoTreeView.drainSliderValues()
+//                .filter(md -> md.getSliderValue() >= DEFAULT_SLIDER_VALUE)
+//                /*
+//                  Here we update OMIM -> pretest proba map.
+//                  However, the `mondoTreeView` provides, well, Mondo IDs. Hence, we first map
+//                  to the corresponding OMIM (if any) and set the pretest probability found on a tree node.
+//                 */
+//                .forEach(d -> {
+//                    TermId omimId = mondoToOmim.get(d.id());
+//                    if (omimId != null) {
+//                        omimToPretestProbability.compute(omimId,
+//                                (OMIM_ID, defaultProba) -> d.getSliderValue()
+//                        );
+//                    }
+//                });
+//
+//        return omimToPretestProbability;
+//    }
 
 //    private void addToMapData(Ontology ontology, TermId mondoID, TermId omimID, Double probValue, Double sliderValue, boolean isFixed) {
 //        String name = "";
@@ -867,11 +870,11 @@ public class MainController {
 
     @FXML
     private void liricalButtonAction(ActionEvent event) throws Exception {
-        Map<TermId, Double> preTestMap = makeSelectedDiseaseMap();
+        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView, optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_SLIDER_VALUE);
         Path phenopacketFile = Path.of(phenopacketLabel.getText());
         String vcfFile = vcfLabel.getText();
         if (!Files.isRegularFile(phenopacketFile)) {
-            PopUps.showInfoMessage("Error: Unable to run analysis: no phenopacket present.", "ERROR");
+            PopUps.showInfoMessage("Unable to run analysis: no phenopacket present.", "ERROR");
             LOGGER.info("Unable to run analysis: no phenopacket present.");
         }
 
