@@ -1,29 +1,25 @@
 package org.monarchinitiative.l2ci.gui.model;
 
-import org.monarchinitiative.l2ci.core.pretestprob.MapData;
 import org.monarchinitiative.l2ci.gui.resources.MondoOmimResources;
-import org.monarchinitiative.l2ci.gui.resources.OptionalResources;
-import org.monarchinitiative.l2ci.gui.resources.OptionalServices;
 import org.monarchinitiative.l2ci.gui.ui.MondoTreeView;
-import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Class to adjust the pretest probability
  */
 public class PretestProbability {
 
-    public static Map<TermId, Double> of(MondoTreeView mondoTreeView, OptionalServices optionalServices, OptionalResources optionalResources, double defaultSliderValue) {
+    public static Map<TermId, Double> of(MondoTreeView mondoTreeView,
+                                         MondoOmimResources mm,
+                                         Collection<TermId> knownDiseaseIds,
+                                         double defaultSliderValue) {
 
         Map<TermId, Double> pretestMap = new HashMap<>();
 
-        MondoOmimResources mm = optionalServices.mondoOmimResources();
         Map<TermId, TermId> mondoToOmim = mm.getMondoToOmim();
 
         // Get updated slider values from TreeView
@@ -52,9 +48,8 @@ public class PretestProbability {
                 pretestMap.put(omimId, defaultSliderValue);
 
 
-        Map<TermId, HpoDisease> hpoaDiseaseMap = optionalResources.ontologyResources().getId2diseaseModelMap();
-        if (hpoaDiseaseMap != null)
-            for (TermId termId : hpoaDiseaseMap.keySet())
+        if (knownDiseaseIds != null)
+            for (TermId termId : knownDiseaseIds)
                 if (!pretestMap.containsKey(termId))
                     pretestMap.put(termId, defaultSliderValue);
 

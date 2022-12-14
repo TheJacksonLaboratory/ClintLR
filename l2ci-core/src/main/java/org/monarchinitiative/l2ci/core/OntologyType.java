@@ -1,15 +1,10 @@
 package org.monarchinitiative.l2ci.core;
 
-import org.monarchinitiative.phenol.ontology.data.Ontology;
-import org.monarchinitiative.phenol.ontology.data.Term;
-import org.monarchinitiative.phenol.ontology.data.TermId;
 
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.*;
-
+/**
+ * @deprecated the enum is redundant since L4CI only directly works with Mondo.
+ */
+@Deprecated(forRemoval = true)
 public enum OntologyType {
     HPO("hpo"),
     HPOA("hpoa"),

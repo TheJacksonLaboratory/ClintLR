@@ -237,6 +237,7 @@ public class MainController {
                     updateDescription(newMondoItem);
                 });
 
+        // TODO - we need both lirical and known disease IDs to run this. Add the corresponding binding.
         liricalButton.disableProperty().bind(optionalServices.liricalProperty().isNull());
 
 
@@ -429,8 +430,8 @@ public class MainController {
         fileChooser.setTitle("Save Pretest Probability Map to File");
         File file = fileChooser.showSaveDialog(contentPane.getScene().getWindow());
         if (file == null) return;
-
-        Map<TermId, Double> pretestMap = PretestProbability.of(mondoTreeView, optionalServices, optionalResources, DEFAULT_SLIDER_VALUE);
+        // TODO - we should not be saving pretest probabilities.
+        Map<TermId, Double> pretestMap = PretestProbability.of(mondoTreeView, optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_SLIDER_VALUE);
         try {
             PretestMapIO.write(pretestMap, file.toPath());
         } catch (IOException ex) {
@@ -908,7 +909,7 @@ public class MainController {
 
     @FXML
     private void liricalButtonAction(ActionEvent event) throws Exception {
-        Map<TermId, Double> preTestMap = PretestProbability.of(mondoTreeView, optionalServices, optionalResources, DEFAULT_SLIDER_VALUE);
+        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView, optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_SLIDER_VALUE);
         Path phenopacketFile = Path.of(phenopacketLabel.getText());
         String vcfFile = vcfLabel.getText();
         if (!Files.isRegularFile(phenopacketFile)) {
