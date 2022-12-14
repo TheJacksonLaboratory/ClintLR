@@ -10,7 +10,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
 
-public class PretestProbabilityMultiplierIOTest {
+public class PretestProbaAdjustmentIOTest {
 
     @Test
     public void writeAndRead() throws Exception {
@@ -19,10 +19,10 @@ public class PretestProbabilityMultiplierIOTest {
                 TermId.of("MONDO:0000456"), 456.
         );
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        PretestProbabilityMultiplierIO.write(values, os);
+        PretestProbaAdjustmentIO.write(values, os);
 
         ByteArrayInputStream is = new ByteArrayInputStream(os.toByteArray());
-        Map<TermId, Double> parsed = PretestProbabilityMultiplierIO.read(is);
+        Map<TermId, Double> parsed = PretestProbaAdjustmentIO.read(is);
         assertThat(parsed, equalTo(values));
     }
 }

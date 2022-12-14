@@ -40,7 +40,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.monarchinitiative.l2ci.core.io.PretestProbabilityMultiplierIO;
+import org.monarchinitiative.l2ci.core.io.PretestProbaAdjustmentIO;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
 import org.monarchinitiative.l2ci.gui.*;
 import org.monarchinitiative.l2ci.gui.config.AppProperties;
@@ -436,7 +436,7 @@ public class MainController {
 
         // Dump the adjustments to the file.
         try {
-            PretestProbabilityMultiplierIO.write(mondoTreeView.sliderValuesProperty(), file.toPath());
+            PretestProbaAdjustmentIO.write(mondoTreeView.sliderValuesProperty(), file.toPath());
         } catch (IOException ex) {
             LOGGER.warn("Unable to write the pretest probability adjustments to {}", file.toPath().toAbsolutePath(), ex);
             PopUps.showException("Save Pretest Probability Adjustments", "Unable to save the data", ex);
@@ -457,7 +457,7 @@ public class MainController {
         // Reset the Mondo tree and set the loaded adjustments.
         try {
             // TODO - we may need more elaborate code to implement adjustment setting
-            Map<TermId, Double> adjustments = PretestProbabilityMultiplierIO.read(file.toPath());
+            Map<TermId, Double> adjustments = PretestProbaAdjustmentIO.read(file.toPath());
             mondoTreeView.sliderValuesProperty().clear();
             mondoTreeView.sliderValuesProperty().putAll(adjustments);
         } catch (IOException ex) {

@@ -5,23 +5,20 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.monarchinitiative.phenol.ontology.data.TermId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PretestProbabilityMultiplierIO {
+public class PretestProbaAdjustmentIO {
     private static final CSVFormat CSV_FORMAT = CSVFormat.DEFAULT.builder()
             .setCommentMarker('#')
             .build();
 
-    private PretestProbabilityMultiplierIO() {
+    private PretestProbaAdjustmentIO() {
     }
 
     public static void write(Map<TermId, Double> multipliersMap, Path destination) throws IOException {
@@ -35,9 +32,9 @@ public class PretestProbabilityMultiplierIO {
              CSVPrinter printer = CSV_FORMAT.print(writer)) {
 
             // Header
-            printer.printComment("Pretest probability multipliers");
+            printer.printComment("Pretest probability adjustments");
             printer.printComment("date=%s".formatted(LocalDateTime.now()));
-            printer.printRecord("MondoID", "PretestProbabilityMultiplier");
+            printer.printRecord("MondoID", "PretestProbabilityAdjustment");
 
             // Values
             for (Map.Entry<TermId, Double> e : multipliersMap.entrySet()) {
