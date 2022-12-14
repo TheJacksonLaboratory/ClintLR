@@ -34,20 +34,6 @@ class MondoTreeCell extends TreeCell<OntologyTermWrapper> {
         }
     }
 
-    private void updateTreeIcons(OntologyTermWrapper item, ImageView icon1, ImageView icon2) {
-        setGraphic(icon1);
-        // TODO(mabeckwith) - please select the appropriate icon
-//        if (mapDataList != null) {
-//            for (MapData mapData : mapDataList) {
-//                TermId mapMondoId = mapData.getMondoId();
-//                TermId treeMondoId = item.term().id();
-//                if (mapMondoId != null && mapMondoId.equals(treeMondoId) && mapData.getSliderValue() > 1.0) {
-//                    setGraphic(icon2);
-//                }
-//            }
-//        }
-    }
-
     @Override
     protected void updateItem(OntologyTermWrapper item, boolean empty) {
         super.updateItem(item, empty);
@@ -59,20 +45,31 @@ class MondoTreeCell extends TreeCell<OntologyTermWrapper> {
             textProperty().bind(text);
 
             // Graphics
-            // TODO - perhaps we can optimize the conditions to prevent two streams?
-            if (item.term().getXrefs().stream().anyMatch(r -> r.getName().contains("OMIM:"))) {
-                ImageView omimIcon = new ImageView(BLACK_CIRCLE);
-                ImageView selectedIcon = new ImageView(BLACK_CIRCLE_UP_ARROW);
-                updateTreeIcons(item, omimIcon, selectedIcon);
-            } else if (item.term().getXrefs().stream().noneMatch(r -> r.getName().contains("OMIM:"))) {
-                if (item.term().getXrefs().stream().anyMatch(r -> r.getName().contains("OMIMPS:"))) {
-                    ImageView omimPSIcon = new ImageView(RED_CIRCLE);
-                    ImageView omimPSSelectedIcon = new ImageView(RED_CIRCLE_UP_ARROW);
-                    updateTreeIcons(item, omimPSIcon, omimPSSelectedIcon);
+            // TODO(ielis) - replace 1.0 with DEFAULT_SLIDER_VALUE variable
+            // TODO - update icons of descendants as well when change the slider
+            item.sliderValueProperty().greaterThan(1.0).addListener((obs, old, sliderAboveDefault) -> {
+                if (sliderAboveDefault) {
+                    if (item.hasOmimXref()) {
+                        ImageView omimChanged = new ImageView(BLACK_CIRCLE_UP_ARROW);
+                        setGraphic(omimChanged);
+                    } else if (item.hasOmimPSXref()) {
+                        ImageView omimPSChanged = new ImageView(RED_CIRCLE_UP_ARROW);
+                        setGraphic(omimPSChanged);
+                    } else {
+                        setGraphic(null);
+                    }
                 } else {
-                    updateTreeIcons(item, null, null);
+                    if (item.hasOmimXref()) {
+                        ImageView omimDefault = new ImageView(BLACK_CIRCLE);
+                        setGraphic(omimDefault);
+                    } else if (item.hasOmimPSXref()) {
+                        ImageView omimPSDefault = new ImageView(RED_CIRCLE);
+                        setGraphic(omimPSDefault);
+                    } else {
+                        setGraphic(null);
+                    }
                 }
-            }
+            });
         } else {
             textProperty().unbind();
             setText(null);

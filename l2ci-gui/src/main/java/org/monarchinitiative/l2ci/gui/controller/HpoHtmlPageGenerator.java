@@ -249,7 +249,7 @@ class HpoHtmlPageGenerator {
             "<p><b>Synonyms:</b> %s</p>" +
             "<p><b>PMID:</b> %s</p>" +
             "<p><b>Xrefs:</b> %s</p>" +
-            "<p><b>Pretest Probability:</b> %6.2e</p>" +
+            "<p><b>Pretest Adjustment:</b> %6.2f</p>" +
             "%s" +
             "</body></html>";
 

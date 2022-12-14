@@ -1,7 +1,6 @@
 package org.monarchinitiative.l2ci.gui.tasks;
 
 import javafx.concurrent.Task;
-import org.monarchinitiative.l2ci.core.io.HPOParser;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.io.utils.CurieUtil;
 import org.monarchinitiative.phenol.io.utils.CurieUtilBuilder;
@@ -9,7 +8,6 @@ import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -27,7 +25,6 @@ public class LoadOntologyTask extends Task<Ontology> {
     protected Ontology call() {
         LOGGER.debug("Loading ontology from {}", ontologyPath.toAbsolutePath());
         CurieUtil newCurie = CurieUtilBuilder.withDefaultsAnd(Map.of("HGNC", "http://identifiers.org/hgnc/"));
-        return OntologyLoader.loadOntology(ontologyPath.toFile(), newCurie, "MONDO");//, "HGNC");
-//        return parser.getHPO(); //OntologyLoader.loadOntology(ontologyPath.toFile(), "MONDO");
+        return OntologyLoader.loadOntology(ontologyPath.toFile(), newCurie, "MONDO");
     }
 }

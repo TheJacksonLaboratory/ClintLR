@@ -61,7 +61,8 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
                     rootId = containsDisease.get(0).id();
                 }
                 Term rootTerm = mondo.getTermMap().get(rootId);
-                TreeItem<OntologyTermWrapper> root = new MondoTreeItem(new OntologyTermWrapper(rootTerm), mondo, nChildren, sliderValues);
+                // TODO(ielis) - replace 1.0 with DEFAULT_SLIDER_VALUE variable
+                TreeItem<OntologyTermWrapper> root = new MondoTreeItem(OntologyTermWrapper.createOmimXref(rootTerm, 1), mondo, nChildren, sliderValues);
                 root.setExpanded(true);
                 setRoot(root);
             }

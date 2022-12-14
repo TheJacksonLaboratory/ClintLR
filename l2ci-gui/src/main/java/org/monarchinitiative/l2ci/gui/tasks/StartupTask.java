@@ -1,6 +1,5 @@
 package org.monarchinitiative.l2ci.gui.tasks;
 
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import org.monarchinitiative.l2ci.gui.resources.*;
 import org.monarchinitiative.lirical.core.model.GenomeBuild;
@@ -172,16 +171,9 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
         optionalServices.mondoProperty()
                 .addListener(loadMondoMeta(executorService, optionalServices, dataDirectory));
 
-        // Load HPO
-        // Load HpoDiseases
-        // TODO - implement or not
-//        resources.ontologyResources().hpoPathProperty()
-//                .addListener(loadOntology(executor, services::setHpo, "HPO"));
-
         // Load LIRICAL
         optionalResources.liricalResources().resourcesAreComplete()
                 .addListener(loadLirical(executorService, optionalServices, optionalResources.liricalResources()));
-
     }
 
     private static ChangeListener<Path> loadOntology(ExecutorService executor,
@@ -207,6 +199,7 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
         return (obs, old, mondo) -> {
             MondoOmimResources mmr = services.mondoOmimResources();
             if (mondo == null) {
+                LOGGER.debug("Mondo was null. Initializing with empty Mondo metadata.");
                 mmr.setOmimToMondo(Map.of());
                 mmr.getMondoToOmim().clear();
                 mmr.setMondoNDescendents(Map.of());
