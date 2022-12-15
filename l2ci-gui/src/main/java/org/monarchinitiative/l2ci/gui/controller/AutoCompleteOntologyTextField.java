@@ -64,14 +64,14 @@ public class AutoCompleteOntologyTextField extends TextField {
                 if (getText().length() == 0) {
                     entriesPopup.hide();
                 } else {
-                    LinkedList<String> searchResult = new LinkedList<>(ontologyLabels.subSet(getText(), getText() + Character.MAX_VALUE));
-                    LinkedList<String> omimSearchResult = new LinkedList<>(omimLabels.subSet(getText(), getText() + Character.MAX_VALUE));
                     if (ontologyLabels.size() > 0) {
+                        List<String> searchResult = List.copyOf(ontologyLabels.subSet(getText(), getText() + Character.MAX_VALUE));
                         populatePopup(searchResult);
                         if (!entriesPopup.isShowing()) {
                             entriesPopup.show(AutoCompleteOntologyTextField.this, Side.BOTTOM, 0, 0);
                         }
                     } else if (omimLabels.size() > 0) {
+                        List<String> omimSearchResult = List.copyOf(omimLabels.subSet(getText(), getText() + Character.MAX_VALUE));
                         populatePopup(omimSearchResult);
                         if (!entriesPopup.isShowing()) {
                             entriesPopup.show(AutoCompleteOntologyTextField.this, Side.BOTTOM, 0, 0);
@@ -155,8 +155,8 @@ public class AutoCompleteOntologyTextField extends TextField {
      * @param searchResult The set of matching strings.
      */
     private void populatePopup(List<String> searchResult) {
-        List<CustomMenuItem> menuItems = new LinkedList<>();
         int count = Math.min(searchResult.size(), maxEntries);
+        List<CustomMenuItem> menuItems = new ArrayList<>(count);
         for (int i = 0; i < count; i++)
         {
             final String result = searchResult.get(i);
