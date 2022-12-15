@@ -1,7 +1,6 @@
 package org.monarchinitiative.l2ci.gui.model;
 
 import org.monarchinitiative.l2ci.gui.resources.MondoOmimResources;
-import org.monarchinitiative.l2ci.gui.ui.MondoTreeView;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.util.Collection;
