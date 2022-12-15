@@ -10,20 +10,6 @@ import java.nio.file.Path;
 public class OptionalResources {
     // The class is annotated by @Component - Spring will create a singleton instance during App's startup.
 
-    /**
-     * Use this name to save HP.json file on the local filesystem.
-     */
-    public static final String DEFAULT_HPO_FILE_NAME = "hp.json";
-    public final static String HP_JSON_PATH_PROPERTY = "hp.json.path";
-    /**
-     * Use this name to save MONDO.json file on the local filesystem.
-     */
-    public static final String DEFAULT_MONDO_FILE_NAME = "mondo.json";
-
-    public static final String DEFAULT_HPOA_FILE_NAME = "phenotype.hpoa";
-    public static final String HPOA_PATH_PROPERTY = "hpoa.path";
-
-
     private final OntologyResources ontologyResources;
     private final LiricalResources liricalResources;
     private final ObjectProperty<Path> liricalResults = new SimpleObjectProperty<>(this, "liricalResults");
