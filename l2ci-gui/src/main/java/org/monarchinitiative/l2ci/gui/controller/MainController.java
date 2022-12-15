@@ -200,9 +200,10 @@ public class MainController {
         // Mondo disease name autocomplete
         autocompleteTextField.ontologyProperty().bind(optionalServices.mondoProperty());
         // TODO - setup OMIM autocompletion
+        autocompleteOmimTextField.omim2MondoProperty().bind(optionalServices.mondoOmimResources().omimToMondoProperty());
 
         // ------------- Slider UI fields ------------
-        pretestProbaFormatter = proparePretestProbabilityFormatter(pretestProbaSlider.getMin(), pretestProbaSlider.getMax(), DEFAULT_SLIDER_VALUE);
+        pretestProbaFormatter = preparePretestProbabilityFormatter(pretestProbaSlider.getMin(), pretestProbaSlider.getMax(), DEFAULT_SLIDER_VALUE);
         pretestProbaTextField.setTextFormatter(pretestProbaFormatter);
 
         InvalidationListener keepSliderValuesInSync = updateSliderValuesInTheUi();
@@ -262,7 +263,7 @@ public class MainController {
         });
     }
 
-    private static TextFormatter<Double> proparePretestProbabilityFormatter(double min, double max, double defaultValue) {
+    private static TextFormatter<Double> preparePretestProbabilityFormatter(double min, double max, double defaultValue) {
         UnaryOperator<TextFormatter.Change> filter = change -> {
             Matcher matcher = NONNEGATIVE_FLOAT.matcher(change.getControlNewText());
             if (matcher.matches()) {
@@ -801,9 +802,10 @@ public class MainController {
 
     @FXML
     private void omimButtonAction() {
-        Optional<TermId> opt = autocompleteOmimTextField.getSelectedId();
+        // TODO - have user choose a Mondo term from the list of Mondo terms in the Omim-to-Mondo map.
+        Optional<List<TermId>> opt = autocompleteOmimTextField.getSelectedIds();
         if (opt.isPresent()) {
-            TermId id = opt.get();
+            TermId id = opt.get().get(0);
             goToTerm(id);
         } else {
             LOGGER.warn("Unable to get term id: ");
@@ -881,7 +883,7 @@ public class MainController {
 
     @FXML
     private void liricalButtonAction(ActionEvent event) throws Exception {
-        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView, optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_SLIDER_VALUE);
+        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.sliderValuesProperty(), optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_SLIDER_VALUE);
         Path phenopacketFile = Path.of(phenopacketLabel.getText());
         String vcfFile = vcfLabel.getText();
         if (!Files.isRegularFile(phenopacketFile)) {
