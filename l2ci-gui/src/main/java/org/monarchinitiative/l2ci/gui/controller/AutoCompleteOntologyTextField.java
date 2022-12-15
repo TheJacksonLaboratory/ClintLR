@@ -113,7 +113,7 @@ public class AutoCompleteOntologyTextField extends TextField {
                 for (var entry : novel.entrySet()) {
                     TermId omimId = entry.getKey();
                     List<TermId> mondoIds = entry.getValue();
-                    labelToTermsMap.put(omimId.toString(), mondoIds);
+                    labelToTermsMap.put(omimId.getValue(), mondoIds);
                 }
                 omimLabels.addAll(labelToTermsMap.keySet());
             }
