@@ -11,11 +11,7 @@ import java.nio.file.Path;
  */
 public class OntologyResources {
 
-    public final static String MONDO_JSON_PATH_PROPERTY = "mondo.json.path";
-    /**
-     * Use this name to save MONDO.json file on the local filesystem.
-     */
-    public static final String DEFAULT_MONDO_FILE_NAME = "mondo.json";
+    static final String MONDO_JSON_PATH_PROPERTY = "mondo.json.path";
 
     private final ObjectProperty<Path> mondoPath = new SimpleObjectProperty<>(this, "mondo");
 

@@ -2,8 +2,6 @@ package org.monarchinitiative.l2ci.gui.tasks;
 
 import javafx.beans.value.ChangeListener;
 import org.monarchinitiative.l2ci.gui.resources.*;
-import org.monarchinitiative.lirical.core.model.GenomeBuild;
-import org.monarchinitiative.lirical.core.service.TranscriptDatabase;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,18 +14,12 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Initialization of the GUI resources is being done here. Information from {@link Properties} parsed from
- * <code>hpo-case-annotator.properties</code> are being read and following resources are initialized:
- * <ul>
- * <li>Human phenotype and Mondo ontology JSON files</li>
- * </ul>
- * <p>
- * Changes made by user are stored for the next run in a property file.
+ * Initialization of the GUI resources is being done here. We trigger listeners on {@link OptionalResources}
+ * and then set analysis parameters and paths to resource files. The parameters and paths are extracted
+ * from {@link Properties} backed by <code>l4ci.properties</code> stored in the app's directory.
  *
+ * @author <a href="mailto:martha.beckwith@jax.org">Martha Beckwith</a>
  * @author <a href="mailto:daniel.danis@jax.org">Daniel Danis</a>
- * @author <a href="mailto:peter.robinson@jax.org">Peter Robinson</a>
- * @version 2.0.0
- * @since 0.0
  */
 @Component
 public class StartupTask implements ApplicationListener<ApplicationStartedEvent>, Runnable {
@@ -63,103 +55,8 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
         LOGGER.debug("Triggering startup tasks");
         triggerLoadingTasks();
 
-        // Mondo
-        String mondoJsonPath = pgProperties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY);
-        if (mondoJsonPath != null)
-            // TODO(mabeckwith) - check if the path is a file, if it ends with *.json, if it is readable, etc.
-            optionalResources.ontologyResources().setMondoPath(Path.of(mondoJsonPath));
-
-        // Lirical
-        String liricalDataPath = pgProperties.getProperty(LiricalResources.LIRICAL_DATA_PROPERTY);
-        if (liricalDataPath != null)
-            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
-            optionalResources.liricalResources().setDataDirectory(Path.of(liricalDataPath));
-
-
-        // TODO(mabeckwith) - set the remaining LIRICAL properties to LiricalResources
-
-        // TODO - set the remaining paths if present in the properties
-        String exomiserVariantPath = pgProperties.getProperty(LiricalResources.EXOMISER_VARIANT_PROPERTY);
-        if (exomiserVariantPath != null)
-            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
-            optionalResources.liricalResources().setExomiserVariantDbFile(Path.of(exomiserVariantPath));
-
-        String backgroundFrequencyPath = pgProperties.getProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY);
-        if (backgroundFrequencyPath != null)
-            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
-            optionalResources.liricalResources().setBackgroundVariantFrequencyFile(Path.of(backgroundFrequencyPath));
-
-        String pathogenicityThreshold = pgProperties.getProperty(LiricalResources.PATHOGENICITY_PROPERTY);
-        if (pathogenicityThreshold != null)
-            optionalResources.liricalResources().setPathogenicityThreshold(Float.parseFloat(pathogenicityThreshold));
-
-        String defaultVariantBackgroundFrequency = pgProperties.getProperty(LiricalResources.DEFAULT_VARIANT_BACKGROUND_FREQUENCY_PROPERTY);
-        if (defaultVariantBackgroundFrequency != null)
-            optionalResources.liricalResources().setDefaultVariantBackgroundFrequency(Double.parseDouble(defaultVariantBackgroundFrequency));
-
-        String isStrict = pgProperties.getProperty(LiricalResources.STRICT_PROPERTY);
-        if (isStrict != null)
-            optionalResources.liricalResources().setStrict(Boolean.parseBoolean(isStrict));
-
-        String defaultAlleleFrequency = pgProperties.getProperty(LiricalResources.DEFAULT_ALLELE_PROPERTY);
-        if (defaultAlleleFrequency != null)
-            optionalResources.liricalResources().setDefaultAlleleFrequency(Float.parseFloat(defaultAlleleFrequency));
-
-        String genomeBuild = pgProperties.getProperty(LiricalResources.GENOME_BUILD_PROPERTY);
-        if (genomeBuild != null)
-            optionalResources.liricalResources().setGenomeBuild(GenomeBuild.valueOf(genomeBuild));
-
-        String transcriptDatabase = pgProperties.getProperty(LiricalResources.TRANSCRIPT_DATABASE_PROPERTY);
-        if (transcriptDatabase != null)
-            optionalResources.liricalResources().setTranscriptDatabase(TranscriptDatabase.valueOf(transcriptDatabase));
-
-//        String[] paths = {mondoJsonPath, hpoJsonPath, hpoAnnotPath};
-//        Type[] types = {Type.Mondo, Type.HPO, Type.HPOA};
-//        for (int i = 0; i < paths.length; i++) {
-//            String path = paths[i];
-//            Type type = types[i];
-//            if (path != null) {
-//                File file = new File(path);
-//                if (file.isFile()) {
-//                    String msg = String.format("Loading " + type + " from file '%s'", file.getAbsoluteFile());
-////                    updateMessage(msg);
-//                    LOGGER.info(msg);
-//                    switch (type) {
-//                        case Mondo:
-//                            HPOParser parser = new HPOParser(mondoJsonPath);
-//                            Ontology ontology = parser.getHPO();
-//                            setOntology(type, ontology, "");
-//                            LOGGER.info("Loaded " + type + " ontology");
-//                            break;
-//                        case HPO:
-//                            ontology = OntologyLoader.loadOntology(file);
-//                            optionalHpoResource.setOntology(ontology);
-//                            LOGGER.info("Loaded " + type + " ontology");
-//                            break;
-//                        case HPOA:
-//                            if (optionalHpoResource.getOntology() == null) {
-//                                LOGGER.error("Cannot load phenotype.hpoa because HP ontology not loaded");
-////                                return null;
-//                            }
-//                            setOntology(type, optionalHpoResource.getOntology(), path);
-//                            LOGGER.info("Loaded annotation maps");
-//                            break;
-//                        }
-////                    updateProgress((double) (i+1)/paths.length, 1);
-////                    updateMessage(type + " loaded");
-//                } else {
-//                    setOntology(type, null, "");
-//                }
-//                LOGGER.info("Finished loading " + type + " ontology.");
-//            } else {
-//                String msg = "Need to set path to " + type + " file (See File -> Show Resources menu)";
-////                updateMessage(msg);
-//                LOGGER.info(msg);
-//                setOntology(type, null, "");
-//            }
-//        }
-//        updateProgress(1, 1);
-//        return null;
+        // It is crucial to init resources AFTER triggering the loading tasks.
+        optionalResources.initResources(pgProperties);
     }
 
     private void triggerLoadingTasks() {
