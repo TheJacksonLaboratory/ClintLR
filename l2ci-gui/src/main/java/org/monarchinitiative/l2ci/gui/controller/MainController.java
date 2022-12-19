@@ -107,7 +107,7 @@ public class MainController {
     public HBox statusHBox;
     @FXML
     private AutoCompleteOntologyTextField autocompleteTextField;
-    // TODO - get the OMIM file and populate the collections that back the search.
+
     @FXML
     private AutoCompleteOntologyTextField autocompleteOmimTextField;
 
@@ -146,8 +146,6 @@ public class MainController {
     private Label treeLabel;
     @FXML
     private TextField outputFileTextField;
-    @FXML
-    private Label outputFileTypeLabel;
     @FXML
     private TextField lrThresholdTextField;
     @FXML
@@ -190,16 +188,12 @@ public class MainController {
         pathogenicityTextField.setText(pgProperties.getProperty("pathogenicity.threshold"));
         variantsCheckbox.setSelected(false);
 
-        // TODO - address
-        outputFileTypeLabel.setText("." + pgProperties.getProperty("output.formats"));
-
         showMondoStats.disableProperty().bind(optionalServices.mondoProperty().isNull());
         copyrightLabel.setText("L4CI, v. " + appProperties.getVersion() + ", © Monarch Initiative 2022");
 
         // ---------- Autocompletion fields ----------
         // Mondo disease name autocomplete
         autocompleteTextField.ontologyProperty().bind(optionalServices.mondoProperty());
-        // TODO - setup OMIM autocompletion
         autocompleteOmimTextField.omim2MondoProperty().bind(optionalServices.mondoOmimResources().omimToMondoProperty());
 
         // ------------- Slider UI fields ------------
@@ -861,25 +855,6 @@ public class MainController {
         double incValue = range/4;
         slider.setMajorTickUnit(incValue);
     }
-
-//    private void adjustLimits(Slider slider, double value) {
-//        // TODO(mabeckwith) - Please use the function if we really want to change the slider values.
-//        //  My gut feeling is that being able to set value to >10 should not be super important.
-//        double curMin = slider.getMin();
-//        double curMax = slider.getMax();
-//        if (value > curMax) {
-//            double newMax = value * 2.0;
-//            while (newMax < value) {
-//                newMax *= 2.0;
-//            }
-//            updateLimits(slider, curMin, newMax);
-//            slider.setValue(value);
-//        } else if (value <= curMax / 4.0) {
-//            double newMax = curMax / 4.0;
-//            updateLimits(slider, curMin, newMax);
-//            slider.setValue(value);
-//        }
-//    }
 
     @FXML
     private void liricalButtonAction(ActionEvent event) throws Exception {

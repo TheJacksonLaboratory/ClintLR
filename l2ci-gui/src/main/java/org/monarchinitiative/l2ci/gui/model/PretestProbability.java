@@ -10,6 +10,8 @@ import java.util.Map;
 /**
  * Class to adjust the pretest probability
  */
+// TODO - make interface with getters for e.g. MondoOmimResources, and use that instead of the gui optional resources
+// TODO - this ultimately belongs in core, not gui package
 public class PretestProbability {
 
     public static Map<TermId, Double> of(Map<TermId, Double> mondoIdPretestAdjMap,

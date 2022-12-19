@@ -35,7 +35,7 @@ public class DownloadMondoTask extends Task<Path> {
     protected Path call() throws Exception {
         // Download Mondo JSON and complain in case of any errors.
         boolean looksCompressed = mondoJsonUrl.getFile().endsWith(".gz");
-        String mondoJsonName = looksCompressed ? "mondo.json.gz" : OntologyResources.DEFAULT_MONDO_FILE_NAME;
+        String mondoJsonName = looksCompressed ? "mondo.json.gz" : "mondo.json";
         BioDownloader downloader = BioDownloader.builder(dataDirectory)
                 .custom(mondoJsonName, mondoJsonUrl)
                 .build();
@@ -43,7 +43,7 @@ public class DownloadMondoTask extends Task<Path> {
         downloader.download();
 
         // This is where the Mondo file will end up.
-        Path target = dataDirectory.resolve(OntologyResources.DEFAULT_MONDO_FILE_NAME);
+        Path target = dataDirectory.resolve("mondo.json");
         if (looksCompressed) {
             LOGGER.debug("Decompressing Mondo JSON to {}", target.toAbsolutePath());
             // We downloaded gzipped Mondo to data directory

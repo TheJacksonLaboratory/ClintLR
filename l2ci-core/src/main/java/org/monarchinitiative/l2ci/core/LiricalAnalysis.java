@@ -37,6 +37,7 @@ public class LiricalAnalysis {
 
     OutputOptions outputOptions;
 
+    // TODO - make interface with getters for LiricalResources, and use that instead of Properties to get LIRICAL resources
     public LiricalAnalysis(Lirical lirical, Properties pgProperties) {
         this.lirical = lirical;
         this.pgProperties = pgProperties;

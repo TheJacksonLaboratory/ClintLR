@@ -62,7 +62,7 @@ public class MondoOmimTask extends Task<MondoOmim> {
         if (Files.exists(mondoNDescendantsPath)) {
             mondoNDescendents = MondoNDescendantsMapIO.read(mondoNDescendantsPath);
         } else {
-            mondoNDescendents = makeMondoDescendantsMaps(mondo, omim2Mondo);
+            mondoNDescendents = makeMondoDescendantsMaps(mondo);
             MondoNDescendantsMapIO.write(mondoNDescendents, mondoNDescendantsPath);
         }
 
@@ -80,8 +80,6 @@ public class MondoOmimTask extends Task<MondoOmim> {
                     builder.computeIfAbsent(omimId, i -> new ArrayList<>())
                             .add(mondoTerm.id());
                     break;
-                    // TODO(mabeckwith) - do we need to do this?
-//                    mainController.omimLabelsAndMondoTermIdMap.put(omimTerm.id().toString(), mondoTerm.id());
                 }
             }
         }
@@ -89,52 +87,14 @@ public class MondoOmimTask extends Task<MondoOmim> {
     }
 
 
-    private static Map<TermId, Integer> makeMondoDescendantsMaps(Ontology mondo, Map<TermId, List<TermId>> omim2Mondo) {
-//        String[] probMondos = {"MONDO:0000001","MONDO:0000252","MONDO:0000257","MONDO:0000432","MONDO:0000888","MONDO:0000916", "MONDO:0001517","MONDO:0001673",
-//                "MONDO:0002051", "MONDO:0002081","MONDO:0002269","MONDO:0002320","MONDO:0002334","MONDO:0002525","MONDO:0002602", "MONDO:0003847","MONDO:0003939",
-//                "MONDO:0004095","MONDO:0004335","MONDO:0004805", "MONDO:0005020", "MONDO:0005027","MONDO:0005046","MONDO:0005062","MONDO:0005066","MONDO:0005070","MONDO:0005071","MONDO:0005093",
-//                "MONDO:0005157","MONDO:0005218","MONDO:0005550","MONDO:0005559","MONDO:0005560","MONDO:0005570","MONDO:0005579","MONDO:0006547", "MONDO:0008945","MONDO:0011876", "MONDO:0013598",
-//                "MONDO:0015286","MONDO:0015650","MONDO:0015757","MONDO:0019044","MONDO:0019052","MONDO:0019117","MONDO:0020573","MONDO:0020579","MONDO:0020683", "MONDO:0021125","MONDO:0021152",
-//                "MONDO:0021166","MONDO:0024237", "MONDO:0042489","MONDO:0043424","MONDO:0044881", "MONDO:0100062","MONDO:0100079","MONDO:0100135","MONDO:0100455", "MONDO:0700092"};
-//        Integer[] probMondoNDesc = {0,27,27,4,54,27,27,16,2582,1190,55,1088,253,353,3853,0,940,28,731,116,266,631,1109,54,4433,1640,13134,2006,87,5,222,971,2562,1092,115,
-//                1,0,1,0,311,336,59,84,2202,4460,0,55,71,0,0,226,553,0,29,133,98,0,0,20,237};
-//        Map<String, Integer> probMondoDescMap = new HashMap<>();
-//        for (int t=0; t<probMondos.length; t++) {
-//            probMondoDescMap.put(probMondos[t], probMondoNDesc[t]);
-//        }
-
+    private static Map<TermId, Integer> makeMondoDescendantsMaps(Ontology mondo) {
         Map<TermId, Integer> builder = new HashMap<>();
         for (Term mondoTerm : mondo.getTerms()) {
-            // TODO(mabeckwith) - update the code.
-            Map<TermId, TermId> selectedTerms = new HashMap<>();
-            TermId mondoID = mondoTerm.id();
-            boolean doRefs = true;
-//            if (probMondoDescMap.containsKey(mondoID.toString())) {
-//                mainController.mondoNDescendantsMap.put(mondoID, probMondoDescMap.get(mondoID.toString()));
-//                doRefs = false;
-//            }
-            if (doRefs) {
-                List<Dbxref> mondoTermXRefs = mondoTerm.getXrefs();
-                for (Dbxref ref : mondoTermXRefs) {
-                    Set<Term> descendents = Relation.getTermRelations(mondo, mondoID, Relation.DESCENDENT);
-//                    Set<Term> descendents = Set.of();
-                    int nDescendents = 0;
-                    for (Term descendent : descendents) {
-                        for (TermId omimID : omim2Mondo.keySet()) {
-                            List<TermId> mondoIDs = omim2Mondo.get(omimID);
-                            if (mondoIDs.contains(descendent.id())) {
-                                selectedTerms.put(omimID, descendent.id());
-                                if (!descendent.id().equals(mondoID)) {
-                                    nDescendents++;
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    builder.put(mondoID, nDescendents);
-                    break;
-                }
-            }
+            long nDescendents = Relation.getTermRelations(mondo, mondoTerm.id(), Relation.DESCENDENT).stream()
+                    .flatMap(d -> d.getXrefs().stream())
+                    .filter(r -> r.getName().startsWith("OMIM"))
+                    .count();
+            builder.put(mondoTerm.id(), Math.toIntExact(nDescendents));
         }
 
         return Map.copyOf(builder);

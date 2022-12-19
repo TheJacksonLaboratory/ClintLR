@@ -131,7 +131,7 @@
                         </Label>
                         <HBox>
                            <children>
-                              <Label fx:id="lrThresholdLabel" minWidth="135.0" text="LR Threshold:">
+                              <Label minWidth="135.0" text="LR Threshold:">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
@@ -144,7 +144,7 @@
                         </HBox>
                         <HBox>
                            <children>
-                              <Label fx:id="minDiagnosisLabel" minWidth="135.0" text="Min Diagnosis Count:">
+                              <Label minWidth="135.0" text="Min Diagnosis Count:">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
@@ -158,7 +158,7 @@
                         </HBox>
                         <HBox>
                            <children>
-                              <Label fx:id="pathogenicityLabel" minWidth="80.0" text="Pathogenicity Threshold:">
+                              <Label minWidth="80.0" text="Pathogenicity Threshold:">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
@@ -171,7 +171,7 @@
                         </HBox>
                         <HBox>
                            <children>
-                              <Label fx:id="variantsLabel" minWidth="132.0" text="Display All Variants:">
+                              <Label minWidth="132.0" text="Display All Variants:">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
@@ -185,7 +185,7 @@
                         </HBox>
                         <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity" VBox.vgrow="ALWAYS">
                            <children>
-                              <Label fx:id="outputFileLabel" text="Results File:">
+                              <Label text="Results File:">
                                  <HBox.margin>
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
@@ -195,11 +195,6 @@
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
                               </TextField>
-                              <Label fx:id="outputFileTypeLabel" >
-                                 <HBox.margin>
-                                    <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                 </HBox.margin>
-                              </Label>
                            </children>
                         </HBox>
                         <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
