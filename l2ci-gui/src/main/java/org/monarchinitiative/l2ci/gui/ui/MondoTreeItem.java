@@ -22,6 +22,7 @@ class MondoTreeItem extends TreeItem<OntologyTermWrapper> {
     private static final Logger LOGGER = LoggerFactory.getLogger(MondoTreeItem.class);
 
     private final Ontology mondo;
+    private Boolean isLeaf = null;
 
     /**
      * Default & only constructor for the TreeItem.
@@ -87,8 +88,11 @@ class MondoTreeItem extends TreeItem<OntologyTermWrapper> {
      */
     @Override
     public boolean isLeaf() {
-        // TODO - Getting children is relatively expensive operation. Perhaps we can cache this?
-        return Relation.getTermRelationsStream(mondo, getValue().term().id(), Relation.CHILD).findAny().isEmpty();
+        // We cache the results to improve UI performance.
+        // The code is not prone to race conditions because the method is run solely by JavaFX thread.
+        if (isLeaf == null)
+            isLeaf = Relation.getTermRelationsStream(mondo, getValue().term().id(), Relation.CHILD).findAny().isEmpty();
+        return isLeaf;
     }
 
 }
