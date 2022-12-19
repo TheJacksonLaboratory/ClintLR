@@ -54,7 +54,6 @@ public class MainApp  extends Application {
         stage.setTitle(properties.getApplicationUiTitle().concat(" :: ").concat(properties.getVersion()));
         stage.setResizable(true);
         stage.setScene(scene);
-//        stage.setOnCloseRequest(); // TODO(mabeckwith) - should we implement this?
         stage.show();
     }
 
