@@ -149,7 +149,7 @@ public class MainController {
     @FXML
     private TextField lrThresholdTextField;
     @FXML
-    private Spinner minDiagnosisSpinner;
+    private Spinner<Integer> minDiagnosisSpinner;
     @FXML
     private TextField pathogenicityTextField;
     @FXML
@@ -183,8 +183,7 @@ public class MainController {
 
     @FXML
     private void initialize() {
-        SpinnerValueFactory<Integer> spinnerFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10);
-        minDiagnosisSpinner.setValueFactory(spinnerFactory);
+        minDiagnosisSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10));
         pathogenicityTextField.setText(pgProperties.getProperty("pathogenicity.threshold"));
         variantsCheckbox.setSelected(false);
 
@@ -239,17 +238,8 @@ public class MainController {
         // TODO - we need both lirical and known disease IDs to run this. Add the corresponding binding.
         liricalButton.disableProperty().bind(optionalServices.liricalProperty().isNull());
 
-
-        // TODO - remove when Mondo file is fixed. Thus should not be required when the app goes out.
-        if (pgProperties.getProperty("obographs.jar.path") == null) {
-            String mainDir = new File(".").getAbsolutePath();
-            String obographsPath = String.join(File.separator, mainDir.substring(0, mainDir.length()-2), "obographs-cli-0.3.0.jar");
-            pgProperties.setProperty("obographs.jar.path", obographsPath);
-        }
-        LOGGER.info("obographs jar located at " + pgProperties.getProperty("obographs.jar.path"));
-
         // show intro message in the infoWebView
-        // TODO - move into initialize
+        // TODO - move into separate UI element
         Platform.runLater(() -> {
             infoWebEngine = infoWebView.getEngine();
             infoWebEngine.loadContent("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>HPO tree browser</title></head>" +
@@ -741,7 +731,7 @@ public class MainController {
      */
     private void updateDescription(TreeItem<OntologyTermWrapper> treeItem) {
         if (treeItem == null)
-            // TODO - handle properly. Null means no display
+            // TODO - move into separate UI component and handle properly. Null means no display
             return;
 
         Term term = treeItem.getValue().term();

@@ -2,7 +2,6 @@ package org.monarchinitiative.l2ci.gui.tasks;
 
 import javafx.concurrent.Task;
 import org.monarchinitiative.biodownload.BioDownloader;
-import org.monarchinitiative.l2ci.gui.resources.OntologyResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

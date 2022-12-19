@@ -10,8 +10,6 @@ import org.springframework.stereotype.Component;
 public class OptionalServices {
 
     private final ObjectProperty<Lirical> lirical = new SimpleObjectProperty<>(this, "lirical");
-    // TODO - consider removal
-//    private final ObjectProperty<Ontology> hpo = new SimpleObjectProperty<>(this, "hpo");
     private final ObjectProperty<Ontology> mondo = new SimpleObjectProperty<>(this, "mondo");
     private final MondoOmimResources mondoOmimResources = new MondoOmimResources();
 
@@ -26,18 +24,6 @@ public class OptionalServices {
     public void setLirical(Lirical lirical) {
         this.lirical.set(lirical);
     }
-
-//    public Ontology getHpo() {
-//        return hpo.get();
-//    }
-
-//    public ObjectProperty<Ontology> hpoProperty() {
-//        return hpo;
-//    }
-
-//    public void setHpo(Ontology hpo) {
-//        this.hpo.set(hpo);
-//    }
 
     public Ontology getMondo() {
         return mondo.get();
