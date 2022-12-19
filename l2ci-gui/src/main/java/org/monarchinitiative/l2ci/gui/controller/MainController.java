@@ -494,7 +494,7 @@ public class MainController {
     @FXML
     private void showResourcesInterface(ActionEvent e) {
         try {
-            ResourcesController controller = new ResourcesController(optionalResources, dataDirectory, executor);
+            ResourcesController controller = new ResourcesController(optionalResources, appProperties, dataDirectory, executor);
             FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(ResourcesController.class.getResource("ResourcesView.fxml")));
             loader.setControllerFactory(clz -> controller);
             Stage stage = new Stage();

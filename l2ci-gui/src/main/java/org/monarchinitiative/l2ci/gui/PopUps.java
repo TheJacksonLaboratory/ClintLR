@@ -167,7 +167,7 @@ public class PopUps {
     }
 
 
-    public static void showException(String windowTitle, String header, Exception exception) {
+    public static void showException(String windowTitle, String header, Throwable exception) {
         Alert alert = new Alert(AlertType.ERROR);
         alert.setTitle(windowTitle);
         alert.setHeaderText(header);
