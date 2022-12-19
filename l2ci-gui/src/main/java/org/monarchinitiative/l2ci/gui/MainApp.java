@@ -23,6 +23,7 @@ import org.springframework.core.io.ClassPathResource;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.util.Properties;
 
@@ -74,32 +75,11 @@ public class MainApp  extends Application {
 
     private static void serializeResourceState(OptionalResources optionalResources,
                                                File target) throws IOException {
-        Properties resourceProperties = new Properties();
-        // Serialize LIRICAL resources
-        LiricalResources liricalResources = optionalResources.liricalResources();
-        if (liricalResources.getDataDirectory() != null)
-            resourceProperties.setProperty(LiricalResources.LIRICAL_DATA_PROPERTY, liricalResources.getDataDirectory().toAbsolutePath().toString());
-        // TODO create new utility class (private constructor) that combines initialization and serialization
-        if (liricalResources.getExomiserVariantDbFile() != null)
-            resourceProperties.setProperty(LiricalResources.EXOMISER_VARIANT_PROPERTY, liricalResources.getExomiserVariantDbFile().toAbsolutePath().toString());
-        if (liricalResources.getBackgroundVariantFrequencyFile() != null)
-            resourceProperties.setProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY, liricalResources.getBackgroundVariantFrequencyFile().toAbsolutePath().toString());
-        resourceProperties.setProperty(LiricalResources.PATHOGENICITY_PROPERTY, String.valueOf(liricalResources.getPathogenicityThreshold()));
-        resourceProperties.setProperty(LiricalResources.DEFAULT_VARIANT_BACKGROUND_FREQUENCY_PROPERTY, String.valueOf(liricalResources.getDefaultVariantBackgroundFrequency()));
-        resourceProperties.setProperty(LiricalResources.STRICT_PROPERTY, String.valueOf(liricalResources.isStrict()));
-        resourceProperties.setProperty(LiricalResources.DEFAULT_ALLELE_PROPERTY, String.valueOf(liricalResources.getDefaultAlleleFrequency()));
-        resourceProperties.setProperty(LiricalResources.GENOME_BUILD_PROPERTY, String.valueOf(liricalResources.getGenomeBuild()));
-        resourceProperties.setProperty(LiricalResources.TRANSCRIPT_DATABASE_PROPERTY, String.valueOf(liricalResources.getTranscriptDatabase()));
+        Properties properties = new Properties();
+        optionalResources.storeResources(properties);
 
-        // MONDO path
-        OntologyResources ontologyResources = optionalResources.ontologyResources();
-        if (ontologyResources.getMondoPath() != null)
-            resourceProperties.setProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY, ontologyResources.getMondoPath().toAbsolutePath().toString());
-
-
-
-        try (OutputStream os = Files.newOutputStream(target.toPath())) {
-            resourceProperties.store(os, "L4CI properties");
+        try (Writer writer = Files.newBufferedWriter(target.toPath())) {
+            properties.store(writer, "L4CI properties");
         }
 
         LOGGER.debug("Properties saved to `{}`", target.getAbsolutePath());

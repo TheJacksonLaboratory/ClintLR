@@ -11,11 +11,7 @@ import java.nio.file.Path;
  */
 public class OntologyResources {
 
-    public final static String MONDO_JSON_PATH_PROPERTY = "mondo.json.path";
-
-//    public final static String HPO_JSON_PATH_PROPERTY = "hpo.json.path";
-
-//    public final static String HPOA_PATH_PROPERTY = "hpoa.path";
+    static final String MONDO_JSON_PATH_PROPERTY = "mondo.json.path";
 
 //    private final ObjectProperty<Path> hpoPath = new SimpleObjectProperty<>(this, "hpoPath");
 
