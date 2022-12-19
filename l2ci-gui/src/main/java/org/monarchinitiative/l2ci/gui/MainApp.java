@@ -44,17 +44,20 @@ public class MainApp  extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(MainController.class.getResource("MainController.fxml"));
-        loader.setControllerFactory(context::getBean);
-
         context.getBean(HostServicesUrlBrowser.class).setHostServices(getHostServices());
-        AppProperties properties = context.getBean(AppProperties.class);
 
-        Scene scene = new Scene(loader.load(), 1200, 900);
-        stage.setTitle(properties.getApplicationUiTitle().concat(" :: ").concat(properties.getVersion()));
-        stage.setResizable(true);
+        AppProperties properties = context.getBean(AppProperties.class);
+        stage.setTitle(properties.getTitle().concat(" :: v").concat(properties.getVersion()));
+
+        Scene scene = new Scene(loadParent(), 1200, 900);
         stage.setScene(scene);
         stage.show();
+    }
+
+    private Parent loadParent() throws IOException {
+        FXMLLoader loader = new FXMLLoader(MainController.class.getResource("MainController.fxml"));
+        loader.setControllerFactory(context::getBean);
+        return loader.load();
     }
 
     /**
