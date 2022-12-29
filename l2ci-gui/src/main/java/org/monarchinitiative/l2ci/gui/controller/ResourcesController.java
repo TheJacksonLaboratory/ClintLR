@@ -16,6 +16,7 @@ import javafx.util.converter.FloatStringConverter;
 import org.monarchinitiative.l2ci.gui.PopUps;
 import org.monarchinitiative.l2ci.gui.config.AppProperties;
 import org.monarchinitiative.l2ci.gui.resources.*;
+import org.monarchinitiative.l2ci.gui.tasks.DownloadLiricalData;
 import org.monarchinitiative.l2ci.gui.tasks.DownloadMondoTask;
 import org.monarchinitiative.lirical.core.model.GenomeBuild;
 import org.monarchinitiative.lirical.core.service.TranscriptDatabase;
@@ -175,6 +176,24 @@ public class ResourcesController {
         e.consume();
     }
 
+    @FXML
+    private void downloadLiricalDataButtonAction(ActionEvent e) {
+        // TODO - consider asking how does the user feel regarding overwriting.
+        boolean overwrite = true;
+        Path liricalDataDirectory = dataDirectory.resolve("lirical");
+        DownloadLiricalData downloadLiricalData = new DownloadLiricalData(appProperties.liricalProperties(), liricalDataDirectory, overwrite);
+            downloadLiricalData.setOnSucceeded(event -> optionalResources.liricalResources().setDataDirectory(liricalDataDirectory));
+            downloadLiricalData.setOnFailed(event -> PopUps.showException(
+                    "Download Lirical Data",
+                    event.getSource().getException().getMessage(),
+                    event.getSource().getException())
+            );
+
+            executorService.submit(downloadLiricalData);
+
+        e.consume();
+    }
+
     /**
      * Open DirChooser and ask user to provide the LIRCAL data directory.
      */
@@ -247,7 +266,7 @@ public class ResourcesController {
         // Construct Mondo URL
         URL mondoUrl;
         try {
-            mondoUrl = new URL(appProperties.getMondoJsonUrl());
+            mondoUrl = new URL(appProperties.mondoJsonUrl());
         } catch (MalformedURLException ex) {
             PopUps.showException("Download Mondo JSON", ex.getMessage(), ex);
             return;

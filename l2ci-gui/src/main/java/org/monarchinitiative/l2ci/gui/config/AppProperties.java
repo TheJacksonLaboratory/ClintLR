@@ -1,42 +1,54 @@
 package org.monarchinitiative.l2ci.gui.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 /**
- * The properties that matches {@code application.properties} that is bundled with the app.
+ * The properties that match {@code application.properties} that is bundled with the app.
  * <p>
  * Note, these properties are <em>not</em> the properties we use to serialize the user data, such as path
  * to {@code mondo.json}, LIRICAL data directory, etc.
  */
-@Component
+@ConfigurationProperties(prefix = "l4ci")
 public class AppProperties {
 
-    private final String title;
-    private final String version;
-    private final String mondoJsonUrl;
+    private String title;
+    private String version;
+    private String mondoJsonUrl;
 
-    @Autowired
-    public AppProperties(@Value("${l4ci.title}") String title,
-                         @Value("${l4ci.version}") String version,
-                         @Value("${mondo.json.url}") String mondoJsonUrl) {
-        this.title = title;
-        this.version = version;
-        this.mondoJsonUrl = mondoJsonUrl;
-    }
+    @NestedConfigurationProperty // l4ci.lirical
+    private LiricalProperties lirical;
 
-    public String getTitle() {
+    public String title() {
         return title;
     }
 
-    public String getVersion() {
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String version() {
         return version;
     }
 
-    public String getMondoJsonUrl() {
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String mondoJsonUrl() {
         return mondoJsonUrl;
     }
 
+    public void setMondoJsonUrl(String mondoJsonUrl) {
+        this.mondoJsonUrl = mondoJsonUrl;
+    }
+
+    public LiricalProperties liricalProperties() {
+        return lirical;
+    }
+
+    public void setLirical(LiricalProperties lirical) {
+        this.lirical = lirical;
+    }
 }
 

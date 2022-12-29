@@ -9,25 +9,27 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.monarchinitiative.l2ci.gui.config.AppProperties;
+import org.monarchinitiative.l2ci.gui.config.LiricalProperties;
 import org.monarchinitiative.l2ci.gui.controller.MainController;
-import org.monarchinitiative.l2ci.gui.resources.LiricalResources;
-import org.monarchinitiative.l2ci.gui.resources.OntologyResources;
 import org.monarchinitiative.l2ci.gui.resources.OptionalResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.util.Properties;
 
-@SpringBootApplication
+@SpringBootApplication@EnableConfigurationProperties({
+        AppProperties.class,
+        LiricalProperties.class
+})
 public class MainApp  extends Application {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MainApp.class);
@@ -47,7 +49,7 @@ public class MainApp  extends Application {
         context.getBean(HostServicesUrlBrowser.class).setHostServices(getHostServices());
 
         AppProperties properties = context.getBean(AppProperties.class);
-        stage.setTitle(properties.getTitle().concat(" :: v").concat(properties.getVersion()));
+        stage.setTitle(properties.title().concat(" :: v").concat(properties.version()));
 
         Scene scene = new Scene(loadParent(), 1200, 900);
         stage.setScene(scene);
