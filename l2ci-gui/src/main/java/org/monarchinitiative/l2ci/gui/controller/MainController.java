@@ -188,7 +188,7 @@ public class MainController {
         variantsCheckbox.setSelected(false);
 
         showMondoStats.disableProperty().bind(optionalServices.mondoProperty().isNull());
-        copyrightLabel.setText("L4CI, v. " + appProperties.getVersion() + ", © Monarch Initiative 2022");
+        copyrightLabel.setText("L4CI, v. " + appProperties.version() + ", © Monarch Initiative 2022");
 
         // ---------- Autocompletion fields ----------
         // Mondo disease name autocomplete

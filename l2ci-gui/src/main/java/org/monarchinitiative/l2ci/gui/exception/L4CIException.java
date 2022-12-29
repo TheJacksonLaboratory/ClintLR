@@ -6,4 +6,5 @@ public class L4CIException extends Exception{
     public L4CIException(String message, Throwable throwable) {
         super(message, throwable);
     }
+    public L4CIException(Throwable cause) { super(cause); }
 }
