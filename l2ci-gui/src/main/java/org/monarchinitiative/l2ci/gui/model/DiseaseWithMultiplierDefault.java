@@ -6,16 +6,16 @@ import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.util.Objects;
 
-class DiseaseWithSliderValueDefault implements DiseaseWithSliderValue {
+class DiseaseWithMultiplierDefault implements DiseaseWithMultiplier {
 
     private final TermId id;
     private final String name;
-    private final DoubleProperty sliderValue = new SimpleDoubleProperty();
+    private final DoubleProperty multiplier = new SimpleDoubleProperty();
 
-    DiseaseWithSliderValueDefault(TermId id, String name, Double sliderValue) {
+    DiseaseWithMultiplierDefault(TermId id, String name, Double multiplier) {
         this.id = id;
         this.name = name;
-        this.sliderValue.setValue(sliderValue);
+        this.multiplier.setValue(multiplier);
     }
 
     @Override
@@ -29,29 +29,29 @@ class DiseaseWithSliderValueDefault implements DiseaseWithSliderValue {
     }
 
     @Override
-    public DoubleProperty sliderValueProperty() {
-        return sliderValue;
+    public DoubleProperty multiplierProperty() {
+        return multiplier;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        DiseaseWithSliderValueDefault that = (DiseaseWithSliderValueDefault) o;
-        return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(sliderValue, that.sliderValue);
+        DiseaseWithMultiplierDefault that = (DiseaseWithMultiplierDefault) o;
+        return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(multiplier, that.multiplier);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, sliderValue);
+        return Objects.hash(id, name, multiplier);
     }
 
     @Override
     public String toString() {
-        return "DiseaseWithSliderValueDefault{" +
+        return "DiseaseWithMultiplierDefault{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", sliderValue=" + sliderValue +
+                ", multiplier=" + multiplier +
                 '}';
     }
 }

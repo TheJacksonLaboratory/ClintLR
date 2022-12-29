@@ -2,7 +2,7 @@ package org.monarchinitiative.l2ci.gui.ui;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import org.monarchinitiative.l2ci.gui.model.DiseaseWithSliderValue;
+import org.monarchinitiative.l2ci.gui.model.DiseaseWithMultiplier;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
@@ -11,24 +11,24 @@ import org.monarchinitiative.phenol.ontology.data.TermId;
  * <p>
  * The pretest probability can be {@code null} or a value in the range of {@code [0, 1]}.
  */
-public class OntologyTermWrapper implements DiseaseWithSliderValue {
+public class OntologyTermWrapper implements DiseaseWithMultiplier {
 
     private final Term term;
-    private final DoubleProperty sliderValue = new SimpleDoubleProperty();
-
+    private final DoubleProperty multiplier = new SimpleDoubleProperty();
     private final boolean hasOmimXref;
-
     private final boolean hasOmimPSXref;
 
-    public static OntologyTermWrapper createOmimXref(Term term, double initialAdjustmentValue) {
-        boolean hasOmimXref = term.getXrefs().stream().anyMatch(r -> r.getName().startsWith("OMIM:"));
-        boolean hasOmimPSXref = term.getXrefs().stream().anyMatch(r -> r.getName().startsWith("OMIMPS:"));
-        return new OntologyTermWrapper(term, initialAdjustmentValue, hasOmimXref, hasOmimPSXref);
+    public static OntologyTermWrapper createOmimXref(Term term, Double multiplier) {
+        boolean hasOmimXref = term.getXrefs().stream()
+                .anyMatch(r -> r.getName().startsWith("OMIM:"));
+        boolean hasOmimPSXref = term.getXrefs().stream()
+                .anyMatch(r -> r.getName().startsWith("OMIMPS:"));
+        return new OntologyTermWrapper(term, multiplier, hasOmimXref, hasOmimPSXref);
     }
 
-    public OntologyTermWrapper(Term term, Double initialAdjustmentValue, boolean hasOmimXref, boolean hasOmimPSXref) {
+    private OntologyTermWrapper(Term term, Double multiplier, boolean hasOmimXref, boolean hasOmimPSXref) {
         this.term = term;
-        this.sliderValue.setValue(initialAdjustmentValue);
+        this.multiplier.setValue(multiplier);
         this.hasOmimXref = hasOmimXref;
         this.hasOmimPSXref = hasOmimPSXref;
     }
@@ -48,19 +48,19 @@ public class OntologyTermWrapper implements DiseaseWithSliderValue {
     }
 
     /**
-     * Get slider value property for this disease.
+     * Get multiplier value property for this disease.
      */
-    public DoubleProperty sliderValueProperty() {
-        return sliderValue;
+    public DoubleProperty multiplierProperty() {
+        return multiplier;
     }
 
     @Override
-    public Double getSliderValue() {
-        return sliderValue.get();
+    public Double getMultiplier() {
+        return multiplier.get();
     }
 
-    public void setSliderValue(Number sliderValue) {
-        this.sliderValue.setValue(sliderValue);
+    public void setMultiplier(Number multiplier) {
+        this.multiplier.setValue(multiplier);
     }
 
     public boolean hasOmimXref() {return hasOmimXref;}

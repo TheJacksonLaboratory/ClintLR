@@ -98,16 +98,16 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
             if (mondo == null) {
                 LOGGER.debug("Mondo was null. Initializing with empty Mondo metadata.");
                 mmr.setOmimToMondo(Map.of());
-                mmr.getMondoToOmim().clear();
-                mmr.setMondoNDescendents(Map.of());
+                mmr.mondoToOmimProperty().clear();
+                mmr.mondoNDescendentsProperty().clear();
             } else {
                 MondoOmimTask task = new MondoOmimTask(mondo, dataDirectory);
                 task.setOnSucceeded(e -> {
                     LOGGER.debug("Mondo meta was loaded");
                     MondoOmim mm = task.getValue();
                     mmr.setOmimToMondo(mm.omimToMondo());
-                    mmr.getMondoToOmim().putAll(mm.mondoToOmim());
-                    mmr.setMondoNDescendents(mm.mondoNDescendents());
+                    mmr.mondoToOmimProperty().putAll(mm.mondoToOmim());
+                    mmr.mondoNDescendentsProperty().putAll(mm.mondoNDescendents());
                 });
                 task.setOnFailed(e -> LOGGER.error("Could not load Mondo meta", e.getSource().getException()));
                 executor.submit(task);

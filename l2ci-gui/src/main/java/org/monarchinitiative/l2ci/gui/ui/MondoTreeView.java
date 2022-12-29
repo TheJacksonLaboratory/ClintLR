@@ -7,7 +7,7 @@ import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import org.monarchinitiative.l2ci.core.Relation;
-import org.monarchinitiative.l2ci.gui.model.DiseaseWithSliderValue;
+import org.monarchinitiative.l2ci.gui.model.DiseaseWithMultiplier;
 import org.monarchinitiative.phenol.ontology.data.Identified;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
@@ -22,19 +22,19 @@ import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.*;
 
 public class MondoTreeView extends TreeView<OntologyTermWrapper> {
 
-    // The default probability is 1.0, a no-op.
-    static final double DEFAULT_PROBABILITY_ADJUSTMENT = 1.;
+    // The default multiplier is 1.0, a no-op.
+    static final double DEFAULT_MULTIPLIER_VALUE = 1.;
     private static final Logger LOGGER = LoggerFactory.getLogger(MondoTreeView.class);
-    private final MapProperty<TermId, Double> sliderValues = new SimpleMapProperty<>(FXCollections.observableHashMap());
     private final ObjectProperty<Ontology> mondo = new SimpleObjectProperty<>();
-    private final MapProperty<TermId, Integer> nChildren = new SimpleMapProperty<>(FXCollections.observableHashMap());
+    private final MapProperty<TermId, Double> multiplierValues = new SimpleMapProperty<>(FXCollections.observableHashMap());
+    private final MapProperty<TermId, Integer> nDescendents = new SimpleMapProperty<>(FXCollections.observableHashMap());
 
     public MondoTreeView() {
         super();
         setShowRoot(false);
         getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 
-        setCellFactory(tw -> new MondoTreeCell(nChildren));
+        setCellFactory(tw -> new MondoTreeCell(nDescendents));
         mondo.addListener(handleOntologyUpdate());
     }
 
@@ -42,24 +42,24 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
         return mondo;
     }
 
-    public MapProperty<TermId, Double> sliderValuesProperty() {
-        return sliderValues;
+    public MapProperty<TermId, Double> multiplierValuesProperty() {
+        return multiplierValues;
     }
 
-    public MapProperty<TermId, Integer> nChildrenProperty() {
-        return nChildren;
+    public MapProperty<TermId, Integer> nDescendentsProperty() {
+        return nDescendents;
     }
 
     /**
      * Reset all multiplier values by setting the multipliers of the expanded elements to {@code 1.0} and clearing the
-     * {@link #sliderValuesProperty()}.
+     * {@link #multiplierValuesProperty()}.
      */
     public void clearMultipliers() {
         // Two steps. First, set multiplier of the expanded items to the default value.
         // This propagates to the children thanks to the listener in `MondoTreeItem`.
         // Next, clear the slider values.
-        getRoot().getValue().sliderValueProperty().setValue(DEFAULT_PROBABILITY_ADJUSTMENT);
-        sliderValues.clear();
+        getRoot().getValue().multiplierProperty().setValue(DEFAULT_MULTIPLIER_VALUE);
+        multiplierValues.clear();
     }
 
     private ChangeListener<Ontology> handleOntologyUpdate() {
@@ -69,12 +69,18 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
             } else {
                 TermId rootId = mondo.getRootTermId();
                 Set<Term> children = Relation.getTermRelations(mondo, rootId, Relation.CHILD);
-                List<Term> containsDisease = children.stream().filter(r -> r.getName().contains("disease or disorder")).toList();
+                List<Term> containsDisease = children.stream()
+                        .filter(r -> r.getName().contains("disease or disorder"))
+                        .toList();
                 if (!containsDisease.isEmpty()) {
                     rootId = containsDisease.get(0).id();
                 }
                 Term rootTerm = mondo.getTermMap().get(rootId);
-                TreeItem<OntologyTermWrapper> root = new MondoTreeItem(OntologyTermWrapper.createOmimXref(rootTerm, MondoTreeView.DEFAULT_PROBABILITY_ADJUSTMENT), mondo, nChildren, sliderValues);
+                TreeItem<OntologyTermWrapper> root = new MondoTreeItem(
+                        OntologyTermWrapper.createOmimXref(rootTerm, DEFAULT_MULTIPLIER_VALUE),
+                        mondo,
+                        nDescendents,
+                        multiplierValues);
                 root.setExpanded(true);
                 setRoot(root);
             }
@@ -131,42 +137,41 @@ public class MondoTreeView extends TreeView<OntologyTermWrapper> {
     }
 
     /**
-     * Run a breadth-first traversal of the tree nodes to yield a stream of {@link DiseaseWithSliderValue} items.
+     * Run a breadth-first traversal of the tree nodes to yield a stream of {@link DiseaseWithMultiplier} items.
      * <p>
      * Note, due to the fact that we use tree to display a graph, the {@code Stream} will contain non-unique elements
      * (the items with multiple parents).
      *
      * @return a {@code Stream} with disease probabilities.
-     * @deprecated Use {@link #drainSliderValues()} to get IDs and slider values for the values that have been changed.
+     * @deprecated Use {@link #drainMultiplierValues()} to get IDs and slider values for the values that have been changed.
      */
     @Deprecated(forRemoval = true)
-    public Stream<DiseaseWithSliderValue> drainDiseaseProbabilities() {
+    public Stream<DiseaseWithMultiplier> drainDiseaseProbabilities() {
         // A tad of recursion never killed anybody..
-        Stream.Builder<DiseaseWithSliderValue> builder = Stream.builder();
+        Stream.Builder<DiseaseWithMultiplier> builder = Stream.builder();
         getMapData(builder, getRoot());
         return builder.build();
     }
 
     /**
-     * Get the stream of disease ids with the multiplier values updated by the user.
-     * @return
+     * Get the stream of disease ids with the multiplier values that have been updated by the user.
      */
-    public Stream<DiseaseWithSliderValue> drainSliderValues() {
+    public Stream<DiseaseWithMultiplier> drainMultiplierValues() {
         if (mondo.get() == null) {
             LOGGER.warn("Tried to get slider values with unset Mondo");
             return Stream.empty();
         }
 
-        return sliderValues.entrySet().stream()
+        return multiplierValues.entrySet().stream()
                 // The user can increase the probability multiplier
-                .filter(e -> e.getValue() > DEFAULT_PROBABILITY_ADJUSTMENT)
-                .map(entry -> DiseaseWithSliderValue.of(
+                .filter(e -> e.getValue() > DEFAULT_MULTIPLIER_VALUE)
+                .map(entry -> DiseaseWithMultiplier.of(
                         entry.getKey(),
                         mondo.get().getTermMap().get(entry.getKey()).getName(),
                         entry.getValue()));
     }
 
-    private static void getMapData(Stream.Builder<DiseaseWithSliderValue> builder, TreeItem<OntologyTermWrapper> item) {
+    private static void getMapData(Stream.Builder<DiseaseWithMultiplier> builder, TreeItem<OntologyTermWrapper> item) {
         if (item == null)
             return;
 

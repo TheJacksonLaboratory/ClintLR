@@ -10,7 +10,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import org.monarchinitiative.l2ci.gui.model.DiseaseWithSliderValue;
+import org.monarchinitiative.l2ci.gui.model.DiseaseWithMultiplier;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.io.IOException;
@@ -20,18 +20,18 @@ public class MapDisplay extends VBox {
     private final MapProperty<TermId, TermId> mondoToOmim = new SimpleMapProperty<>(FXCollections.observableHashMap());
 
     @FXML
-    private TableView<DiseaseWithSliderValue> tableView;
+    private TableView<DiseaseWithMultiplier> tableView;
 
     @FXML
-    private TableColumn<DiseaseWithSliderValue, String> diseaseName;
+    private TableColumn<DiseaseWithMultiplier, String> diseaseName;
     @FXML
-    private TableColumn<DiseaseWithSliderValue, String> mondoId;
+    private TableColumn<DiseaseWithMultiplier, String> mondoId;
     @FXML
-    private TableColumn<DiseaseWithSliderValue, TermId> omimId;
+    private TableColumn<DiseaseWithMultiplier, TermId> omimId;
 //    @FXML
 //    private TableColumn<DiseaseWithProbability, Double> diseaseProb;
     @FXML
-    private TableColumn<DiseaseWithSliderValue, Double> sliderValue;
+    private TableColumn<DiseaseWithMultiplier, Double> multiplierValue;
 //    @FXML
 //    private TableColumn<DiseaseWithProbability, Boolean> isFixed;
 
@@ -63,8 +63,8 @@ public class MapDisplay extends VBox {
             }
         });
 
-        sliderValue.setCellValueFactory(cdf -> cdf.getValue().sliderValueProperty().asObject());
-        sliderValue.setCellFactory(tc -> new TableCell<>() {
+        multiplierValue.setCellValueFactory(cdf -> cdf.getValue().multiplierProperty().asObject());
+        multiplierValue.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(Double value, boolean empty) {
                 super.updateItem(value, empty);
@@ -83,7 +83,7 @@ public class MapDisplay extends VBox {
         return mondoToOmim;
     }
 
-    public ObservableList<DiseaseWithSliderValue> getItems() {
+    public ObservableList<DiseaseWithMultiplier> getItems() {
         return tableView.getItems();
     }
 
