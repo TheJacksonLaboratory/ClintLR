@@ -46,7 +46,7 @@ import org.monarchinitiative.l2ci.gui.*;
 import org.monarchinitiative.l2ci.gui.config.AppProperties;
 import org.monarchinitiative.l2ci.gui.model.PretestProbability;
 import org.monarchinitiative.l2ci.gui.resources.*;
-import org.monarchinitiative.l2ci.gui.model.DiseaseWithSliderValue;
+import org.monarchinitiative.l2ci.gui.model.DiseaseWithMultiplier;
 import org.monarchinitiative.l2ci.gui.ui.MondoTreeView;
 import org.monarchinitiative.l2ci.gui.ui.OntologyTermWrapper;
 import org.monarchinitiative.lirical.core.Lirical;
@@ -75,8 +75,8 @@ public class MainController {
     // (e.g. `.1`, `.123`, `1.234`).
     private static final Pattern NONNEGATIVE_FLOAT = Pattern.compile("(\\d+\\.?)|(\\d*\\.\\d+)");
 
-    // Default slider value is 1. and it must match the probability in the `MainView.fxml`.
-    private static final double DEFAULT_SLIDER_VALUE = 1.;
+    // Default multiplier value is 1. and it must match the multiplier in the `MainView.fxml`.
+    private static final double DEFAULT_MULTIPLIER_VALUE = 1.;
 
     private static final String EVENT_TYPE_CLICK = "click";
 
@@ -127,17 +127,17 @@ public class MainController {
     @FXML
     private MondoTreeView mondoTreeView;
 
-    // A flag for syncing slider pretest proba updates.
-    private boolean updatingPretestProba = false;
-    private final DoubleProperty sliderValue = new SimpleDoubleProperty(DEFAULT_SLIDER_VALUE);
+    // A flag for syncing pretest proba multiplier updates.
+    private boolean updatingMultiplier = false;
+    private final DoubleProperty multiplier = new SimpleDoubleProperty(DEFAULT_MULTIPLIER_VALUE);
     /**
-     * Slider to adjust pretest probability before running LIRICAL
+     * Slider to adjust pretest probability multiplier before running LIRICAL
      */
     @FXML
-    private Slider pretestProbaSlider;
+    private Slider multiplierSlider;
     @FXML
-    private TextField pretestProbaTextField;
-    private TextFormatter<Double> pretestProbaFormatter;
+    private TextField multiplierTextField;
+    private TextFormatter<Double> multiplierFormatter;
     @FXML
     private Button vcfButton;
     @FXML
@@ -196,13 +196,13 @@ public class MainController {
         autocompleteOmimTextField.omim2MondoProperty().bind(optionalServices.mondoOmimResources().omimToMondoProperty());
 
         // ------------- Slider UI fields ------------
-        pretestProbaFormatter = preparePretestProbabilityFormatter(pretestProbaSlider.getMin(), pretestProbaSlider.getMax(), DEFAULT_SLIDER_VALUE);
-        pretestProbaTextField.setTextFormatter(pretestProbaFormatter);
+        multiplierFormatter = preparePretestProbabilityFormatter(multiplierSlider.getMin(), multiplierSlider.getMax(), DEFAULT_MULTIPLIER_VALUE);
+        multiplierTextField.setTextFormatter(multiplierFormatter);
 
-        InvalidationListener keepSliderValuesInSync = updateSliderValuesInTheUi();
-        pretestProbaFormatter.valueProperty().addListener(keepSliderValuesInSync);
-        pretestProbaSlider.valueProperty().addListener(keepSliderValuesInSync);
-        sliderValue.addListener(keepSliderValuesInSync);
+        InvalidationListener keepMultiplierValuesInSync = updateMultiplierValuesInTheUi();
+        multiplierFormatter.valueProperty().addListener(keepMultiplierValuesInSync);
+        multiplierSlider.valueProperty().addListener(keepMultiplierValuesInSync);
+        multiplier.addListener(keepMultiplierValuesInSync);
 
         // Show path to Mondo file
         treeLabel.textProperty().bind(Bindings.createStringBinding(
@@ -215,26 +215,25 @@ public class MainController {
         // Set up the Mondo tree
         mondoTreeView.disableProperty().bind(optionalServices.mondoProperty().isNull());
         mondoTreeView.mondoProperty().bind(optionalServices.mondoProperty());
-        // TODO - change mondoTreeView children to descendents and update the map when the data becomes available.
-//        mondoTreeView.mondoNDescendentsProperty().bind(optionalServices.mondoOmimResources().mondoNDescendentsProperty());
+        mondoTreeView.nDescendentsProperty().bind(optionalServices.mondoOmimResources().mondoNDescendentsProperty());
         mondoTreeView.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousMondoItem, newMondoItem) -> {
                     if (previousMondoItem != null)
                         // We must unbind the previous slider value on the tree item so that we do not update it.
-                        previousMondoItem.getValue().sliderValueProperty().unbind();
+                        previousMondoItem.getValue().multiplierProperty().unbind();
 
                     if (newMondoItem != null) {
                         // Next, we update the slider UI elements with the value of the new item and bind it,
                         // to track the user activity.
-                        sliderValue.setValue(newMondoItem.getValue().getSliderValue());
-                        newMondoItem.getValue().sliderValueProperty().bind(sliderValue);
+                        multiplier.setValue(newMondoItem.getValue().getMultiplier());
+                        newMondoItem.getValue().multiplierProperty().bind(multiplier);
                     }
 
                     // Finally, we update the term description in the right panel
                     updateDescription(newMondoItem);
                 });
 
-        resetMultipliersButton.disableProperty().bind(mondoTreeView.sliderValuesProperty().emptyProperty());
+        resetMultipliersButton.disableProperty().bind(mondoTreeView.multiplierValuesProperty().emptyProperty());
         // TODO - we need both lirical and known disease IDs to run this. Add the corresponding binding.
         liricalButton.disableProperty().bind(optionalServices.liricalProperty().isNull());
 
@@ -263,30 +262,31 @@ public class MainController {
         return new TextFormatter<>(new RoundingDoubleStringConverter(), defaultValue, filter);
     }
 
-    private InvalidationListener updateSliderValuesInTheUi() {
+    private InvalidationListener updateMultiplierValuesInTheUi() {
         return obs -> {
-            if (updatingPretestProba)
+            if (updatingMultiplier)
                 return;
             try {
-                updatingPretestProba = true;
-                if (obs.equals(pretestProbaTextField.getTextFormatter().valueProperty())) {
+                // Note: this is not synchronized since JavaFX UI is updated exclusively on the UI thread.
+                updatingMultiplier = true;
+                if (obs.equals(multiplierTextField.getTextFormatter().valueProperty())) {
                     // The text field changed, we must update the slider
                     // We're practically sure the value is a valid double since we have a filter on the text formatter
-                    pretestProbaSlider.setValue(pretestProbaFormatter.getValue());
-                    sliderValue.set(pretestProbaFormatter.getValue());
-                } else if (obs.equals(pretestProbaSlider.valueProperty())) {
+                    multiplierSlider.setValue(multiplierFormatter.getValue());
+                    multiplier.set(multiplierFormatter.getValue());
+                } else if (obs.equals(multiplierSlider.valueProperty())) {
                     // The slider changed, we must update the text field.
-                    pretestProbaFormatter.setValue(pretestProbaSlider.getValue());
-                    sliderValue.set(pretestProbaSlider.getValue());
-                } else if (obs.equals(sliderValue)) {
+                    multiplierFormatter.setValue(multiplierSlider.getValue());
+                    multiplier.set(multiplierSlider.getValue());
+                } else if (obs.equals(multiplier)) {
                     // The sliderValue changed, we must update both the text field and the slider
-                    pretestProbaSlider.setValue(sliderValue.getValue());
-                    pretestProbaFormatter.setValue(sliderValue.getValue());
+                    multiplierSlider.setValue(multiplier.getValue());
+                    multiplierFormatter.setValue(multiplier.getValue());
                 } else {
                     LOGGER.warn("Unknown observable changed: {}", obs);
                 }
             } finally {
-                updatingPretestProba = false;
+                updatingMultiplier = false;
             }
         };
     }
@@ -425,7 +425,7 @@ public class MainController {
 
         // Dump the adjustments to the file.
         try {
-            PretestProbaAdjustmentIO.write(mondoTreeView.sliderValuesProperty(), file.toPath());
+            PretestProbaAdjustmentIO.write(mondoTreeView.multiplierValuesProperty(), file.toPath());
         } catch (IOException ex) {
             LOGGER.warn("Unable to write the pretest probability adjustments to {}", file.toPath().toAbsolutePath(), ex);
             PopUps.showException("Save Pretest Probability Adjustments", "Unable to save the data", ex);
@@ -447,8 +447,8 @@ public class MainController {
         try {
             // TODO - we may need more elaborate code to implement adjustment setting
             Map<TermId, Double> adjustments = PretestProbaAdjustmentIO.read(file.toPath());
-            mondoTreeView.sliderValuesProperty().clear();
-            mondoTreeView.sliderValuesProperty().putAll(adjustments);
+            mondoTreeView.multiplierValuesProperty().clear();
+            mondoTreeView.multiplierValuesProperty().putAll(adjustments);
         } catch (IOException ex) {
             LOGGER.warn("Unable to load the pretest probability adjustments from {}", file.toPath().toAbsolutePath(), ex);
             PopUps.showException("Load Pretest Probability Adjustments", "Unable to load the data", ex);
@@ -458,7 +458,7 @@ public class MainController {
 
     @FXML
     private void showMapInterface(ActionEvent e) {
-        ObservableList<DiseaseWithSliderValue> source = mondoTreeView.drainSliderValues()
+        ObservableList<DiseaseWithMultiplier> source = mondoTreeView.drainMultiplierValues()
                 .collect(Collectors.toCollection(FXCollections::observableArrayList));
 
         MapDisplay mapDisplay = new MapDisplay();
@@ -740,8 +740,8 @@ public class MainController {
 //        List<HpoDisease> annotatedDiseases =  optionalHpoaResource.getIndirectAnnotMap().getOrDefault(term.id(), List.of());
         int n_descendents = 42;//getDescendents(model.getHpoOntology(),term.getId()).size();
         //todo--add number of descendents to HTML
-        Double pretestProba = treeItem.getValue().getSliderValue();
-        String content = HpoHtmlPageGenerator.getHTML(term, annotatedDiseases, pretestProba);
+        Double multiplier = treeItem.getValue().getMultiplier();
+        String content = HpoHtmlPageGenerator.getHTML(term, annotatedDiseases, multiplier);
         //System.out.print(content);
         infoWebEngine=this.infoWebView.getEngine();
         infoWebEngine.loadContent(content);
@@ -848,7 +848,7 @@ public class MainController {
 
     @FXML
     private void liricalButtonAction(ActionEvent event) throws Exception {
-        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.sliderValuesProperty(), optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_SLIDER_VALUE);
+        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.multiplierValuesProperty(), optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
         Path phenopacketFile = Path.of(phenopacketLabel.getText());
         String vcfFile = vcfLabel.getText();
         if (!Files.isRegularFile(phenopacketFile)) {

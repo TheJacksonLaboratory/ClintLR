@@ -21,7 +21,7 @@ public class PretestProbability {
 
         Map<TermId, Double> pretestMap = new HashMap<>();
 
-        Map<TermId, TermId> mondoToOmim = mm.getMondoToOmim();
+        Map<TermId, TermId> mondoToOmim = mm.mondoToOmimProperty();
 
         // Populate map with OMIM terms corresponding to the Mondo terms and pretest adjustment values
         for (TermId mondoId : mondoIdPretestAdjMap.keySet()) {

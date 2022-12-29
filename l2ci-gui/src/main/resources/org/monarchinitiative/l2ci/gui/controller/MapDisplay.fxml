@@ -13,7 +13,7 @@
                 <TableColumn fx:id="mondoId" text="Mondo ID"/>
                 <TableColumn fx:id="omimId" text="OMIM ID"/>
 <!--                <TableColumn fx:id="diseaseProb" text="Probability"/>-->
-                <TableColumn fx:id="sliderValue" text="Slider value"/>
+                <TableColumn fx:id="multiplierValue" text="Multiplier value"/>
 <!--                <TableColumn fx:id="isFixed" text="Is fixed"/>-->
             </columns>
         </TableView>

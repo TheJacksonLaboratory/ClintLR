@@ -30,21 +30,21 @@ class MondoTreeItem extends TreeItem<OntologyTermWrapper> {
      * @param term             {@link Term} that is represented by this {@linkplain MondoTreeItem}.
      * @param mondo            Mondo {@link Ontology}
      * @param nChildren        A map for caching number of children of a Mondo term.
-     * @param adjustmentValues A mapping from Mondo ID to adjustment value
+     * @param multipliers      A mapping from Mondo ID to multiplier value
      */
     MondoTreeItem(OntologyTermWrapper term,
                   Ontology mondo,
                   MapProperty<TermId, Integer> nChildren,
-                  MapProperty<TermId, Double> adjustmentValues) {
+                  Map<TermId, Double> multipliers) {
         super(term);
         this.mondo = mondo;
-        this.getValue().sliderValueProperty()
+        this.getValue().multiplierProperty()
                 .addListener((obs, oldProba, novelProba) -> {
                     LOGGER.trace("Setting pretest probability adjustment of {} to {}", getValue().term().id(), novelProba);
                     if (!isLeaf()) {
                         // Update the children anytime a value is set. Will end up setting the adjustment to all children recursively
                         Relation.getTermRelationsStream(mondo, getValue().id(), Relation.DESCENDENT)
-                                .forEach(descendent -> adjustmentValues.put(descendent.id(), novelProba.doubleValue()));
+                                .forEach(descendent -> multipliers.put(descendent.id(), novelProba.doubleValue()));
                     }
                 });
         // TODO - sort tree item children number of descendants.
@@ -55,7 +55,7 @@ class MondoTreeItem extends TreeItem<OntologyTermWrapper> {
             /*
               The user or code is expanding or collapsing the tree item.
               We need to get the children and set with the slider values.
-              We do not cache the children, we cache just the slider values in the `adjustmentValues` map.
+              We do not cache the children, we cache just the slider values in the `multipliers` map.
              */
             if (isExpanded) {
                 /*
@@ -65,18 +65,19 @@ class MondoTreeItem extends TreeItem<OntologyTermWrapper> {
                 */
                 List<MondoTreeItem> children = Relation.getTermRelationsStream(mondo, getValue().term().id(), Relation.CHILD)
                         .map(t -> {
-                            OntologyTermWrapper wrapper = OntologyTermWrapper.createOmimXref(t, MondoTreeView.DEFAULT_PROBABILITY_ADJUSTMENT);
-                            Double previousSliderValue = adjustmentValues.get(wrapper.id());
-                            wrapper.sliderValueProperty().setValue(previousSliderValue);
-                            wrapper.sliderValueProperty().addListener((o, old, novel) -> adjustmentValues.put(wrapper.id(), novel.doubleValue()));
-                            return new MondoTreeItem(wrapper, mondo, nChildren, adjustmentValues);
+                            OntologyTermWrapper wrapper = OntologyTermWrapper.createOmimXref(t, MondoTreeView.DEFAULT_MULTIPLIER_VALUE);
+                            Double previousMultiplier = multipliers.get(t.id());
+                            if (previousMultiplier != null)
+                                wrapper.setMultiplier(previousMultiplier);
+                            wrapper.multiplierProperty().addListener((o, old, novel) -> multipliers.put(wrapper.id(), novel.doubleValue()));
+                            return new MondoTreeItem(wrapper, mondo, nChildren, multipliers);
                         })
                         .sorted(comparator)
                         .toList();
                 nChildren.put(getValue().term().id(), children.size());
                 getChildren().setAll(children);
             } else
-                // The item is being collapsed. We clear the children to free up some memory. Note, we keep the adjustment values in the `adjustmentValues` map!
+                // The item is being collapsed. We clear the children to free up some memory. Note, we keep the adjustment values in the `multipliers` map!
                 getChildren().clear();
         });
     }

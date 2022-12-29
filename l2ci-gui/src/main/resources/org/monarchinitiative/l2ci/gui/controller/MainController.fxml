@@ -102,7 +102,7 @@
                         </Label>
                         <HBox>
                            <children>
-                              <Slider fx:id="pretestProbaSlider" prefWidth="200" min="1" max="10" value="1" majorTickUnit="2" showTickLabels="true" showTickMarks="true">
+                              <Slider fx:id="multiplierSlider" prefWidth="200" min="1" max="10" value="1" majorTickUnit="2" showTickLabels="true" showTickMarks="true">
                                  <VBox.margin>
                                     <Insets bottom="5.0" left="15.0" top="5.0" />
                                  </VBox.margin>
@@ -110,7 +110,7 @@
                                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                                  </HBox.margin>
                               </Slider>
-                              <TextField fx:id="pretestProbaTextField" prefWidth="50.0">
+                              <TextField fx:id="multiplierTextField" prefWidth="50.0">
                                  <VBox.margin>
                                     <Insets bottom="5.0" left="15.0" top="5.0" />
                                  </VBox.margin>
