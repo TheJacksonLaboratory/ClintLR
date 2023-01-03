@@ -42,6 +42,7 @@ import java.util.*;
 public class LiricalRunTask extends Task<Path> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LiricalRunTask.class);
+    private static final String UNKNOWN_VERSION_PLACEHOLDER = "UNKNOWN VERSION";
 
     private final Lirical lirical;
     private final LiricalResources liricalResources;
@@ -87,8 +88,8 @@ public class LiricalRunTask extends Task<Path> {
         // Write out the results into HTML file.
         FilteringStats filteringStats = gene2Genotypes.computeFilteringStats();
         AnalysisResultsMetadata metadata = AnalysisResultsMetadata.builder()
-//                .setLiricalVersion(pgProperties.getProperty("lirical.version")) // TODO
-                .setHpoVersion(lirical.phenotypeService().hpo().version().orElse("UNKNOWN RELEASE"))
+                .setLiricalVersion(lirical.version().orElse(UNKNOWN_VERSION_PLACEHOLDER))
+                .setHpoVersion(lirical.phenotypeService().hpo().version().orElse(UNKNOWN_VERSION_PLACEHOLDER))
                 .setTranscriptDatabase(analysisOptions.transcriptDatabase().toString())
                 .setLiricalPath(liricalResources.getDataDirectory().toAbsolutePath().toString())
                 .setExomiserPath(getExomiserPathForGenomeBuild(liricalResources, analysisOptions.genomeBuild()))
@@ -100,17 +101,20 @@ public class LiricalRunTask extends Task<Path> {
                 .setGlobalMode(analysisOptions.useGlobal())
                 .build();
 
-        AnalysisResultsWriter writer = lirical.analysisResultsWriterFactory()
-                .getWriter(OutputFormat.HTML).get();
-        writer.process(analysisData, results, metadata, outputOptions);
-
-        // Finally, return path where the resulting HTML should land at.
-        return outputOptions.outputDirectory().resolve(outputOptions.prefix() + ".html");
+        Optional<AnalysisResultsWriter> writer = lirical.analysisResultsWriterFactory()
+                .getWriter(OutputFormat.HTML);
+        if (writer.isPresent()) {
+            writer.get()
+                    .process(analysisData, results, metadata, outputOptions);
+            // Finally, return path where the resulting HTML should land at.
+            return outputOptions.outputDirectory().resolve(outputOptions.prefix() + ".html");
+        } else
+            throw new L4CIException("Cannot to write the analysis results in HTML format");
     }
 
     private GenesAndGenotypes readVariants(Path vcfPath) throws Exception {
         if (vcfPath != null && Files.isRegularFile(vcfPath)) {
-            Optional<VariantParser> variantParser = lirical.variantParserFactory().get()
+            Optional<VariantParser> variantParser = lirical.variantParserFactory()
                     .forPath(vcfPath, analysisOptions.genomeBuild(), analysisOptions.transcriptDatabase());
             if (variantParser.isPresent()) {
                 List<LiricalVariant> variants;
