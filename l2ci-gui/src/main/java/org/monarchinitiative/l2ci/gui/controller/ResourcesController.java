@@ -19,7 +19,7 @@ import org.monarchinitiative.l2ci.gui.resources.*;
 import org.monarchinitiative.l2ci.gui.tasks.DownloadLiricalData;
 import org.monarchinitiative.l2ci.gui.tasks.DownloadMondoTask;
 import org.monarchinitiative.lirical.core.model.GenomeBuild;
-import org.monarchinitiative.lirical.core.service.TranscriptDatabase;
+import org.monarchinitiative.lirical.core.model.TranscriptDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

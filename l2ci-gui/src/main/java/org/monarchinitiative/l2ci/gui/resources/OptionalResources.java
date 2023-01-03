@@ -3,7 +3,7 @@ package org.monarchinitiative.l2ci.gui.resources;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.monarchinitiative.lirical.core.model.GenomeBuild;
-import org.monarchinitiative.lirical.core.service.TranscriptDatabase;
+import org.monarchinitiative.lirical.core.model.TranscriptDatabase;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;

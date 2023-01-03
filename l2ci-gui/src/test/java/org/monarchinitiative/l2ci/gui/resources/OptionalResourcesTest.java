@@ -3,7 +3,7 @@ package org.monarchinitiative.l2ci.gui.resources;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.monarchinitiative.lirical.core.model.GenomeBuild;
-import org.monarchinitiative.lirical.core.service.TranscriptDatabase;
+import org.monarchinitiative.lirical.core.model.TranscriptDatabase;
 
 import java.io.StringReader;
 import java.nio.file.Path;

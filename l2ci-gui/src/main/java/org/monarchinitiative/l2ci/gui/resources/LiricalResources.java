@@ -2,7 +2,7 @@ package org.monarchinitiative.l2ci.gui.resources;
 
 import javafx.beans.property.*;
 import org.monarchinitiative.lirical.core.model.GenomeBuild;
-import org.monarchinitiative.lirical.core.service.TranscriptDatabase;
+import org.monarchinitiative.lirical.core.model.TranscriptDatabase;
 import org.monarchinitiative.lirical.core.service.VariantMetadataService;
 
 import java.nio.file.Path;
