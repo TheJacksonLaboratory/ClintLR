@@ -12,5 +12,4 @@ cd ${current_dir}
 MP="${current_dir}:${current_dir}/lib"
 printf "Module path: %s\n" ${MP}
 
-java --add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls \
-  --module-path "${MP}" --module l2ci.gui
+java --module-path "${MP}" --module l2ci.gui
