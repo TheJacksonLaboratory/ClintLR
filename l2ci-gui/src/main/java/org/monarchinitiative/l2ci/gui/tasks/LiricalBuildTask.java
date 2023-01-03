@@ -42,34 +42,6 @@ public class LiricalBuildTask extends Task<Lirical> {
         checkAndSetExomiserVariantDbPath(builder::exomiserVariantDbPath,
                 GenomeBuild.HG38,
                 liricalResources.getExomiserHg38VariantDbFile());
-
-//        LOGGER.debug("Using Exomiser file at {}", liricalResources.getExomiserVariantDbFile().toAbsolutePath());
-//        builder.exomiserVariantDatabase(liricalResources.getExomiserVariantDbFile());
-//
-//        LOGGER.debug("Using GenomeBuild {}", liricalResources.getGenomeBuild());
-//        builder.genomeBuild(liricalResources.getGenomeBuild());
-//
-//        if (liricalResources.getBackgroundVariantFrequencyFile() != null) {
-//            LOGGER.debug("Using background variant frequency file at {}", liricalResources.getBackgroundVariantFrequencyFile().toAbsolutePath());
-//            builder.backgroundVariantFrequency(liricalResources.getBackgroundVariantFrequencyFile());
-//        } else {
-//            LOGGER.debug("Using bundled background variant frequency file");
-//        }
-//
-//        LOGGER.debug("Using pathogenicityThreshold of {}", liricalResources.getPathogenicityThreshold());
-//        LOGGER.debug("Using default variant background frequency of {}", liricalResources.getDefaultVariantBackgroundFrequency());
-//        LOGGER.debug("Using strict mode: {}", liricalResources.isStrict());
-//        GenotypeLrProperties gtLrProperties = new GenotypeLrProperties(liricalResources.getPathogenicityThreshold(),
-//                liricalResources.getDefaultVariantBackgroundFrequency(),
-//                liricalResources.isStrict());
-//        builder.genotypeLrProperties(gtLrProperties);
-//
-//        LOGGER.debug("Using default allele frequency of {}", liricalResources.getDefaultAlleleFrequency());
-//        builder.defaultVariantAlleleFrequency(liricalResources.getDefaultAlleleFrequency());
-//
-//        LOGGER.debug("Using {} transcripts", liricalResources.getTranscriptDatabase());
-//        builder.transcriptDatabase(liricalResources.getTranscriptDatabase());
-
         return builder.build();
     }
 

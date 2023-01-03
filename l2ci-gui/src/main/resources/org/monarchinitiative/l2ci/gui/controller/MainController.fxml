@@ -199,7 +199,7 @@
                         </HBox>
                         <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
                            <children>
-                              <Button fx:id="phenopacketButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#phenopacketButtonAction" styleClass="Button" stylesheets="@style.css" text="Load Phenopacket" textOverrun="CLIP">
+                              <Button minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#phenopacketButtonAction" styleClass="Button" stylesheets="@style.css" text="Load Phenopacket" textOverrun="CLIP">
                                  <tooltip>
                                     <Tooltip text="Load Phenopacket" />
                                  </tooltip>
@@ -207,7 +207,7 @@
                                     <Insets bottom="5.0" left="5.0" right="10.0" top="5.0" />
                                  </HBox.margin>
                               </Button>
-                              <Button fx:id="vcfButton" minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#vcfButtonAction" styleClass="Button" stylesheets="@style.css" text="Load VCF" textOverrun="CLIP">
+                              <Button minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false" onAction="#vcfButtonAction" styleClass="Button" stylesheets="@style.css" text="Load VCF" textOverrun="CLIP">
                                  <tooltip>
                                     <Tooltip text="Load VCF" />
                                  </tooltip>

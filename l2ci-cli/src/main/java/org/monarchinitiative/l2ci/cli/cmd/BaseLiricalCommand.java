@@ -163,7 +163,7 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
 //                        : Set.of(DiseaseDatabase.OMIM, DiseaseDatabase.DECIPHER))
                 .setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM))
                 .genotypeLrProperties(genotypeLrProperties)
-                .transcriptDatabase(runConfiguration.transcriptDb)
+//                .transcriptDatabase(runConfiguration.transcriptDb)
                 .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
                 .build();
     }

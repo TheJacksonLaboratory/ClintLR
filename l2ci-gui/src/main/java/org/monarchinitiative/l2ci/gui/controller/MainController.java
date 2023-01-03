@@ -3,8 +3,11 @@ package org.monarchinitiative.l2ci.gui.controller;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -29,12 +32,12 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,18 +50,20 @@ import org.monarchinitiative.l2ci.gui.config.AppProperties;
 import org.monarchinitiative.l2ci.gui.model.PretestProbability;
 import org.monarchinitiative.l2ci.gui.resources.*;
 import org.monarchinitiative.l2ci.gui.model.DiseaseWithMultiplier;
+import org.monarchinitiative.l2ci.gui.tasks.LiricalRunTask;
 import org.monarchinitiative.l2ci.gui.ui.MondoTreeView;
 import org.monarchinitiative.l2ci.gui.ui.OntologyTermWrapper;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
+import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
 import org.monarchinitiative.lirical.core.output.*;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
+import org.monarchinitiative.phenol.annotations.io.hpo.DiseaseDatabase;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -80,11 +85,6 @@ public class MainController {
 
     private static final String EVENT_TYPE_CLICK = "click";
 
-    /**
-     * Application-specific properties (not the System properties!) defined in the 'application.properties' file that
-     * resides in the classpath.
-     */
-    public final Properties pgProperties;
     private final AppProperties appProperties;
     private final OptionalResources optionalResources;
     private final OptionalServices optionalServices;
@@ -139,8 +139,6 @@ public class MainController {
     private TextField multiplierTextField;
     private TextFormatter<Double> multiplierFormatter;
     @FXML
-    private Button vcfButton;
-    @FXML
     private Button liricalButton;
     @FXML
     private Label treeLabel;
@@ -157,8 +155,10 @@ public class MainController {
 
     @FXML
     private Label phenopacketLabel;
+    private final ObjectProperty<Path> phenopacketPath = new SimpleObjectProperty<>();
     @FXML
     private Label vcfLabel;
+    private final ObjectProperty<Path> vcfPath = new SimpleObjectProperty<>();
 
 
     private enum MessageType {
@@ -168,14 +168,12 @@ public class MainController {
     public MainController(OptionalResources optionalResources,
                           OptionalServices optionalServices,
                           AppProperties appProperties,
-                          @Qualifier("configProperties") Properties properties,
                           ExecutorService executorService,
                           UrlBrowser urlBrowser,
                           Path dataDirectory) {
         this.optionalResources = optionalResources;
         this.optionalServices = optionalServices;
         this.appProperties = appProperties;
-        this.pgProperties = properties;
         this.executor = executorService;
         this.urlBrowser = urlBrowser;
         this.dataDirectory = dataDirectory;
@@ -184,7 +182,7 @@ public class MainController {
     @FXML
     private void initialize() {
         minDiagnosisSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10));
-        pathogenicityTextField.setText(pgProperties.getProperty("pathogenicity.threshold"));
+        pathogenicityTextField.setText(String.valueOf(optionalResources.liricalResources().getPathogenicityThreshold()));
         variantsCheckbox.setSelected(false);
 
         showMondoStats.disableProperty().bind(optionalServices.mondoProperty().isNull());
@@ -204,13 +202,12 @@ public class MainController {
         multiplierSlider.valueProperty().addListener(keepMultiplierValuesInSync);
         multiplier.addListener(keepMultiplierValuesInSync);
 
+        // -------- Inputs - Phenopacket & VCF --------
+        phenopacketLabel.textProperty().bind(showAbsolutePathIfPresent(phenopacketPath));
+        vcfLabel.textProperty().bind(showAbsolutePathIfPresent(vcfPath));
+
         // Show path to Mondo file
-        treeLabel.textProperty().bind(Bindings.createStringBinding(
-                () -> {
-                    Path mondoPath = optionalResources.ontologyResources().getMondoPath();
-                    return mondoPath == null ? "Unset" : mondoPath.toAbsolutePath().toString();
-                    },
-                optionalResources.ontologyResources().mondoPathProperty()));
+        treeLabel.textProperty().bind(showAbsolutePathIfPresent(optionalResources.ontologyResources().mondoPathProperty()));
 
         // Set up the Mondo tree
         mondoTreeView.disableProperty().bind(optionalServices.mondoProperty().isNull());
@@ -234,8 +231,9 @@ public class MainController {
                 });
 
         resetMultipliersButton.disableProperty().bind(mondoTreeView.multiplierValuesProperty().emptyProperty());
-        // TODO - we need both lirical and known disease IDs to run this. Add the corresponding binding.
-        liricalButton.disableProperty().bind(optionalServices.liricalProperty().isNull());
+
+        // TODO - we need both LIRICAL and known disease IDs to run this. Add the corresponding binding.
+        liricalButton.disableProperty().bind(optionalServices.liricalProperty().isNull().or(phenopacketPath.isNull()));
 
         // show intro message in the infoWebView
         // TODO - move into separate UI element
@@ -289,6 +287,15 @@ public class MainController {
                 updatingMultiplier = false;
             }
         };
+    }
+
+    private static StringBinding showAbsolutePathIfPresent(ObjectProperty<Path> pathProperty) {
+        return Bindings.createStringBinding(
+                () -> {
+                    Path path = pathProperty.get();
+                    return path == null ? "Unset" : path.toAbsolutePath().toString();
+                },
+                pathProperty);
     }
 
     private Stage progressWindow(Task<?> task, String taskMessage) {
@@ -823,7 +830,7 @@ public class MainController {
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Phenopacket JSON File", "*.json"));
         File file = fileChooser.showOpenDialog(contentPane.getScene().getWindow());
         if (file != null) {
-            phenopacketLabel.setText(file.getAbsolutePath());
+            phenopacketPath.set(file.toPath());
         }
     }
 
@@ -834,7 +841,7 @@ public class MainController {
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Background VCF File", "*.vcf"));
         File file = fileChooser.showOpenDialog(contentPane.getScene().getWindow());
         if (file != null) {
-            vcfLabel.setText(file.getAbsolutePath());
+            vcfPath.set(file.toPath());
         }
     }
 
@@ -848,85 +855,78 @@ public class MainController {
 
     @FXML
     private void liricalButtonAction(ActionEvent event) throws Exception {
-        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.multiplierValuesProperty(), optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
-        Path phenopacketFile = Path.of(phenopacketLabel.getText());
-        String vcfFile = vcfLabel.getText();
-        if (!Files.isRegularFile(phenopacketFile)) {
-            PopUps.showInfoMessage("Unable to run analysis: no phenopacket present.", "ERROR");
-            LOGGER.info("Unable to run analysis: no phenopacket present.");
-        }
-
+        LOGGER.debug("Running LIRICAL");
         Lirical lirical = optionalServices.getLirical();
+        AnalysisOptions analysisOptions = prepareAnalysisOptions();
 
-        AnalysisData analysisData = null; // TODO - implement
-        AnalysisOptions analysisOptions = null; // TODO - implement
-        AnalysisResultsMetadata metadata = null; // TODO - implement
+        LiricalRunTask liricalTask = new LiricalRunTask(lirical,
+                optionalResources.liricalResources(),
+                phenopacketPath.get(),
+                vcfPath.get(), // nullable
+                analysisOptions,
+                createOutputOptions());
 
-        LiricalAnalysisRunner runner = lirical.analysisRunner();
-
-        AnalysisResults results = runner.run(analysisData, analysisOptions);
-
-        AnalysisResultsWriter writer = lirical.analysisResultsWriterFactory()
-                .getWriter(analysisData, results, metadata);
-
-        OutputOptions outputOptions = createOutputOptions();
-        writer.process(outputOptions);
-        Path outFile = outputOptions.outputDirectory().resolve(outputOptions.prefix() + ".html");
-
-        if (Files.isRegularFile(outFile)) {
-            try {
-                URL document = new URL(outFile.toAbsolutePath().toString());
-                urlBrowser.showDocument(document);
-            } catch (MalformedURLException e) {
-                LOGGER.error("Unable to create URL from {}: ", outFile.toAbsolutePath());
+        liricalTask.setOnSucceeded(e -> {
+            Path report = liricalTask.getValue();
+            if (Files.isRegularFile(report)) {
+                URI uri = report.toUri();
+                try {
+                    URL document = uri.toURL();
+                    urlBrowser.showDocument(document);
+                } catch (MalformedURLException ex) {
+                    LOGGER.error("Unable to create URL from {}: ", uri, ex);
+                }
             }
-        }
-
+        });
+        liricalTask.setOnFailed(e -> PopUps.showException(
+                "Run LIRICAL",
+                e.getSource().getException().getMessage(),
+                e.getSource().getException())
+            );
+        executor.submit(liricalTask);
         event.consume();
     }
 
-    protected OutputOptions createOutputOptions() throws LiricalParseException {
+    private AnalysisOptions prepareAnalysisOptions() {
+        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.multiplierValuesProperty(), optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
+        PretestDiseaseProbability pretestProba = PretestDiseaseProbability.of(diseaseIdToPretestProba);
+        LiricalResources liricalResources = optionalResources.liricalResources();
+        return AnalysisOptions.builder()
+                .genomeBuild(liricalResources.getGenomeBuild())
+                .transcriptDatabase(liricalResources.getTranscriptDatabase())
+                .setDiseaseDatabases(List.of(DiseaseDatabase.OMIM, DiseaseDatabase.DECIPHER))
+                .variantDeleteriousnessThreshold(liricalResources.getPathogenicityThreshold())
+                .defaultVariantBackgroundFrequency(liricalResources.getDefaultVariantBackgroundFrequency())
+                .useStrictPenalties(liricalResources.isStrict())
+//                .useGlobal(true) // TODO - evaluate
+                .pretestProbability(pretestProba)
+                .disregardDiseaseWithNoDeleteriousVariants(false) // TODO - evaluate
+                .build();
+    }
+
+    private OutputOptions createOutputOptions() throws LiricalParseException {
         double lrThresholdValue = Double.parseDouble(lrThresholdTextField.getText());
-        int minDiagnosisValue = Integer.parseInt(minDiagnosisSpinner.getValue().toString());
-        String outputFormatsString = pgProperties.getProperty("output.formats");
-        float pathogenicityThreshold = Float.parseFloat(pathogenicityTextField.getText());
-        boolean displayAllVariants = variantsCheckbox.isSelected();
         if (lrThresholdValue < 0 || lrThresholdValue > 1) {
+            // TODO(mabeckwith) - can you use TextFormatter to make it impossible to submit out of range value and remove this check?
             PopUps.showInfoMessage("Error: LR Threshold must be between 0 and 1.", "ERROR");
             throw new LiricalParseException("LR Threshold not between 0 and 1.");
         }
-        Path outdir = Path.of(pgProperties.getProperty("lirical.results.path"));
+        LrThreshold lrThreshold = LrThreshold.setToUserDefinedThreshold(lrThresholdValue);
+
+        MinDiagnosisCount minDiagnosisCount = MinDiagnosisCount.setToUserDefinedMinCount(minDiagnosisSpinner.getValue());
+        float pathogenicityThreshold = Float.parseFloat(pathogenicityTextField.getText());
+        boolean displayAllVariants = variantsCheckbox.isSelected();
+
+        Path resultsDir = optionalResources.getLiricalResults();
         String outfileText = outputFileTextField.getText();
         String outfilePrefix = outfileText == null ? "lirical_results" : outfileText;
-        LrThreshold lrThreshold = LrThreshold.setToUserDefinedThreshold(lrThresholdValue);
-        MinDiagnosisCount minDiagnosisCount = MinDiagnosisCount.setToUserDefinedMinCount(minDiagnosisValue);
-        List<OutputFormat> outputFormats = parseOutputFormats(outputFormatsString);
+
         return new OutputOptions(lrThreshold,
                 minDiagnosisCount,
                 pathogenicityThreshold,
                 displayAllVariants,
-                outdir,
-                outfilePrefix,
-                outputFormats);
-    }
-
-    private List<OutputFormat> parseOutputFormats(String outputFormats) {
-        return Arrays.stream(outputFormats.split(","))
-                .map(String::trim)
-                .map(toOutputFormat())
-                .flatMap(Optional::stream)
-                .toList();
-    }
-
-    private static Function<String, Optional<OutputFormat>> toOutputFormat() {
-        return payload -> switch (payload.toUpperCase()) {
-            case "HTML" -> Optional.of(OutputFormat.HTML);
-            case "TSV" -> Optional.of(OutputFormat.TSV);
-            default -> {
-                LOGGER.warn("Unknown output format {}", payload);
-                yield Optional.empty();
-            }
-        };
+                resultsDir,
+                outfilePrefix);
     }
 
 }
