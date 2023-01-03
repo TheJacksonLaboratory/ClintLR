@@ -71,10 +71,14 @@ public class OptionalResources {
         // TODO(mabeckwith) - set the remaining LIRICAL properties to LiricalResources
 
         // TODO - set the remaining paths if present in the properties
-        String exomiserVariantPath = properties.getProperty(LiricalResources.EXOMISER_VARIANT_PROPERTY);
-        if (exomiserVariantPath != null)
+        String exomiserHg19VariantPath = properties.getProperty(LiricalResources.EXOMISER_HG19_VARIANT_PROPERTY);
+        if (exomiserHg19VariantPath != null)
             // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
-            liricalResources.setExomiserVariantDbFile(Path.of(exomiserVariantPath));
+            liricalResources.setExomiserHg19VariantDbFile(Path.of(exomiserHg19VariantPath));
+        String exomiserHg38VariantPath = properties.getProperty(LiricalResources.EXOMISER_HG38_VARIANT_PROPERTY);
+        if (exomiserHg38VariantPath != null)
+            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
+            liricalResources.setExomiserHg38VariantDbFile(Path.of(exomiserHg38VariantPath));
 
         String backgroundFrequencyPath = properties.getProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY);
         if (backgroundFrequencyPath != null)
@@ -125,7 +129,8 @@ public class OptionalResources {
 
         // Serialize LIRICAL resources
         storePathIfNotNull(properties, LiricalResources.LIRICAL_DATA_PROPERTY, liricalResources.getDataDirectory());
-        storePathIfNotNull(properties, LiricalResources.EXOMISER_VARIANT_PROPERTY, liricalResources.getExomiserVariantDbFile());
+        storePathIfNotNull(properties, LiricalResources.EXOMISER_HG19_VARIANT_PROPERTY, liricalResources.getExomiserHg19VariantDbFile());
+        storePathIfNotNull(properties, LiricalResources.EXOMISER_HG38_VARIANT_PROPERTY, liricalResources.getExomiserHg38VariantDbFile());
         storePathIfNotNull(properties, LiricalResources.BACKGROUND_FREQUENCY_PROPERTY, liricalResources.getBackgroundVariantFrequencyFile());
         // The properties below should never be null
         properties.setProperty(LiricalResources.PATHOGENICITY_PROPERTY, String.valueOf(liricalResources.getPathogenicityThreshold()));

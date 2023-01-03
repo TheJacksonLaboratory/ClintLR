@@ -103,6 +103,7 @@
                         <RowConstraints vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="60.0" />
                         <RowConstraints minHeight="10.0" />
                         <RowConstraints minHeight="10.0" prefHeight="60.0" />
@@ -155,35 +156,29 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <Label fx:id="exomiserFileLabel" GridPane.columnIndex="2" GridPane.rowIndex="4">
+                        <Label text="hg19" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                        <Label fx:id="exomiserHg19FileLabel" GridPane.columnIndex="2" GridPane.rowIndex="4">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Label>
-                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setExomiserVariantFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="4">
+                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setExomiserHg19VariantFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="4">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Button>
-                        <Label text="Background Frequency file" wrapText="true" GridPane.rowIndex="5">
-                            <GridPane.margin>
-                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                            </GridPane.margin>
-                            <font>
-                                <Font name="System Bold" size="18.0" />
-                            </font>
-                        </Label>
-                        <Label fx:id="bkgFreqFileLabel" GridPane.columnIndex="2" GridPane.rowIndex="5">
+                        <Label text="hg38" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                        <Label fx:id="exomiserHg38FileLabel" GridPane.columnIndex="2" GridPane.rowIndex="5">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Label>
-                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setBackgroundFrequencyFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="5">
+                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setExomiserHg38VariantFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="5">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </Button>
-                        <Label text="Genotype LR Properties" wrapText="true" GridPane.rowIndex="6">
+                        <Label text="Background Frequency file" wrapText="true" GridPane.rowIndex="6">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -191,7 +186,17 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <Label text="    Pathogenicity Threshold" wrapText="true" GridPane.rowIndex="7">
+                        <Label fx:id="bkgFreqFileLabel" GridPane.columnIndex="2" GridPane.rowIndex="6">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                        </Label>
+                        <Button minHeight="30.0" minWidth="90.0" mnemonicParsing="false" onAction="#setBackgroundFrequencyFileButtonAction" text="Set path" GridPane.columnIndex="3" GridPane.rowIndex="6">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                        </Button>
+                        <Label text="Genotype LR Properties" wrapText="true" GridPane.rowIndex="7">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -199,12 +204,20 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <TextField fx:id="pathogenicityTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="7">
+                        <Label text="    Pathogenicity Threshold" wrapText="true" GridPane.rowIndex="8">
+                            <GridPane.margin>
+                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                            </GridPane.margin>
+                            <font>
+                                <Font name="System Bold" size="18.0" />
+                            </font>
+                        </Label>
+                        <TextField fx:id="pathogenicityTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="8">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </TextField>
-                        <Label text="    Default Variant Background Frequency" wrapText="true" GridPane.rowIndex="8">
+                        <Label text="    Default Variant Background Frequency" wrapText="true" GridPane.rowIndex="9">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -212,12 +225,12 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <TextField fx:id="variantBkgFreqTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="8">
+                        <TextField fx:id="variantBkgFreqTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="50.0" GridPane.columnIndex="2" GridPane.rowIndex="9">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </TextField>
-                        <Label text="    Strict" wrapText="true" GridPane.rowIndex="9">
+                        <Label text="    Strict" wrapText="true" GridPane.rowIndex="10">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -225,12 +238,12 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <CheckBox fx:id="strictCheckBox" prefWidth="80.0" GridPane.columnIndex="2" GridPane.rowIndex="9">
+                        <CheckBox fx:id="strictCheckBox" prefWidth="80.0" GridPane.columnIndex="2" GridPane.rowIndex="10">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </CheckBox>
-                        <Label text="Transcript Database" wrapText="true" GridPane.rowIndex="10">
+                        <Label text="Transcript Database" wrapText="true" GridPane.rowIndex="11">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -238,12 +251,12 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <ChoiceBox fx:id="transcriptDBChoiceBox" prefWidth="80.0" GridPane.columnIndex="2" GridPane.rowIndex="10">
+                        <ChoiceBox fx:id="transcriptDBChoiceBox" prefWidth="80.0" GridPane.columnIndex="2" GridPane.rowIndex="11">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
                         </ChoiceBox>
-                        <Label text="Default Allele Frequency" wrapText="true" GridPane.rowIndex="11">
+                        <Label text="Default Allele Frequency" wrapText="true" GridPane.rowIndex="12">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>
@@ -251,7 +264,7 @@
                                 <Font name="System Bold" size="18.0" />
                             </font>
                         </Label>
-                        <TextField fx:id="alleleFreqTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="60.0" GridPane.columnIndex="2" GridPane.rowIndex="11">
+                        <TextField fx:id="alleleFreqTextField" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="60.0" GridPane.columnIndex="2" GridPane.rowIndex="12">
                             <GridPane.margin>
                                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                             </GridPane.margin>

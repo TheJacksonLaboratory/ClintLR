@@ -4,8 +4,13 @@ import javafx.concurrent.Task;
 import org.monarchinitiative.l2ci.gui.resources.LiricalResources;
 import org.monarchinitiative.lirical.configuration.LiricalBuilder;
 import org.monarchinitiative.lirical.core.Lirical;
+import org.monarchinitiative.lirical.core.model.GenomeBuild;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.function.BiConsumer;
 
 
 /**
@@ -29,8 +34,14 @@ public class LiricalBuildTask extends Task<Lirical> {
 
     @Override
     protected Lirical call() throws Exception {
-        LOGGER.debug("Building LIRICAL from {}", liricalResources.getDataDirectory().toAbsolutePath());
+        LOGGER.debug("Building LIRICAL from {}", liricalResources.getDataDirectory());
         LiricalBuilder builder = LiricalBuilder.builder(liricalResources.getDataDirectory());
+        checkAndSetExomiserVariantDbPath(builder::exomiserVariantDbPath,
+                GenomeBuild.HG19,
+                liricalResources.getExomiserHg19VariantDbFile());
+        checkAndSetExomiserVariantDbPath(builder::exomiserVariantDbPath,
+                GenomeBuild.HG38,
+                liricalResources.getExomiserHg38VariantDbFile());
 
 //        LOGGER.debug("Using Exomiser file at {}", liricalResources.getExomiserVariantDbFile().toAbsolutePath());
 //        builder.exomiserVariantDatabase(liricalResources.getExomiserVariantDbFile());
@@ -60,6 +71,19 @@ public class LiricalBuildTask extends Task<Lirical> {
 //        builder.transcriptDatabase(liricalResources.getTranscriptDatabase());
 
         return builder.build();
+    }
+
+    private static void checkAndSetExomiserVariantDbPath(BiConsumer<GenomeBuild, Path> consumer,
+                                                         GenomeBuild genomeBuild,
+                                                         Path path) {
+        if (path == null) {
+            LOGGER.debug("Exomiser variant database path for {} is unset", genomeBuild);
+        } else if (!Files.isRegularFile(path)) {
+            LOGGER.warn("Ignoring Exomiser variant database path that is not a file: {}", path.toAbsolutePath());
+        } else {
+            LOGGER.debug("Using Exomiser variant database for {}: {}", genomeBuild, path.toAbsolutePath());
+            consumer.accept(genomeBuild, path);
+        }
     }
 
 }

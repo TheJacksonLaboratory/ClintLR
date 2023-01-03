@@ -9,7 +9,6 @@ import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.Properties;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
 
@@ -31,7 +30,8 @@ public class OptionalResourcesTest {
                 #Thu Dec 31 23:59:59 EST 2022
                 mondo.json.path=/path/to/mondo.json
                 lirical.data.directory=/path/to/lirical/datadir
-                lirical.exomiser.variant.file=/path/to/exomiser.mv.db
+                lirical.exomiser.hg19.variant.file=/path/to/exomiser.hg19.mv.db
+                lirical.exomiser.hg38.variant.file=/path/to/exomiser.hg38.mv.db
                 lirical.background.frequency.file=/path/to/bg.freq.txt
                 lirical.pathogenicity.threshold=0.1
                 lirical.default.variant.background.frequency=0.1234
@@ -50,7 +50,8 @@ public class OptionalResourcesTest {
         // LiricalResources
         LiricalResources liricalResources = instance.liricalResources();
         assertThat(liricalResources.getDataDirectory(), equalTo(Path.of("/path/to/lirical/datadir")));
-        assertThat(liricalResources.getExomiserVariantDbFile(), equalTo(Path.of("/path/to/exomiser.mv.db")));
+        assertThat(liricalResources.getExomiserHg19VariantDbFile(), equalTo(Path.of("/path/to/exomiser.hg19.mv.db")));
+        assertThat(liricalResources.getExomiserHg38VariantDbFile(), equalTo(Path.of("/path/to/exomiser.hg38.mv.db")));
         assertThat(liricalResources.getBackgroundVariantFrequencyFile(), equalTo(Path.of("/path/to/bg.freq.txt")));
         assertThat((double) liricalResources.getPathogenicityThreshold(), closeTo(.1, ERROR));
         assertThat(liricalResources.getDefaultVariantBackgroundFrequency(), closeTo(.1234, ERROR));
@@ -68,7 +69,8 @@ public class OptionalResourcesTest {
         instance.ontologyResources().setMondoPath(Path.of("/path/to/mondo.json"));
         LiricalResources liricalResources = instance.liricalResources();
         liricalResources.setDataDirectory(Path.of("/path/to/lirical/datadir"));
-        liricalResources.setExomiserVariantDbFile(Path.of("/path/to/exomiser.mv.db"));
+        liricalResources.setExomiserHg19VariantDbFile(Path.of("/path/to/exomiser.hg19.mv.db"));
+        liricalResources.setExomiserHg38VariantDbFile(Path.of("/path/to/exomiser.hg38.mv.db"));
         liricalResources.setBackgroundVariantFrequencyFile(Path.of("/path/to/bg.freq.txt"));
         liricalResources.setPathogenicityThreshold(.5f);
         liricalResources.setDefaultVariantBackgroundFrequency(.1234);
@@ -85,7 +87,8 @@ public class OptionalResourcesTest {
         // And test..
         assertThat(properties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY), equalTo("/path/to/mondo.json"));
         assertThat(properties.getProperty(LiricalResources.LIRICAL_DATA_PROPERTY), equalTo("/path/to/lirical/datadir"));
-        assertThat(properties.getProperty(LiricalResources.EXOMISER_VARIANT_PROPERTY), equalTo("/path/to/exomiser.mv.db"));
+        assertThat(properties.getProperty(LiricalResources.EXOMISER_HG19_VARIANT_PROPERTY), equalTo("/path/to/exomiser.hg19.mv.db"));
+        assertThat(properties.getProperty(LiricalResources.EXOMISER_HG38_VARIANT_PROPERTY), equalTo("/path/to/exomiser.hg38.mv.db"));
         assertThat(properties.getProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY), equalTo("/path/to/bg.freq.txt"));
         assertThat(properties.getProperty(LiricalResources.PATHOGENICITY_PROPERTY), equalTo("0.5"));
         assertThat(properties.getProperty(LiricalResources.DEFAULT_VARIANT_BACKGROUND_FREQUENCY_PROPERTY), equalTo("0.1234"));
