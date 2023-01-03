@@ -34,17 +34,8 @@ public class LiricalResources {
     private final FloatProperty defaultAlleleFrequency = new SimpleFloatProperty(this, "defaultAlleleFrequency", VariantMetadataService.DEFAULT_FREQUENCY);
     private final ObjectProperty<GenomeBuild> genomeBuild = new SimpleObjectProperty<>(this, "genomeBuild", GenomeBuild.HG38);
     private final ObjectProperty<TranscriptDatabase> transcriptDatabase = new SimpleObjectProperty<>(this, "transcriptDatabase", TranscriptDatabase.REFSEQ);
-    private final BooleanBinding resourcesAreComplete = dataDirectory.isNotNull()
-            .and(exomiserVariantDbFile.isNotNull());
 
     LiricalResources() {
-    }
-
-    /**
-     * @return binding that returns {@code true} if all resources
-     */
-    public BooleanBinding resourcesAreComplete() {
-        return resourcesAreComplete;
     }
 
     public Path getDataDirectory() {

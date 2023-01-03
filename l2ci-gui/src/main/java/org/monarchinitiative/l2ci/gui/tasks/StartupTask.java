@@ -69,7 +69,7 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
                 .addListener(loadMondoMeta(executorService, optionalServices, dataDirectory));
 
         // Load LIRICAL
-        optionalResources.liricalResources().resourcesAreComplete()
+        optionalResources.liricalResources().dataDirectoryProperty().isNotNull()
                 .addListener(loadLirical(executorService, optionalServices, optionalResources.liricalResources()));
     }
 
@@ -118,14 +118,17 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
     private static ChangeListener<? super Boolean> loadLirical(ExecutorService executor,
                                                                OptionalServices services,
                                                                LiricalResources liricalResources) {
-        return (obs, old, resourcesAreComplete) -> {
-            if (resourcesAreComplete) {
+        return (obs, old, liricalDataDirIsSet) -> {
+            if (liricalDataDirIsSet) {
                 LiricalBuildTask task = new LiricalBuildTask(liricalResources);
                 task.setOnSucceeded(e -> {
                     LOGGER.debug("LIRICAL setup was completed");
                     services.setLirical(task.getValue());
                 });
-                task.setOnFailed(e -> LOGGER.error("Could not load LIRICAL"));
+                task.setOnFailed(e -> {
+                    LOGGER.error("Could not load LIRICAL: {}", e.getSource().getException().getMessage());
+                    LOGGER.debug("Could not load LIRICAL", e.getSource().getException());
+                });
                 executor.submit(task);
             }
         };
