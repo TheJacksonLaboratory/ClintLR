@@ -233,7 +233,10 @@ public class MainController {
         resetMultipliersButton.disableProperty().bind(mondoTreeView.multiplierValuesProperty().emptyProperty());
 
         // TODO - we need both LIRICAL and known disease IDs to run this. Add the corresponding binding.
-        liricalButton.disableProperty().bind(optionalServices.liricalProperty().isNull().or(phenopacketPath.isNull()));
+        liricalButton.disableProperty().bind(
+                optionalServices.liricalProperty().isNull()
+                        .or(phenopacketPath.isNull())
+                        .or(optionalResources.liricalResultsProperty().isNull()));
 
         // show intro message in the infoWebView
         // TODO - move into separate UI element
