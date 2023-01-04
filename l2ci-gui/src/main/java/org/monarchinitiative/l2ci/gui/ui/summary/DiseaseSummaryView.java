@@ -46,13 +46,9 @@ public class DiseaseSummaryView extends VBox {
 
     @FXML
     private void initialize() {
-        // // TODO - move into separate UI element
-        //        Platform.runLater(() -> {
-        //            infoWebEngine = infoWebView.getEngine();
-        //            infoWebEngine.loadContent("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>HPO tree browser</title></head>" +
-        //                    "<body><p>Click on Mondo term in the tree browser to display additional information</p></body></html>");
-        //        });
         infoWebEngine = infoWebView.getEngine();
+        infoWebEngine.loadContent("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>HPO tree browser</title></head>" +
+                                    "<body><p>Click on Mondo term in the tree browser to display additional information</p></body></html>");
         data.addListener((obs, old, novel) -> updateDescription(novel));
     }
 
@@ -67,15 +63,13 @@ public class DiseaseSummaryView extends VBox {
      */
     private void updateDescription(DiseaseSummary diseaseSummary) {
         if (diseaseSummary == null)
-            // TODO - Null means no display
+            // Null means no display
             return;
 
         List<HpoDisease> annotatedDiseases = List.of();
 //        List<HpoDisease> annotatedDiseases =  optionalHpoaResource.getIndirectAnnotMap().getOrDefault(term.id(), List.of());
         int n_descendents = 42;//getDescendents(model.getHpoOntology(),term.getId()).size();
-        //todo--add number of descendents to HTML
-        Double multiplier = diseaseSummary.getMultiplier();
-        String content = HpoHtmlPageGenerator.getHTML(diseaseSummary.getTerm(), annotatedDiseases, multiplier);
+        String content = HpoHtmlPageGenerator.getHTML(diseaseSummary.getTerm(), annotatedDiseases);
         //System.out.print(content);
 
         infoWebEngine.loadContent(content);

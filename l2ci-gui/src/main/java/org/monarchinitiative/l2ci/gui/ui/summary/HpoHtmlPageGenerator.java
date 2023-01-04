@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 class HpoHtmlPageGenerator {
     /**@return A String with the HTML for representing one HPO term and the diseases it is annotated to. */
-    static String getHTML(Term term, List<HpoDisease> annotatedDiseases, Double pretestProba) {
+    static String getHTML(Term term, List<HpoDisease> annotatedDiseases) {
 
         String termID = term.id().getValue();
         String synonyms = (term.getSynonyms() == null) ? "" : term.getSynonyms().stream().map(TermSynonym::getValue)
@@ -52,7 +52,7 @@ class HpoHtmlPageGenerator {
             xrefList="-";
         else
             xrefList= xrefs.stream().map(Dbxref::getName).collect(Collectors.joining(", "));
-        return String.format(HTML_TEMPLATE, CSS, term.getName(), termID, definition, comment, synonyms, pmidList, xrefList, pretestProba, diseaseTable);
+        return String.format(HTML_TEMPLATE, CSS, term.getName(), termID, definition, comment, synonyms, pmidList, xrefList, diseaseTable);
     }
 
     /**
@@ -249,7 +249,6 @@ class HpoHtmlPageGenerator {
             "<p><b>Synonyms:</b> %s</p>" +
             "<p><b>PMID:</b> %s</p>" +
             "<p><b>Xrefs:</b> %s</p>" +
-            "<p><b>Pretest Adjustment:</b> %6.2f</p>" +
             "%s" +
             "</body></html>";
 
