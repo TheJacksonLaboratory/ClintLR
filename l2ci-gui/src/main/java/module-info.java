@@ -1,12 +1,10 @@
 module l2ci.gui {
     requires l2ci.core;
+    requires lirical.io;
     requires lirical.configuration;
     requires org.monarchinitiative.phenol.io;
     requires org.monarchinitiative.phenol.annotations;
     requires org.monarchinitiative.biodownload;
-    requires org.phenopackets.phenopackettools.io;
-    requires org.phenopackets.phenopackettools.core;
-    requires org.phenopackets.schema;
 
     requires spring.boot;
     requires spring.boot.autoconfigure;
@@ -20,7 +18,6 @@ module l2ci.gui {
     requires javafx.web;
 
     requires commons.csv;
-    requires com.google.protobuf;
     requires org.slf4j;
 
     exports org.monarchinitiative.l2ci.gui to javafx.graphics;

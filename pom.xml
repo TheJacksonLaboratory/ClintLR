@@ -157,6 +157,11 @@
         </dependency>
         <dependency>
           <groupId>org.monarchinitiative.lirical</groupId>
+          <artifactId>lirical-io</artifactId>
+          <version>${lirical.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.monarchinitiative.lirical</groupId>
           <artifactId>lirical-configuration</artifactId>
           <version>${lirical.version}</version>
           <exclusions>

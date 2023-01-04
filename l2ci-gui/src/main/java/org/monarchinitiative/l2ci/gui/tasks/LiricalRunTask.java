@@ -1,6 +1,5 @@
 package org.monarchinitiative.l2ci.gui.tasks;
 
-import com.google.protobuf.Message;
 import javafx.concurrent.Task;
 import org.monarchinitiative.l2ci.gui.exception.L4CIException;
 import org.monarchinitiative.l2ci.gui.resources.LiricalResources;
@@ -15,24 +14,18 @@ import org.monarchinitiative.lirical.core.output.AnalysisResultsMetadata;
 import org.monarchinitiative.lirical.core.output.AnalysisResultsWriter;
 import org.monarchinitiative.lirical.core.output.OutputFormat;
 import org.monarchinitiative.lirical.core.output.OutputOptions;
+import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
+import org.monarchinitiative.lirical.io.analysis.PhenopacketImportException;
+import org.monarchinitiative.lirical.io.analysis.PhenopacketImporters;
 import org.monarchinitiative.phenol.annotations.formats.GeneIdentifier;
-import org.monarchinitiative.phenol.base.PhenolRuntimeException;
-import org.monarchinitiative.phenol.ontology.data.TermId;
-import org.phenopackets.phenopackettools.core.PhenopacketSchemaVersion;
-import org.phenopackets.phenopackettools.io.PhenopacketParser;
-import org.phenopackets.phenopackettools.io.PhenopacketParserFactory;
-import org.phenopackets.schema.v2.Phenopacket;
-import org.phenopackets.schema.v2.core.Individual;
-import org.phenopackets.schema.v2.core.PhenotypicFeature;
-import org.phenopackets.schema.v2.core.TimeElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Period;
 import java.util.*;
 
 /**
@@ -74,11 +67,11 @@ public class LiricalRunTask extends Task<Path> {
         GenesAndGenotypes gene2Genotypes = readVariants(vcfPath);
 
         // Assemble the analysis data.
-        AnalysisData analysisData = AnalysisData.of(phenopacketData.sampleId(),
-                phenopacketData.age,
-                phenopacketData.sex,
-                phenopacketData.present,
-                phenopacketData.excluded,
+        AnalysisData analysisData = AnalysisData.of(phenopacketData.getSampleId(),
+                phenopacketData.getAge().orElse(Age.ageNotKnown()),
+                phenopacketData.getSex().orElse(Sex.UNKNOWN),
+                phenopacketData.getHpoTerms().toList(),
+                phenopacketData.getNegatedHpoTerms().toList(),
                 gene2Genotypes);
 
         // Run the analysis.
@@ -129,63 +122,18 @@ public class LiricalRunTask extends Task<Path> {
     }
 
     private static PhenopacketData readPhenopacketData(Path phenopacketPath) throws Exception {
-        PhenopacketParserFactory parserFactory = PhenopacketParserFactory.getInstance();
-        PhenopacketParser phenopacketParser = parserFactory.forFormat(PhenopacketSchemaVersion.V2);
-        Message message = phenopacketParser.parse(phenopacketPath);
-        String sampleId;
-        List<TermId> present = new ArrayList<>();
-        List<TermId> excluded = new ArrayList<>();
-        if (message instanceof Phenopacket pp) {
-            Individual subject = pp.getSubject();
-            sampleId = subject.getId();
-            Age age = parseAge(subject);
-            for (PhenotypicFeature pf : pp.getPhenotypicFeaturesList()) {
-                try {
-                    TermId termId = TermId.of(pf.getType().getId());
-                    if (pf.getExcluded())
-                        excluded.add(termId);
-                    else
-                        present.add(termId);
-                } catch (PhenolRuntimeException e) {
-                    LOGGER.warn("Ignoring invalid phenotypic feature {}", pf.getType().getId());
-                }
-            }
-            Sex sex = parseSex(subject.getSex());
-            return new PhenopacketData(sampleId, age, sex, present, excluded);
+        LOGGER.debug("Reading phenopacket data at {}", phenopacketPath.toAbsolutePath());
+        try (InputStream is = Files.newInputStream(phenopacketPath)) {
+            return PhenopacketImporters.v2().read(is);
+        } catch (PhenopacketImportException e) {
+            LOGGER.debug("Failed.");
+            // swallow
         }
-        throw new L4CIException("Phenopacket %s is not in V2 format".formatted(phenopacketPath.toAbsolutePath()));
-    }
 
-    private static Age parseAge(Individual subject) {
-        TimeElement timeAtLastEncounter = subject.getTimeAtLastEncounter();
-        return switch (timeAtLastEncounter.getElementCase()) {
-            case GESTATIONAL_AGE -> {
-                // TODO - revisit once we support gestational age in LIRICAL.
-                LOGGER.warn("Ignoring gestational age for subject {}", subject.getId());
-                yield Age.ageNotKnown();
-            }
-            case AGE -> {
-                org.phenopackets.schema.v2.core.Age a = timeAtLastEncounter.getAge();
-                LOGGER.debug("Parsing age {} of subject {}", a.getIso8601Duration(), subject.getId());
-                yield Age.parse(Period.parse(a.getIso8601Duration()));
-            }
-            case AGE_RANGE, ONTOLOGY_CLASS, TIMESTAMP, INTERVAL -> {
-                LOGGER.warn("Ignoring unsupported age format {} for subject {}", timeAtLastEncounter.getElementCase(), subject.getId());
-                yield Age.ageNotKnown();
-            }
-            case ELEMENT_NOT_SET ->  {
-                LOGGER.warn("Time at last encounter was not set for subject {}", subject.getId());
-                yield Age.ageNotKnown();
-            }
-        };
-    }
-
-    private static Sex parseSex(org.phenopackets.schema.v2.core.Sex sex) {
-        return switch (sex) {
-            case FEMALE -> Sex.FEMALE;
-            case MALE -> Sex.MALE;
-            case UNKNOWN_SEX, OTHER_SEX, UNRECOGNIZED -> Sex.UNKNOWN;
-        };
+        LOGGER.debug("Trying to decode phenopacket at {} as legacy v1 format", phenopacketPath.toAbsolutePath());
+        try (InputStream is = Files.newInputStream(phenopacketPath)) {
+            return PhenopacketImporters.v1().read(is);
+        }
     }
 
     private static GenesAndGenotypes prepareGenesAndGenotypes(List<LiricalVariant> variants) {
@@ -226,5 +174,4 @@ public class LiricalRunTask extends Task<Path> {
                 : exomiserFile.toAbsolutePath().toString();
     }
 
-    private record PhenopacketData(String sampleId, Age age, Sex sex, List<TermId> present, List<TermId> excluded) {}
 }
