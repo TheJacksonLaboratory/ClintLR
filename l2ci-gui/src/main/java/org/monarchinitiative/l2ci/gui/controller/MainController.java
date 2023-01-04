@@ -11,7 +11,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -24,8 +23,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -51,13 +48,12 @@ import org.monarchinitiative.l2ci.gui.model.PretestProbability;
 import org.monarchinitiative.l2ci.gui.resources.*;
 import org.monarchinitiative.l2ci.gui.model.DiseaseWithMultiplier;
 import org.monarchinitiative.l2ci.gui.tasks.LiricalRunTask;
-import org.monarchinitiative.l2ci.gui.ui.MondoTreeView;
-import org.monarchinitiative.l2ci.gui.ui.OntologyTermWrapper;
+import org.monarchinitiative.l2ci.gui.ui.mondotree.MondoTreeView;
+import org.monarchinitiative.l2ci.gui.ui.summary.DiseaseSummaryView;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
 import org.monarchinitiative.lirical.core.output.*;
-import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.annotations.io.hpo.DiseaseDatabase;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
@@ -65,10 +61,6 @@ import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.events.EventTarget;
 
 @Component
 public class MainController {
@@ -82,8 +74,6 @@ public class MainController {
 
     // Default multiplier value is 1. and it must match the multiplier in the `MainView.fxml`.
     private static final double DEFAULT_MULTIPLIER_VALUE = 1.;
-
-    private static final String EVENT_TYPE_CLICK = "click";
 
     private final AppProperties appProperties;
     private final OptionalResources optionalResources;
@@ -115,14 +105,10 @@ public class MainController {
     private Button resetMultipliersButton;
 
     /**
-     * WebView for displaying details of the Term that is selected in the {@link #mondoTreeView}.
+     * A UI component for displaying details of the Term that is selected in the {@link #mondoTreeView}.
      */
     @FXML
-    private WebView infoWebView;
-    /**
-     * WebEngine backing up the {@link #infoWebView}.
-     */
-    private WebEngine infoWebEngine;
+    private DiseaseSummaryView diseaseSummaryView;
 
     @FXML
     private MondoTreeView mondoTreeView;
@@ -225,9 +211,11 @@ public class MainController {
                         multiplier.setValue(newMondoItem.getValue().getMultiplier());
                         newMondoItem.getValue().multiplierProperty().bind(multiplier);
                     }
-
-                    // Finally, we update the term description in the right panel
-                    updateDescription(newMondoItem);
+                });
+        // Finally, we update the term description in the right panel
+        mondoTreeView.getSelectionModel().selectedItemProperty()
+                .addListener((observable, previousMondoItem, newMondoItem) -> {
+                    diseaseSummaryView.dataProperty().set(newMondoItem.getValue());
                 });
 
         resetMultipliersButton.disableProperty().bind(mondoTreeView.multiplierValuesProperty().emptyProperty());
@@ -238,13 +226,6 @@ public class MainController {
                         .or(phenopacketPath.isNull())
                         .or(optionalResources.liricalResultsProperty().isNull()));
 
-        // show intro message in the infoWebView
-        // TODO - move into separate UI element
-        Platform.runLater(() -> {
-            infoWebEngine = infoWebView.getEngine();
-            infoWebEngine.loadContent("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>HPO tree browser</title></head>" +
-                    "<body><p>Click on Mondo term in the tree browser to display additional information</p></body></html>");
-        });
     }
 
     private static TextFormatter<Double> preparePretestProbabilityFormatter(double min, double max, double defaultValue) {
@@ -734,53 +715,6 @@ public class MainController {
 //            mapDataList.add(new MapData(name, mondoID, omimID, probValue, sliderValue, isFixed));
 //        }
 
-    /**
-     * Update content of the {@link #infoWebView} with currently selected {@link Term}.
-     *
-     * @param treeItem currently selected {@link TreeItem} containing {@link Term}
-     */
-    private void updateDescription(TreeItem<OntologyTermWrapper> treeItem) {
-        if (treeItem == null)
-            // TODO - move into separate UI component and handle properly. Null means no display
-            return;
-
-        Term term = treeItem.getValue().term();
-
-        List<HpoDisease> annotatedDiseases = List.of();
-//        List<HpoDisease> annotatedDiseases =  optionalHpoaResource.getIndirectAnnotMap().getOrDefault(term.id(), List.of());
-        int n_descendents = 42;//getDescendents(model.getHpoOntology(),term.getId()).size();
-        //todo--add number of descendents to HTML
-        Double multiplier = treeItem.getValue().getMultiplier();
-        String content = HpoHtmlPageGenerator.getHTML(term, annotatedDiseases, multiplier);
-        //System.out.print(content);
-        infoWebEngine=this.infoWebView.getEngine();
-        infoWebEngine.loadContent(content);
-        infoWebEngine.getLoadWorker().stateProperty().addListener(// ChangeListener<Worker.State>
-                (observableValue, oldState, newState) -> {
-                    LOGGER.trace("TOP OF CHANGED  UPDATE DESCRIPTION");
-                    if (newState == Worker.State.SUCCEEDED) {
-                        org.w3c.dom.events.EventListener listener = // EventListener
-                                (event) -> {
-                                    String domEventType = event.getType();
-                                    // System.err.println("EventType FROM updateHPO: " + domEventType);
-                                    if (domEventType.equals(EVENT_TYPE_CLICK)) {
-                                        String href = ((Element) event.getTarget()).getAttribute("href");
-                                        // System.out.println("HREF "+href);
-                                        if (href.equals("http://www.human-phenotype-ontology.org")) {
-                                            return; // the external link is taken care of by the Webengine
-                                            // therefore, we do not need to do anything special here
-                                        }
-                                    }
-                                };
-
-                        Document doc = infoWebView.getEngine().getDocument();
-                        NodeList nodeList = doc.getElementsByTagName("a");
-                        for (int i = 0; i < nodeList.getLength(); i++) {
-                            ((EventTarget) nodeList.item(i)).addEventListener(EVENT_TYPE_CLICK, listener, false);
-                        }
-                    }
-                });
-    }
 
     @FXML
     private void goButtonAction() {

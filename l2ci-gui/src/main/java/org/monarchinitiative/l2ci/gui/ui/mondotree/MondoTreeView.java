@@ -1,4 +1,4 @@
-package org.monarchinitiative.l2ci.gui.ui;
+package org.monarchinitiative.l2ci.gui.ui.mondotree;
 
 import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
@@ -8,6 +8,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.gui.model.DiseaseWithMultiplier;
+import org.monarchinitiative.l2ci.gui.ui.OntologyTermWrapper;
 import org.monarchinitiative.phenol.ontology.data.Identified;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;

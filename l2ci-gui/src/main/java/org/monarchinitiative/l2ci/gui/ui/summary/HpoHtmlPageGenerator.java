@@ -1,4 +1,4 @@
-package org.monarchinitiative.l2ci.gui.controller;
+package org.monarchinitiative.l2ci.gui.ui.summary;
 
 import org.monarchinitiative.phenol.annotations.base.temporal.PointInTime;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
