@@ -3,6 +3,7 @@
     <!-- We're not interested in seeing all events produced by the following libraries: -->
     <logger name="de.charite.compbio.jannovar" level="WARN" />
     <logger name="org.monarchinitiative.phenol" level="DEBUG" />
+    <logger name="org.springframework" level="WARN" />
 
     <property name="pattern" value="%d{HH:mm:ss.SSS} [%-5thread] %-5level %logger{36} - %msg%n"/>
 

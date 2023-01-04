@@ -2,7 +2,7 @@ module l2ci.core {
     requires transitive lirical.core;
     requires lirical.io;
     requires org.monarchinitiative.phenol.io;
-    requires org.monarchinitiative.phenol.annotations;
+    requires org.monarchinitiative.phenol.annotations; // TODO - consider removing
     requires org.monarchinitiative.biodownload;
 
     requires org.slf4j;

@@ -69,7 +69,7 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
                 .addListener(loadMondoMeta(executorService, optionalServices, dataDirectory));
 
         // Load LIRICAL
-        optionalResources.liricalResources().resourcesAreComplete()
+        optionalResources.liricalResources().dataDirectoryProperty()
                 .addListener(loadLirical(executorService, optionalServices, optionalResources.liricalResources()));
     }
 
@@ -115,17 +115,24 @@ public class StartupTask implements ApplicationListener<ApplicationStartedEvent>
         };
     }
 
-    private static ChangeListener<? super Boolean> loadLirical(ExecutorService executor,
+    private static ChangeListener<? super Path> loadLirical(ExecutorService executor,
                                                                OptionalServices services,
                                                                LiricalResources liricalResources) {
-        return (obs, old, resourcesAreComplete) -> {
-            if (resourcesAreComplete) {
+        return (obs, old, novel) -> {
+            if (novel == null) {
+                LOGGER.debug("Unsetting LIRICAL");
+                services.setLirical(null);
+            } else {
+                LOGGER.debug("Configuring LIRICAL");
                 LiricalBuildTask task = new LiricalBuildTask(liricalResources);
                 task.setOnSucceeded(e -> {
                     LOGGER.debug("LIRICAL setup was completed");
                     services.setLirical(task.getValue());
                 });
-                task.setOnFailed(e -> LOGGER.error("Could not load LIRICAL"));
+                task.setOnFailed(e -> {
+                    LOGGER.error("Could not load LIRICAL: {}", e.getSource().getException().getMessage());
+                    LOGGER.debug("Could not load LIRICAL", e.getSource().getException());
+                });
                 executor.submit(task);
             }
         };

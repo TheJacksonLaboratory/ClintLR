@@ -19,7 +19,7 @@ import org.monarchinitiative.l2ci.gui.resources.*;
 import org.monarchinitiative.l2ci.gui.tasks.DownloadLiricalData;
 import org.monarchinitiative.l2ci.gui.tasks.DownloadMondoTask;
 import org.monarchinitiative.lirical.core.model.GenomeBuild;
-import org.monarchinitiative.lirical.core.service.TranscriptDatabase;
+import org.monarchinitiative.lirical.core.model.TranscriptDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,9 @@ public class ResourcesController {
     private Label liricalResultsDirLabel;
 
     @FXML
-    private Label exomiserFileLabel;
+    private Label exomiserHg19FileLabel;
+    @FXML
+    private Label exomiserHg38FileLabel;
 
     @FXML
     private Label bkgFreqFileLabel;
@@ -110,8 +112,11 @@ public class ResourcesController {
         StringBinding liricalData = preparePathBinding(liricalResources.dataDirectoryProperty(), "Unset");
         liricalDataDirLabel.textProperty().bind(liricalData);
 
-        StringBinding exomiserDb = preparePathBinding(liricalResources.exomiserVariantDbFileProperty(), "Unset");
-        exomiserFileLabel.textProperty().bind(exomiserDb);
+        StringBinding exomiserHg19Db = preparePathBinding(liricalResources.exomiserHg19VariantDbFileProperty(), "Unset");
+        exomiserHg19FileLabel.textProperty().bind(exomiserHg19Db);
+
+        StringBinding exomiserHg38Db = preparePathBinding(liricalResources.exomiserHg38VariantDbFileProperty(), "Unset");
+        exomiserHg38FileLabel.textProperty().bind(exomiserHg38Db);
 
         StringBinding bgFreq = preparePathBinding(liricalResources.backgroundVariantFrequencyFileProperty(), "Default background frequency");
         bkgFreqFileLabel.textProperty().bind(bgFreq);
@@ -130,7 +135,7 @@ public class ResourcesController {
         InvalidationListener genomeBuildChecker = obs -> {
             String genomeBuild = genomeBuildChoiceBox.getValue().toString().toLowerCase();
 
-            Path exomiserPath = liricalResources.getExomiserVariantDbFile();
+            Path exomiserPath = liricalResources.getExomiserHg19VariantDbFile();
             Path background = liricalResources.getBackgroundVariantFrequencyFile();
             if ((exomiserPath != null && !exomiserPath.toString().toLowerCase().contains(genomeBuild))
                     || (background != null && !background.toString().toLowerCase().contains(genomeBuild))) {
@@ -138,9 +143,11 @@ public class ResourcesController {
             }
         };
 
-        genomeBuildChoiceBox.valueProperty().addListener(genomeBuildChecker);
-        exomiserFileLabel.textProperty().addListener(genomeBuildChecker);
-        bkgFreqFileLabel.textProperty().addListener(genomeBuildChecker);
+        // TODO(mabeckwith) - do we still need to check this? We have Exomiser files for both builds
+        //  and the bg freq file should probably not be used..
+//        genomeBuildChoiceBox.valueProperty().addListener(genomeBuildChecker);
+//        exomiserHg19FileLabel.textProperty().addListener(genomeBuildChecker);
+//        bkgFreqFileLabel.textProperty().addListener(genomeBuildChecker);
 
         pathogenicityTextField.setTextFormatter(pathogenicityTextFormatter);
         pathogenicityTextFormatter.valueProperty().bindBidirectional(liricalResources.pathogenicityThresholdProperty().asObject());
@@ -225,11 +232,19 @@ public class ResourcesController {
     }
 
     /**
-     * Open DirChooser and ask user to provide a path to the Exomiser variant file.
+     * Open DirChooser and ask user to provide a path to the Exomiser hg19 variant file.
      */
     @FXML
-    private void setExomiserVariantFileButtonAction() {
-        loadFileType(FileType.EXOMISER);
+    private void setExomiserHg19VariantFileButtonAction() {
+        loadFileType(FileType.EXOMISER_HG19);
+    }
+
+    /**
+     * Open DirChooser and ask user to provide a path to the Exomiser hg38 variant file.
+     */
+    @FXML
+    private void setExomiserHg38VariantFileButtonAction() {
+        loadFileType(FileType.EXOMISER_HG38);
     }
 
     /**
@@ -249,7 +264,8 @@ public class ResourcesController {
         // A consumer for setting the selected file.
         Consumer<Path> consumer = switch (fileType) {
             case MONDO -> optionalResources.ontologyResources()::setMondoPath;
-            case EXOMISER -> optionalResources.liricalResources()::setExomiserVariantDbFile;
+            case EXOMISER_HG19 -> optionalResources.liricalResources()::setExomiserHg19VariantDbFile;
+            case EXOMISER_HG38 -> optionalResources.liricalResources()::setExomiserHg38VariantDbFile;
             case BACKGROUND_VARIANT_FREQUENCY -> optionalResources.liricalResources()::setBackgroundVariantFrequencyFile;
         };
 
@@ -287,7 +303,8 @@ public class ResourcesController {
 
     private enum FileType {
         MONDO("Mondo JSON File", "*.json"),
-        EXOMISER("Exomiser Variant Database", "*.mv.db"),
+        EXOMISER_HG19("Exomiser hg19 Variant Database", "*.mv.db"),
+        EXOMISER_HG38("Exomiser hg38 Variant Database", "*.mv.db"),
         BACKGROUND_VARIANT_FREQUENCY("Background Variant Frequency", "*.tsv");
 
         private final String description;

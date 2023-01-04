@@ -2,11 +2,15 @@ package org.monarchinitiative.l2ci.gui.tasks;
 
 import javafx.concurrent.Task;
 import org.monarchinitiative.l2ci.gui.resources.LiricalResources;
-import org.monarchinitiative.lirical.configuration.GenotypeLrProperties;
 import org.monarchinitiative.lirical.configuration.LiricalBuilder;
 import org.monarchinitiative.lirical.core.Lirical;
+import org.monarchinitiative.lirical.core.model.GenomeBuild;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.function.BiConsumer;
 
 
 /**
@@ -32,35 +36,26 @@ public class LiricalBuildTask extends Task<Lirical> {
     protected Lirical call() throws Exception {
         LOGGER.debug("Building LIRICAL from {}", liricalResources.getDataDirectory());
         LiricalBuilder builder = LiricalBuilder.builder(liricalResources.getDataDirectory());
-
-        LOGGER.debug("Using Exomiser file at {}", liricalResources.getExomiserVariantDbFile().toAbsolutePath());
-        builder.exomiserVariantDatabase(liricalResources.getExomiserVariantDbFile());
-
-        LOGGER.debug("Using GenomeBuild {}", liricalResources.getGenomeBuild());
-        builder.genomeBuild(liricalResources.getGenomeBuild());
-
-        if (liricalResources.getBackgroundVariantFrequencyFile() != null) {
-            LOGGER.debug("Using background variant frequency file at {}", liricalResources.getBackgroundVariantFrequencyFile().toAbsolutePath());
-            builder.backgroundVariantFrequency(liricalResources.getBackgroundVariantFrequencyFile());
-        } else {
-            LOGGER.debug("Using bundled background variant frequency file");
-        }
-
-        LOGGER.debug("Using pathogenicityThreshold of {}", liricalResources.getPathogenicityThreshold());
-        LOGGER.debug("Using default variant background frequency of {}", liricalResources.getDefaultVariantBackgroundFrequency());
-        LOGGER.debug("Using strict mode: {}", liricalResources.isStrict());
-        GenotypeLrProperties gtLrProperties = new GenotypeLrProperties(liricalResources.getPathogenicityThreshold(),
-                liricalResources.getDefaultVariantBackgroundFrequency(),
-                liricalResources.isStrict());
-        builder.genotypeLrProperties(gtLrProperties);
-
-        LOGGER.debug("Using default allele frequency of {}", liricalResources.getDefaultAlleleFrequency());
-        builder.defaultVariantAlleleFrequency(liricalResources.getDefaultAlleleFrequency());
-
-        LOGGER.debug("Using {} transcripts", liricalResources.getTranscriptDatabase());
-        builder.transcriptDatabase(liricalResources.getTranscriptDatabase());
-
+        checkAndSetExomiserVariantDbPath(builder::exomiserVariantDbPath,
+                GenomeBuild.HG19,
+                liricalResources.getExomiserHg19VariantDbFile());
+        checkAndSetExomiserVariantDbPath(builder::exomiserVariantDbPath,
+                GenomeBuild.HG38,
+                liricalResources.getExomiserHg38VariantDbFile());
         return builder.build();
+    }
+
+    private static void checkAndSetExomiserVariantDbPath(BiConsumer<GenomeBuild, Path> consumer,
+                                                         GenomeBuild genomeBuild,
+                                                         Path path) {
+        if (path == null) {
+            LOGGER.debug("Exomiser variant database path for {} is unset", genomeBuild);
+        } else if (!Files.isRegularFile(path)) {
+            LOGGER.warn("Ignoring Exomiser variant database path that is not a file: {}", path.toAbsolutePath());
+        } else {
+            LOGGER.debug("Using Exomiser variant database for {}: {}", genomeBuild, path.toAbsolutePath());
+            consumer.accept(genomeBuild, path);
+        }
     }
 
 }
