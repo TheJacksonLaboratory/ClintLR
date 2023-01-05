@@ -3,9 +3,9 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.web.*?>
 <?import org.monarchinitiative.l2ci.gui.controller.*?>
-<?import org.monarchinitiative.l2ci.gui.ui.*?>
+<?import org.monarchinitiative.l2ci.gui.ui.summary.DiseaseSummaryView?>
+<?import org.monarchinitiative.l2ci.gui.ui.mondotree.MondoTreeView?>
 
 <BorderPane fx:id="contentPane" prefHeight="1000.0" prefWidth="1200.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l2ci.gui.controller.MainController">
      <top>
@@ -271,15 +271,13 @@
                   <Insets left="5.0" right="5.0" top="5.0" />
                </VBox.margin>
                <children>
-                   <MondoTreeView fx:id="mondoTreeView"  VBox.vgrow="ALWAYS"/>
+                   <MondoTreeView fx:id="mondoTreeView" VBox.vgrow="ALWAYS"/>
                    <Button fx:id="resetMultipliersButton" onAction="#resetMultipliersAction" text="Reset pretest probability multiplier values"/>
                </children>
             </VBox>
               </VBox>
 
-              <AnchorPane>
-                  <WebView fx:id="infoWebView" maxHeight="-1.0" minHeight="-1.0" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
-              </AnchorPane>
+              <DiseaseSummaryView fx:id="diseaseSummaryView"/>
           </SplitPane>
       </center>
       <bottom>

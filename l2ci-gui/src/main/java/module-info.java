@@ -32,5 +32,7 @@ module l2ci.gui {
     opens org.monarchinitiative.l2ci.gui;
     opens org.monarchinitiative.l2ci.gui.config;
     opens org.monarchinitiative.l2ci.gui.controller to javafx.fxml;
+    opens org.monarchinitiative.l2ci.gui.ui.mondotree to javafx.fxml;
+    opens org.monarchinitiative.l2ci.gui.ui.summary to javafx.fxml;
     opens org.monarchinitiative.l2ci.gui.tasks;
 }

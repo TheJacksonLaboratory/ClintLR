@@ -1,8 +1,9 @@
-package org.monarchinitiative.l2ci.gui.ui;
+package org.monarchinitiative.l2ci.gui.ui.mondotree;
 
 import javafx.beans.property.MapProperty;
 import javafx.scene.control.TreeItem;
 import org.monarchinitiative.l2ci.core.Relation;
+import org.monarchinitiative.l2ci.gui.ui.OntologyTermWrapper;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.Term;
 import org.monarchinitiative.phenol.ontology.data.TermId;

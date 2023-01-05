@@ -1,4 +1,4 @@
-package org.monarchinitiative.l2ci.gui.ui;
+package org.monarchinitiative.l2ci.gui.ui.mondotree;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
@@ -7,7 +7,7 @@ import javafx.scene.Node;
 import javafx.scene.control.TreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import org.monarchinitiative.l2ci.gui.controller.MainController;
+import org.monarchinitiative.l2ci.gui.ui.OntologyTermWrapper;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.io.IOException;
@@ -71,7 +71,7 @@ class MondoTreeCell extends TreeCell<OntologyTermWrapper> {
     }
 
     private static Image loadBundledImage(String location) {
-        try (InputStream is = MainController.class.getResourceAsStream(location)) {
+        try (InputStream is = MondoTreeCell.class.getResourceAsStream(location)) {
             return new Image(Objects.requireNonNull(is));
         } catch (IOException e) {
             throw new RuntimeException("Unable to load the image from %s. Please contact the developers".formatted(location), e);
