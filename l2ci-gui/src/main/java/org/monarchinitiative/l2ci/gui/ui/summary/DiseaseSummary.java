@@ -6,6 +6,5 @@ public interface DiseaseSummary {
 
     Term getTerm();
 
-    Double getMultiplier();
 
 }

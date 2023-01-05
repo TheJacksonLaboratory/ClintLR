@@ -26,6 +26,9 @@ public class DiseaseSummaryView extends VBox {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiseaseSummaryView.class);
     private static final String EVENT_TYPE_CLICK = "click";
 
+    private static final String HTML_VIEW_PLACEHOLDER = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>HPO tree browser</title></head>" +
+            "<body><p>Click on Mondo term in the tree browser to display additional information</p></body></html>";
+
     private final ObjectProperty<DiseaseSummary> data = new SimpleObjectProperty<>();
 
     @FXML
@@ -47,8 +50,7 @@ public class DiseaseSummaryView extends VBox {
     @FXML
     private void initialize() {
         infoWebEngine = infoWebView.getEngine();
-        infoWebEngine.loadContent("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>HPO tree browser</title></head>" +
-                                    "<body><p>Click on Mondo term in the tree browser to display additional information</p></body></html>");
+        infoWebEngine.loadContent(HTML_VIEW_PLACEHOLDER);
         data.addListener((obs, old, novel) -> updateDescription(novel));
     }
 
@@ -63,14 +65,10 @@ public class DiseaseSummaryView extends VBox {
      */
     private void updateDescription(DiseaseSummary diseaseSummary) {
         if (diseaseSummary == null)
-            // Null means no display
-            return;
+            infoWebEngine.loadContent(HTML_VIEW_PLACEHOLDER);
 
         List<HpoDisease> annotatedDiseases = List.of();
-//        List<HpoDisease> annotatedDiseases =  optionalHpoaResource.getIndirectAnnotMap().getOrDefault(term.id(), List.of());
-        int n_descendents = 42;//getDescendents(model.getHpoOntology(),term.getId()).size();
         String content = HpoHtmlPageGenerator.getHTML(diseaseSummary.getTerm(), annotatedDiseases);
-        //System.out.print(content);
 
         infoWebEngine.loadContent(content);
         infoWebEngine.getLoadWorker().stateProperty().addListener(// ChangeListener<Worker.State>
