@@ -64,37 +64,15 @@ public class DiseaseSummaryView extends VBox {
      * @param diseaseSummary currently selected {@link TreeItem} containing {@link Term}
      */
     private void updateDescription(DiseaseSummary diseaseSummary) {
-        if (diseaseSummary == null)
+        if (diseaseSummary == null) {
             infoWebEngine.loadContent(HTML_VIEW_PLACEHOLDER);
+            return;
+        }
 
         List<HpoDisease> annotatedDiseases = List.of();
         String content = HpoHtmlPageGenerator.getHTML(diseaseSummary.getTerm(), annotatedDiseases);
 
         infoWebEngine.loadContent(content);
-        infoWebEngine.getLoadWorker().stateProperty().addListener(// ChangeListener<Worker.State>
-                (observableValue, oldState, newState) -> {
-                    LOGGER.trace("TOP OF CHANGED  UPDATE DESCRIPTION");
-                    if (newState == Worker.State.SUCCEEDED) {
-                        org.w3c.dom.events.EventListener listener = // EventListener
-                                (event) -> {
-                                    String domEventType = event.getType();
-                                    // System.err.println("EventType FROM updateHPO: " + domEventType);
-                                    if (domEventType.equals(EVENT_TYPE_CLICK)) {
-                                        String href = ((Element) event.getTarget()).getAttribute("href");
-                                        // System.out.println("HREF "+href);
-                                        if (href.equals("http://www.human-phenotype-ontology.org")) {
-                                            return; // the external link is taken care of by the Webengine
-                                            // therefore, we do not need to do anything special here
-                                        }
-                                    }
-                                };
 
-                        Document doc = infoWebEngine.getDocument();
-                        NodeList nodeList = doc.getElementsByTagName("a");
-                        for (int i = 0; i < nodeList.getLength(); i++) {
-                            ((EventTarget) nodeList.item(i)).addEventListener(EVENT_TYPE_CLICK, listener, false);
-                        }
-                    }
-                });
     }
 }

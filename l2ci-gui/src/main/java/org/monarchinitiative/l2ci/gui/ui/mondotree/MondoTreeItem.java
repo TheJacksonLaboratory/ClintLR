@@ -48,9 +48,11 @@ class MondoTreeItem extends TreeItem<OntologyTermWrapper> {
                                 .forEach(descendent -> multipliers.put(descendent.id(), novelProba.doubleValue()));
                     }
                 });
-        // TODO - sort tree item children number of descendants.
-//        Comparator<MondoTreeItem> comparator = Comparator.<MondoTreeItem>comparingInt(t -> nChildren.getOrDefault(t.getValue().id(), 0))
-        Comparator<MondoTreeItem> comparator = Comparator.comparing(treeItem -> treeItem.getValue().term().getName());
+
+        Comparator<MondoTreeItem> comparator = Comparator.<MondoTreeItem>comparingInt(t -> nChildren.getOrDefault(t.getValue().id(), 0))
+                .reversed()
+                .thenComparing(treeItem -> treeItem.getValue().term().getName());
+//        Comparator<MondoTreeItem> comparator = Comparator.comparing(treeItem -> treeItem.getValue().term().getName());
 
         expandedProperty().addListener((obs, wasExpanded, isExpanded) -> {
             /*

@@ -4,10 +4,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -32,6 +29,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.*;
+import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -40,6 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import javafx.util.StringConverter;
 import org.monarchinitiative.l2ci.core.io.PretestProbaAdjustmentIO;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
 import org.monarchinitiative.l2ci.gui.*;
@@ -75,6 +75,7 @@ public class MainController {
     // Default multiplier value is 1. and it must match the multiplier in the `MainView.fxml`.
     private static final double DEFAULT_MULTIPLIER_VALUE = 1.;
 
+    private static final double DEFAULT_LR_THRESHOLD = 0.05;
     private final AppProperties appProperties;
     private final OptionalResources optionalResources;
     private final OptionalServices optionalServices;
@@ -116,6 +117,8 @@ public class MainController {
     // A flag for syncing pretest proba multiplier updates.
     private boolean updatingMultiplier = false;
     private final DoubleProperty multiplier = new SimpleDoubleProperty(DEFAULT_MULTIPLIER_VALUE);
+
+    private final DoubleProperty lrThreshold = new SimpleDoubleProperty(this, "lrThreshold", DEFAULT_LR_THRESHOLD);
     /**
      * Slider to adjust pretest probability multiplier before running LIRICAL
      */
@@ -132,6 +135,7 @@ public class MainController {
     private TextField outputFileTextField;
     @FXML
     private TextField lrThresholdTextField;
+    private TextFormatter<Double> lrThresholdTextFormatter;
     @FXML
     private Spinner<Integer> minDiagnosisSpinner;
     @FXML
@@ -167,6 +171,39 @@ public class MainController {
 
     @FXML
     private void initialize() {
+        // TODO - apply converter to restrict pathogenicity threshold values as well?
+        StringConverter<Double> converter = new StringConverter<>() {
+            final DecimalFormat decimalFormat = new DecimalFormat();
+
+            @Override
+            public String toString(Double object) {
+                return object == null ? "" : decimalFormat.format(object);
+            }
+
+            @Override
+            public Double fromString(String string) {
+                try {
+                    if (string.isEmpty())
+                        return 0.0;
+                    else {
+                        if (Double.parseDouble(string) < 0.0) {
+                            return 0.0;
+                        } else if (Double.parseDouble(string) > 1.0) {
+                            return 1.0;
+                        } else {
+                            return decimalFormat.parse(string).doubleValue();
+                        }
+                    }
+                } catch (ParseException e) {
+                    return 0.0 ;
+                }
+            }
+
+        };
+
+        lrThresholdTextFormatter = new TextFormatter<>(converter, DEFAULT_LR_THRESHOLD);
+        lrThresholdTextField.setTextFormatter(lrThresholdTextFormatter);
+        lrThresholdTextFormatter.valueProperty().bindBidirectional(lrThreshold.asObject());
         minDiagnosisSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10));
         pathogenicityTextField.setText(String.valueOf(optionalResources.liricalResources().getPathogenicityThreshold()));
         variantsCheckbox.setSelected(false);
@@ -303,99 +340,6 @@ public class MainController {
         });
     }
 
-//    private void showProgress(Task task, String type, String taskMessage) {
-//        publishMessage(taskMessage);
-//        Stage window = progressWindow(task, taskMessage);
-//        switch (type) {
-//            case "startup" -> {
-//                updateProgressMessage(window, task);
-//                task.setOnSucceeded(e -> {
-//                    Ontology mondoOnt = optionalMondoResource.getOntology();
-//                    Ontology hpoOnt = optionalHpoResource.getOntology();
-//                    boolean hpoaEmpty = optionalHpoaResource.getDirectAnnotMap().isEmpty();
-//                    if (mondoOnt != null && hpoOnt != null && !hpoaEmpty) {
-//                        MapBuildTask mapTask = new MapBuildTask(optionalMondoResource, pgProperties);
-//                        Stage mapWindow = progressWindow(mapTask, "Making Map Files");
-//                        updateProgressMessage(mapWindow, mapTask);
-//                        mapTask.setOnSucceeded(w -> mapWindow.close());
-//                        this.executor.submit(mapTask);
-//                        logger.info("Activating Ontology Tree.");
-//                        activateOntologyTree();
-//                        autocompleteTextfield.setOntology(mondoOnt);
-//                        autocompleteOmimTextfield.setOmimMap(omimLabelsAndMondoTermIdMap);
-//                        publishMessage("Finished " + taskMessage);
-//                    } else {
-//                        StringBuilder msg = new StringBuilder();
-//                        Ontology[] ontologies = {mondoOnt, hpoOnt};
-//                        String[] ontTypes = {"Mondo", "HPO"};
-//                        for (int i = 0; i < ontologies.length; i++) {
-//                            Ontology ontology = ontologies[i];
-//                            String ontType = ontTypes[i];
-//                            if (ontology == null) {
-//                                msg.append("\nNeed to set path to ").append(ontType).append(" file (See File -> Show Resources menu)");
-//                            }
-//                        }
-//                        if (hpoaEmpty) {
-//                            msg.append("\nNeed to set path to phenotype.hpoa file (See File -> Show Resources menu)");
-//                        }
-//                        PopUps.showInfoMessage(msg.toString(), "Error Intializing Ontologies");
-//                    }
-//                    window.close();
-//                });
-//            }
-//            case "lirical" -> task.setOnSucceeded(e -> {
-//                if (lirical != null) {
-//                    if (lirical.variantParserFactory().isEmpty()) {
-//                        PopUps.showInfoMessage("Path to Exomiser variant file not set (see File -> Show Resources menu). Variants will not be annotated in the current LIRICAL instance. \n\nTo annotate variants, set the path to the Exomiser variant file, and restart the program.", "Missing LIRICAL Resource");
-//                    }
-//                    liricalAnalysis = new LiricalAnalysis(lirical, pgProperties);
-//                    liricalButton.setDisable(false);
-//                    publishMessage("Finished " + taskMessage);
-//                } else {
-//                    System.out.println(task.getException().toString());
-//                    publishMessage("Failed " + taskMessage + ". LIRICAL instance is null.", MessageType.ERROR);
-//                }
-//                window.close();
-//            });
-//        }
-//        task.setOnFailed(e -> {
-//            String msg = "Failed " + taskMessage;
-//            PopUps.showInfoMessage(msg, "Error Intializing Resources");
-//            publishMessage(msg, MessageType.ERROR);
-//            window.close();
-//        });
-//        this.executor.submit(task);
-//    }
-
-//    @FXML
-//    public void loadMondoFile(Event e) {
-//        FileChooser fileChooser = new FileChooser();
-//        fileChooser.setTitle("Import Local Mondo JSON File");
-//        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Mondo JSON File", "*.json"));
-//        File file = fileChooser.showOpenDialog(contentPane.getScene().getWindow());
-//        if (file != null) {
-//            String mondoJsonPath = file.getAbsolutePath();
-//            loadMondoFile(mondoJsonPath);
-//        }
-//    }
-
-//    public void loadMondoFile(String mondoPath) {
-//        HPOParser parser = new HPOParser(mondoPath);
-//        ont = parser.getHPO();
-//        if (ont != null) {
-////            optionalMondoResource.setOntology(ont);
-//            pgProperties.setProperty("mondo.json.path", mondoPath);
-//            pgProperties.setProperty(OptionalResources.MONDO_JSON_PATH_PROPERTY, mondoPath);
-//            logger.info("Loaded Ontology {} from file {}", ont.toString(), mondoPath);
-////            MapBuildTask mapTask = new MapBuildTask(optionalMondoResource, pgProperties);
-////            Stage mapWindow = progressWindow(mapTask, "Making Map Files");
-////            updateProgressMessage(mapWindow, mapTask);
-////            mapTask.setOnSucceeded(w -> mapWindow.close());
-////            this.executor.submit(mapTask);
-//            publishMessage("Loaded Ontology from file " + mondoPath);
-//        }
-//    }
-
 
     @FXML
     private void showMondoStatsAction(ActionEvent e) {
@@ -492,40 +436,6 @@ public class MainController {
         Platform.exit();
     }
 
-//    @FXML
-//    private void setLiricalResultsDirectory() {
-//        String homeDir = System.getProperty("user.home");
-//        String initialDir = pgProperties.getProperty("lirical.results.path").equals("unset") ? homeDir : pgProperties.getProperty("lirical.results.path");
-//        File dir = PopUps.selectDirectory(contentPane.getScene().getWindow(), new File(initialDir), "Choose Directory to Save Results");
-//        if (dir != null) {
-//            pgProperties.setProperty("lirical.results.path", dir.getAbsolutePath());
-//        }
-//    }
-
-//    public void setExomiserVariantFile() {
-//        String homeDir = System.getProperty("user.home");
-//        String initialDir = pgProperties.getProperty("exomiser.variant.path").equals("unset") ? homeDir :
-//                new File(pgProperties.getProperty("exomiser.variant.path")).getParentFile().getAbsolutePath();
-//        File file = PopUps.selectFileToOpen(contentPane.getScene().getWindow(), new File(initialDir), "Set Exomiser Variant File");
-//        if (file != null) {
-//            String exomiserVariantPath = file.getAbsolutePath();
-//            pgProperties.setProperty("exomiser.variant.path", exomiserVariantPath);
-//            logger.info("Exomiser Variant File path set to {}", file.getAbsolutePath());
-//        }
-//    }
-
-//    public void setBackgroundFrequencyFile() {
-//        String homeDir = System.getProperty("user.home");
-//        String initialDir = pgProperties.getProperty("background.frequency.path").equals("unset") ? homeDir :
-//                new File(pgProperties.getProperty("background.frequency.path")).getParentFile().getAbsolutePath();
-//        File file = PopUps.selectFileToOpen(contentPane.getScene().getWindow(), new File(initialDir), "Set Background Frequency File");
-//        if (file != null) {
-//            String bkgFreqPath = file.getAbsolutePath();
-//            pgProperties.setProperty("background.frequency.path", bkgFreqPath);
-//            LOGGER.info("Background Frequency File path set to {}", file.getAbsolutePath());
-//        }
-//    }
-
 
     /**
      * Post information message to the status bar.
@@ -583,137 +493,6 @@ public class MainController {
         return label;
     }
 
-
-//    /**
-//     * Check availability of tracked resources and publish an appropriate message.
-//     */
-//    private void checkAll() {
-//        if (optionalHpoResource.getOntology() == null) { // hpo obo file is missing
-//            publishMessage("hpo json file is missing", MessageType.ERROR);
-//        } else if (optionalHpoaResource.getDirectAnnotMap() == null) {
-//            publishMessage("phenotype.hpoa file is missing", MessageType.ERROR);
-//        } else if (optionalMondoResource.getOntology() == null) {
-//            publishMessage("mondo json file is missing", MessageType.ERROR);
-//        } else {
-//            logger.info("All resources loaded");
-//            publishMessage("Ready to go", MessageType.INFO);
-//        }
-//    }
-
-//    /**
-//     * Initialize the ontology browser-tree in the left column of the app.
-//     *
-//     */
-//    private ChangeListener<? super Ontology> initMondoTree() {
-//        return (obs, old, mondo) -> {
-//            mondoTreeView.mondoProperty().set(mondo);
-////            if (mondo == null) {
-////                mondoTreeView.setCellFactory(null);
-////            } else {
-////                mondoTreeView.setCellFactory(tw -> new MondoTreeCell(mapDataList, mondoNDescendantsMap));
-////            }
-////
-//            // TODO - WE ma?
-////        root.getChildren().remove(1, root.getChildren().size());
-////        TreeItem<OntologyTermWrapper> diseasesTreeItem = root.getChildren().get(0);
-////        diseasesTreeItem.getChildren().remove(1, diseasesTreeItem.getChildren().size());
-////        List<TreeItem<OntologyTermWrapper>> mendelianDiseases = diseasesTreeItem.getChildren().get(0).getChildren();
-//
-//
-//
-//            // TODO - tweak width, #rows
-////        AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
-////        AutoCompletionBinding<TermId> omimBinding = TextFields.bindAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
-////        omimBinding.prefWidthProperty().bind(autocompleteOmimTextfield.widthProperty());
-//
-//
-//        };
-//
-//    }
-//
-//    /** Function is called once all of the resources are found (hp obo, disease annotations, mondo). */
-//    public void activateOntologyTree() {
-//        if (optionalMondoResource.getOntology() == null) {
-//            logger.error("activateOntologyTree: Mondo null");
-//        } else {
-//            final Ontology mondo = optionalMondoResource.getOntology();
-//            Platform.runLater(()->{
-//                initMondoTree(mondo);
-//                // TODO - tweak width, #rows
-////                AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
-////                treeLabel.setText(pgProperties.getProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY));
-//            });
-//        }
-//    }
-
-
-
-
-
-//    private HashMap<TermId, TermId> makeDescendentsMap(TermId mondoId, Set<TermId> omimIDs) {
-//        HashMap<TermId, TermId> selectedTerms = new HashMap<>();
-//        for (TermId omimID : omimIDs) {
-////            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
-////            if (mondoIDs.contains(mondoId)) {
-//                Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT);
-//                for (Term descendent : descendents) {
-//                    for (TermId omimID2 : omimIDs) {
-//                        List<TermId> mondoIDs2 = omimToMondoMap.get(omimID2);
-//                        if (mondoIDs2.contains(descendent.id())) {
-//                            selectedTerms.put(omimID2, descendent.id());
-//                            break;
-//                        }
-//                    }
-//                }
-////            }
-//        }
-//        return selectedTerms;
-//    }
-
-
-    // TODO(mabeckwith) - consider removing the method if it proves to have become redundant.
-//    private Map<TermId, Double> makeSelectedDiseaseMap() {
-//        Map<TermId, Double> omimToPretestProbability = new HashMap<>();
-//
-//        MondoOmimResources mm = optionalServices.mondoOmimResources();
-//        Map<TermId, TermId> mondoToOmim = mm.getMondoToOmim();
-//
-//        for (TermId omimId : mm.getOmimToMondo().keySet()) {
-//            omimToPretestProbability.put(omimId, DEFAULT_SLIDER_VALUE);
-//        }
-//        mondoTreeView.drainSliderValues()
-//                .filter(md -> md.getSliderValue() >= DEFAULT_SLIDER_VALUE)
-//                /*
-//                  Here we update OMIM -> pretest proba map.
-//                  However, the `mondoTreeView` provides, well, Mondo IDs. Hence, we first map
-//                  to the corresponding OMIM (if any) and set the pretest probability found on a tree node.
-//                 */
-//                .forEach(d -> {
-//                    TermId omimId = mondoToOmim.get(d.id());
-//                    if (omimId != null) {
-//                        omimToPretestProbability.compute(omimId,
-//                                (OMIM_ID, defaultProba) -> d.getSliderValue()
-//                        );
-//                    }
-//                });
-//
-//        return omimToPretestProbability;
-//    }
-
-//    private void addToMapData(Ontology ontology, TermId mondoID, TermId omimID, Double probValue, Double sliderValue, boolean isFixed) {
-//        String name = "";
-//        if (mondoID != null & ontology != null) {
-//            name = ontology.getTermMap().get(mondoID).getName();
-//        } else if (ontology == null) {
-//            name = "other diseases"; //optionalHpoaResource.getId2diseaseModelMap().get(omimID).diseaseName();
-//        }
-//        List<TermId> mapMondoIds = new ArrayList<>();
-//        for (MapData mapData : mapDataList) {
-//            mapMondoIds.add(mapData.getMondoId());
-//        }
-//        if (!mapMondoIds.contains(mondoID)) {
-//            mapDataList.add(new MapData(name, mondoID, omimID, probValue, sliderValue, isFixed));
-//        }
 
 
     @FXML
@@ -842,12 +621,9 @@ public class MainController {
     }
 
     private OutputOptions createOutputOptions() throws LiricalParseException {
-        double lrThresholdValue = Double.parseDouble(lrThresholdTextField.getText());
-        if (lrThresholdValue < 0 || lrThresholdValue > 1) {
-            // TODO(mabeckwith) - can you use TextFormatter to make it impossible to submit out of range value and remove this check?
-            PopUps.showInfoMessage("Error: LR Threshold must be between 0 and 1.", "ERROR");
-            throw new LiricalParseException("LR Threshold not between 0 and 1.");
-        }
+        double lrThresholdValue = lrThresholdTextFormatter.getValue();
+//        System.out.println(lrThresholdValue);
+
         LrThreshold lrThreshold = LrThreshold.setToUserDefinedThreshold(lrThresholdValue);
 
         MinDiagnosisCount minDiagnosisCount = MinDiagnosisCount.setToUserDefinedMinCount(minDiagnosisSpinner.getValue());

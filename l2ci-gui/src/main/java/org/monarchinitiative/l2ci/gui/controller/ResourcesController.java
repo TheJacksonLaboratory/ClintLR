@@ -143,12 +143,7 @@ public class ResourcesController {
             }
         };
 
-        // TODO(mabeckwith) - do we still need to check this? We have Exomiser files for both builds
-        //  and the bg freq file should probably not be used..
-//        genomeBuildChoiceBox.valueProperty().addListener(genomeBuildChecker);
-//        exomiserHg19FileLabel.textProperty().addListener(genomeBuildChecker);
-//        bkgFreqFileLabel.textProperty().addListener(genomeBuildChecker);
-
+        // TODO - remove pathogenicity threshold from ResourcesController and only have it in the main GUI?
         pathogenicityTextField.setTextFormatter(pathogenicityTextFormatter);
         pathogenicityTextFormatter.valueProperty().bindBidirectional(liricalResources.pathogenicityThresholdProperty().asObject());
 
