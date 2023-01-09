@@ -1,9 +1,9 @@
-package org.monarchinitiative.l2ci.gui;
+package org.monarchinitiative.l2ci.gui.controller;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
 
-public class StringConverter {
+class ThresholdStringConverter {
 
     javafx.util.StringConverter<Double> converter = new javafx.util.StringConverter<>() {
         final DecimalFormat decimalFormat = new DecimalFormat();

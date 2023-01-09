@@ -7,7 +7,6 @@ import javafx.beans.binding.StringBinding;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -29,8 +28,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.*;
-import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -171,7 +168,7 @@ public class MainController {
     @FXML
     private void initialize() {
         // TODO - apply converter to restrict pathogenicity threshold values as well?
-        lrThresholdTextFormatter = new TextFormatter<>(new StringConverter().getConverter(), DEFAULT_LR_THRESHOLD);
+        lrThresholdTextFormatter = new TextFormatter<>(new ThresholdStringConverter().getConverter(), DEFAULT_LR_THRESHOLD);
         lrThresholdTextField.setTextFormatter(lrThresholdTextFormatter);
         lrThresholdTextFormatter.valueProperty().bindBidirectional(lrThreshold.asObject());
         minDiagnosisSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10));
