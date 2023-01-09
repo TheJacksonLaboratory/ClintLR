@@ -39,7 +39,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javafx.util.StringConverter;
 import org.monarchinitiative.l2ci.core.io.PretestProbaAdjustmentIO;
 import org.monarchinitiative.l2ci.core.mondo.MondoStats;
 import org.monarchinitiative.l2ci.gui.*;
@@ -172,36 +171,7 @@ public class MainController {
     @FXML
     private void initialize() {
         // TODO - apply converter to restrict pathogenicity threshold values as well?
-        StringConverter<Double> converter = new StringConverter<>() {
-            final DecimalFormat decimalFormat = new DecimalFormat();
-
-            @Override
-            public String toString(Double object) {
-                return object == null ? "" : decimalFormat.format(object);
-            }
-
-            @Override
-            public Double fromString(String string) {
-                try {
-                    if (string.isEmpty())
-                        return 0.0;
-                    else {
-                        if (Double.parseDouble(string) < 0.0) {
-                            return 0.0;
-                        } else if (Double.parseDouble(string) > 1.0) {
-                            return 1.0;
-                        } else {
-                            return decimalFormat.parse(string).doubleValue();
-                        }
-                    }
-                } catch (ParseException e) {
-                    return 0.0 ;
-                }
-            }
-
-        };
-
-        lrThresholdTextFormatter = new TextFormatter<>(converter, DEFAULT_LR_THRESHOLD);
+        lrThresholdTextFormatter = new TextFormatter<>(new StringConverter().getConverter(), DEFAULT_LR_THRESHOLD);
         lrThresholdTextField.setTextFormatter(lrThresholdTextFormatter);
         lrThresholdTextFormatter.valueProperty().bindBidirectional(lrThreshold.asObject());
         minDiagnosisSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10));
@@ -252,7 +222,9 @@ public class MainController {
         // Finally, we update the term description in the right panel
         mondoTreeView.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousMondoItem, newMondoItem) -> {
-                    diseaseSummaryView.dataProperty().set(newMondoItem.getValue());
+                    if (newMondoItem != null) {
+                        diseaseSummaryView.dataProperty().set(newMondoItem.getValue());
+                    }
                 });
 
         resetMultipliersButton.disableProperty().bind(mondoTreeView.multiplierValuesProperty().emptyProperty());
@@ -317,27 +289,6 @@ public class MainController {
                     return path == null ? "Unset" : path.toAbsolutePath().toString();
                 },
                 pathProperty);
-    }
-
-    private Stage progressWindow(Task<?> task, String taskMessage) {
-        ProgressIndicator pb = new ProgressIndicator();
-        pb.setProgress(0);
-        pb.progressProperty().unbind();
-        pb.progressProperty().bind(task.progressProperty());
-        Stage window = PopUps.setupProgressDialog("Initializing", taskMessage + "...", pb);
-        window.show();
-        window.toFront();
-        window.setAlwaysOnTop(true);
-        return window;
-    }
-
-    private void updateProgressMessage(Stage window, Task task) {
-        Label progressLabel = (Label) window.getScene().getRoot().getChildrenUnmodifiable().get(0);
-        progressLabel.setMaxWidth(325);
-        progressLabel.setWrapText(true);
-        task.messageProperty().addListener((observable, oldValue, newValue) -> {
-            progressLabel.setText(newValue);
-        });
     }
 
 
@@ -559,14 +510,6 @@ public class MainController {
         if (file != null) {
             vcfPath.set(file.toPath());
         }
-    }
-
-    private void updateLimits(Slider slider, double min, double max) {
-        slider.setMin(min);
-        slider.setMax(max);
-        double range = max - min;
-        double incValue = range/4;
-        slider.setMajorTickUnit(incValue);
     }
 
     @FXML

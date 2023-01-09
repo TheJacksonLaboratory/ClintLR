@@ -39,10 +39,6 @@ public class AppProperties {
         return mondoJsonUrl;
     }
 
-    public void setMondoJsonUrl(String mondoJsonUrl) {
-        this.mondoJsonUrl = mondoJsonUrl;
-    }
-
     public LiricalProperties liricalProperties() {
         return lirical;
     }

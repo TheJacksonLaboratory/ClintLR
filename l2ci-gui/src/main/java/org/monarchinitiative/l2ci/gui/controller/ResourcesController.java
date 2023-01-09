@@ -132,17 +132,6 @@ public class ResourcesController {
         transcriptDBChoiceBox.valueProperty().bindBidirectional(liricalResources.transcriptDatabaseProperty());
 
 
-        InvalidationListener genomeBuildChecker = obs -> {
-            String genomeBuild = genomeBuildChoiceBox.getValue().toString().toLowerCase();
-
-            Path exomiserPath = liricalResources.getExomiserHg19VariantDbFile();
-            Path background = liricalResources.getBackgroundVariantFrequencyFile();
-            if ((exomiserPath != null && !exomiserPath.toString().toLowerCase().contains(genomeBuild))
-                    || (background != null && !background.toString().toLowerCase().contains(genomeBuild))) {
-                PopUps.showInfoMessage("Genome build of Exomiser variant or background frequency file does not match the selected genome build.", "Warning");
-            }
-        };
-
         // TODO - remove pathogenicity threshold from ResourcesController and only have it in the main GUI?
         pathogenicityTextField.setTextFormatter(pathogenicityTextFormatter);
         pathogenicityTextFormatter.valueProperty().bindBidirectional(liricalResources.pathogenicityThresholdProperty().asObject());

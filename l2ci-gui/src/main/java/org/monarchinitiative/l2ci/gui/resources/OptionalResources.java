@@ -61,8 +61,7 @@ public class OptionalResources {
         String mondoJsonPath = properties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY);
         if (mondoJsonPath != null) {
             Path path = Path.of(mondoJsonPath);
-            File file = new File(mondoJsonPath);
-            if (file.isFile() && Files.isReadable(path) && mondoJsonPath.endsWith(".json")) {
+            if (Files.isRegularFile(path) && Files.isReadable(path) && mondoJsonPath.endsWith(".json")) {
                 ontologyResources.setMondoPath(path);
             }
         }
@@ -71,8 +70,7 @@ public class OptionalResources {
         String liricalDataPath = properties.getProperty(LiricalResources.LIRICAL_DATA_PROPERTY);
         if (liricalDataPath != null) {
             Path path = Path.of(liricalDataPath);
-            File file = new File(liricalDataPath);
-            if (file.isDirectory() && Files.isReadable(path)) {
+            if (Files.isDirectory(path) && Files.isReadable(path)) {
                 liricalResources.setDataDirectory(path);
             }
         }
@@ -80,8 +78,7 @@ public class OptionalResources {
         String exomiserHg19VariantPath = properties.getProperty(LiricalResources.EXOMISER_HG19_VARIANT_PROPERTY);
         if (exomiserHg19VariantPath != null) {
             Path path = Path.of(exomiserHg19VariantPath);
-            File file = new File(exomiserHg19VariantPath);
-            if (file.isFile() && Files.isReadable(path) && exomiserHg19VariantPath.endsWith("mv.db")) {
+            if (Files.isRegularFile(path) && Files.isReadable(path) && exomiserHg19VariantPath.endsWith("mv.db")) {
                 liricalResources.setExomiserHg19VariantDbFile(path);
             }
         }
@@ -89,8 +86,7 @@ public class OptionalResources {
         String exomiserHg38VariantPath = properties.getProperty(LiricalResources.EXOMISER_HG38_VARIANT_PROPERTY);
         if (exomiserHg38VariantPath != null) {
             Path path = Path.of(exomiserHg38VariantPath);
-            File file = new File(exomiserHg38VariantPath);
-            if (file.isFile() && Files.isReadable(path) && exomiserHg38VariantPath.endsWith("mv.db")) {
+            if (Files.isRegularFile(path) && Files.isReadable(path) && exomiserHg38VariantPath.endsWith("mv.db")) {
                 liricalResources.setExomiserHg38VariantDbFile(path);
             }
         }
@@ -98,8 +94,7 @@ public class OptionalResources {
         String backgroundFrequencyPath = properties.getProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY);
         if (backgroundFrequencyPath != null) {
             Path path = Path.of(backgroundFrequencyPath);
-            File file = new File(backgroundFrequencyPath);
-            if (file.isFile() && Files.isReadable(path)) {
+            if (Files.isRegularFile(path) && Files.isReadable(path)) {
                 liricalResources.setBackgroundVariantFrequencyFile(path);
             }
         }
@@ -132,8 +127,7 @@ public class OptionalResources {
         String liricalResults = properties.getProperty(LIRICAL_RESULTS_PROPERTY);
         if (liricalResults != null) {
             Path path = Path.of(liricalResults);
-            File file = new File(liricalResults);
-            if (file.isDirectory() && Files.isReadable(path)) {
+            if (Files.isDirectory(path) && Files.isReadable(path)) {
                 this.liricalResults.set(path);
             }
         }

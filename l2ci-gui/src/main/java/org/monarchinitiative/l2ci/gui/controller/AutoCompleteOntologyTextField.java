@@ -137,20 +137,6 @@ public class AutoCompleteOntologyTextField extends TextField {
     public ObjectProperty<Map<TermId, List<TermId>>> omim2MondoProperty() {return omim2Mondo; }
 
     /**
-     * Update this autocomplete functionality with the OMIM term labels
-     * @param omimMap Map of OMIM labels and Mondo IDs
-     */
-    public void setOmimMap(Map<String, TermId> omimMap) {
-        this.labelToTermMap.clear();
-        for (Map.Entry<String, TermId> entry : omimMap.entrySet()) {
-            String omimLabel = entry.getKey();
-            TermId mondoID = entry.getValue();
-            this.labelToTermMap.put(omimLabel, mondoID);
-        }
-        this.ontologyLabels.addAll(labelToTermMap.keySet());
-    }
-
-    /**
      * Populate the entry set with the given search results.  Display is limited to 10 entries, for performance.
      * @param searchResult The set of matching strings.
      */
