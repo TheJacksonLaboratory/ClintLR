@@ -90,39 +90,6 @@ public class MainApp  extends Application {
     }
 
 
-    static void loadSplashScreen()  {
-        Stage splashStage = new Stage();
-        ClassPathResource splashResource = new ClassPathResource("fxml/splashScreen.fxml");
-        try {
-            FXMLLoader fxmlLoader = new FXMLLoader(splashResource.getURL());
-            Parent splashRoot = fxmlLoader.load();
-            Scene splashScene = new Scene(splashRoot);
-            splashStage.setScene(splashScene);
-            splashStage.initStyle(StageStyle.UNDECORATED);
-            splashStage.show();
-
-            setFadeInOut(splashRoot, splashStage);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    static void setFadeInOut(Parent splashScene, Stage splashStage) {
-        FadeTransition fadeIn = new FadeTransition(Duration.seconds(3), splashScene);
-        fadeIn.setFromValue(0);
-        fadeIn.setToValue(1);
-        fadeIn.setCycleCount(1);
-
-        FadeTransition fadeOut = new FadeTransition(Duration.seconds(3), splashScene);
-        fadeOut.setFromValue(1);
-        fadeOut.setToValue(0);
-        fadeOut.setCycleCount(1);
-        fadeIn.play();
-
-        fadeIn.setOnFinished((e) -> fadeOut.play());
-        fadeOut.setOnFinished((e) -> splashStage.close());
-    }
-
     public static void main(String[] args) {
         Application.launch(MainApp.class, args);
     }

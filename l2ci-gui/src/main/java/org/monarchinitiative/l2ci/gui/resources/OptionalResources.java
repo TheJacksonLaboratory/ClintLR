@@ -6,6 +6,8 @@ import org.monarchinitiative.lirical.core.model.GenomeBuild;
 import org.monarchinitiative.lirical.core.model.TranscriptDatabase;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Properties;
@@ -57,33 +59,45 @@ public class OptionalResources {
 
         // --------------------------- Mondo ----------------------------
         String mondoJsonPath = properties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY);
-        if (mondoJsonPath != null)
-            // TODO(mabeckwith) - check if the path is a file, if it ends with *.json, if it is readable, etc.
-            ontologyResources.setMondoPath(Path.of(mondoJsonPath));
+        if (mondoJsonPath != null) {
+            Path path = Path.of(mondoJsonPath);
+            if (Files.isRegularFile(path) && Files.isReadable(path) && mondoJsonPath.endsWith(".json")) {
+                ontologyResources.setMondoPath(path);
+            }
+        }
 
         // --------------------------- LIRICAL ---------------------------
         String liricalDataPath = properties.getProperty(LiricalResources.LIRICAL_DATA_PROPERTY);
-        if (liricalDataPath != null)
-            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
-            liricalResources.setDataDirectory(Path.of(liricalDataPath));
+        if (liricalDataPath != null) {
+            Path path = Path.of(liricalDataPath);
+            if (Files.isDirectory(path) && Files.isReadable(path)) {
+                liricalResources.setDataDirectory(path);
+            }
+        }
 
-
-        // TODO(mabeckwith) - set the remaining LIRICAL properties to LiricalResources
-
-        // TODO - set the remaining paths if present in the properties
         String exomiserHg19VariantPath = properties.getProperty(LiricalResources.EXOMISER_HG19_VARIANT_PROPERTY);
-        if (exomiserHg19VariantPath != null)
-            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
-            liricalResources.setExomiserHg19VariantDbFile(Path.of(exomiserHg19VariantPath));
+        if (exomiserHg19VariantPath != null) {
+            Path path = Path.of(exomiserHg19VariantPath);
+            if (Files.isRegularFile(path) && Files.isReadable(path) && exomiserHg19VariantPath.endsWith("mv.db")) {
+                liricalResources.setExomiserHg19VariantDbFile(path);
+            }
+        }
+
         String exomiserHg38VariantPath = properties.getProperty(LiricalResources.EXOMISER_HG38_VARIANT_PROPERTY);
-        if (exomiserHg38VariantPath != null)
-            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
-            liricalResources.setExomiserHg38VariantDbFile(Path.of(exomiserHg38VariantPath));
+        if (exomiserHg38VariantPath != null) {
+            Path path = Path.of(exomiserHg38VariantPath);
+            if (Files.isRegularFile(path) && Files.isReadable(path) && exomiserHg38VariantPath.endsWith("mv.db")) {
+                liricalResources.setExomiserHg38VariantDbFile(path);
+            }
+        }
 
         String backgroundFrequencyPath = properties.getProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY);
-        if (backgroundFrequencyPath != null)
-            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
-            liricalResources.setBackgroundVariantFrequencyFile(Path.of(backgroundFrequencyPath));
+        if (backgroundFrequencyPath != null) {
+            Path path = Path.of(backgroundFrequencyPath);
+            if (Files.isRegularFile(path) && Files.isReadable(path)) {
+                liricalResources.setBackgroundVariantFrequencyFile(path);
+            }
+        }
 
         String pathogenicityThreshold = properties.getProperty(LiricalResources.PATHOGENICITY_PROPERTY);
         if (pathogenicityThreshold != null)
@@ -111,9 +125,12 @@ public class OptionalResources {
 
         // --------------------------- The rest ---------------------------
         String liricalResults = properties.getProperty(LIRICAL_RESULTS_PROPERTY);
-        if (liricalResults != null)
-            // TODO(mabeckwith) - check if the path is a folder, if it is readable, etc.
-            this.liricalResults.set(Path.of(liricalResults));
+        if (liricalResults != null) {
+            Path path = Path.of(liricalResults);
+            if (Files.isDirectory(path) && Files.isReadable(path)) {
+                this.liricalResults.set(path);
+            }
+        }
     }
 
     /**

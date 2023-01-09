@@ -10,10 +10,6 @@ public class HostServicesUrlBrowser implements UrlBrowser {
 
     private HostServices hostServices;
 
-    public HostServices hostServices() {
-        return hostServices;
-    }
-
     public void setHostServices(HostServices hostServices) {
         this.hostServices = hostServices;
     }

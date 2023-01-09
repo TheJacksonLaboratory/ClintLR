@@ -29,19 +29,7 @@ class HpoHtmlPageGenerator {
         String diseaseTable = getDiseaseTableHTML(annotatedDiseases, termID);
         List<SimpleXref> pmids=term.getPmidXrefs();
         List<Dbxref> xrefs = term.getXrefs();
-        // TODO - Is it kosher to just use the probability directly?
-//        Double pretestProb = 1.0;
-        //        for (Dbxref xref : xrefs) {
-//            String name = xref.getName();
-//            if (name.contains("OMIM")) {
-//                termID += " (" + name + ")";
-//                TermId omimTermId = Term.of(name, name).id();
-//                if (pretestProba.keySet().contains(omimTermId)) {
-//                    pretestProb = pretestProba.get(omimTermId);
-//                    break;
-//                }
-//            }
-//        }
+
         String pmidList;
         if (pmids.isEmpty())
             pmidList="-";

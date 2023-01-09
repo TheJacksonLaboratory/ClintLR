@@ -61,7 +61,6 @@ public class OntologyTermWrapper implements DiseaseWithMultiplier, DiseaseSummar
         return term;
     }
 
-    @Override
     public Double getMultiplier() {
         return multiplier.get();
     }

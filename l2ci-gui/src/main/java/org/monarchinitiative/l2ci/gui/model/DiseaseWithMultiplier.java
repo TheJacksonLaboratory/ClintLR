@@ -20,11 +20,4 @@ public interface DiseaseWithMultiplier extends Identified {
 
     DoubleProperty multiplierProperty();
 
-    /**
-     * Get the pretest probability multiplier for a disease. Note, the multiplier can be {@code null}.
-     */
-    default Double getMultiplier() {
-        return multiplierProperty().getValue();
-    }
-
 }
