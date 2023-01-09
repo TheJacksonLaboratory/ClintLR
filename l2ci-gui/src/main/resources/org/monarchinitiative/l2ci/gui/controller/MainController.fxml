@@ -272,7 +272,7 @@
                </VBox.margin>
                <children>
                    <MondoTreeView fx:id="mondoTreeView" VBox.vgrow="ALWAYS"/>
-                   <Button fx:id="resetMultipliersButton" onAction="#resetMultipliersAction" text="Reset pretest probability multiplier values"/>
+                   <Button fx:id="resetMultipliersButton" onAction="#resetMultipliersAction" text="Reset pretest probability adjustment values"/>
                </children>
             </VBox>
               </VBox>
