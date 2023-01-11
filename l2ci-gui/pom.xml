@@ -18,14 +18,6 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.controlsfx</groupId>
-            <artifactId>controlsfx</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>net.rgielen</groupId>
-            <artifactId>javafx-weaver-spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-graphics</artifactId>
         </dependency>
@@ -37,10 +29,6 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-web</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.googlecode.json-simple</groupId>-->
-<!--            <artifactId>json-simple</artifactId>-->
-<!--        </dependency>-->
 
         <dependency>
             <groupId>org.monarchinitiative.phenol</groupId>
@@ -50,17 +38,31 @@
             <groupId>org.monarchinitiative.lirical</groupId>
             <artifactId>lirical-core</artifactId>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.monarchinitiative.lirical</groupId>-->
-<!--            <artifactId>lirical-configuration</artifactId>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.monarchinitiative.lirical</groupId>
+            <artifactId>lirical-io</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.monarchinitiative.biodownload</groupId>
             <artifactId>biodownload</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.phenopackets</groupId>
-            <artifactId>phenopacket-schema</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -68,11 +70,6 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>io.projectreactor</groupId>-->
-<!--            <artifactId>reactor-test</artifactId>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
     </dependencies>
 
     <build>
@@ -83,24 +80,6 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <configuration>
-                    <!-- As of now, there are binary & non-binary data files in the resources.
-                    We must configure the filtering to exclude the resource files.
-                    We should NOT bundle the resources in the JAR, the user should be instructed to download the resources.
-                    This configuration stays here until the download feature is implemented.  -->
-                    <!-- TODO - remove after the data are removed from resources. -->
-                    <nonFilteredFileExtensions>
-
-                        <nonFilteredFileExtension>ser</nonFilteredFileExtension>
-                        <nonFilteredFileExtension>json</nonFilteredFileExtension>
-                        <nonFilteredFileExtension>hpoa</nonFilteredFileExtension>
-                        <nonFilteredFileExtension>tsv</nonFilteredFileExtension>
-                    </nonFilteredFileExtensions>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -154,20 +133,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.6.2</version>
-            </plugin>
-<!--            <plugin>-->
-<!--                <groupId>org.openjfx</groupId>-->
-<!--                <artifactId>javafx-maven-plugin</artifactId>-->
-<!--                <version>0.0.5</version>-->
-<!--                <configuration>-->
-<!--                    <mainClass>org.monarchinitiative.l2ci.gui.StockUIApp</mainClass>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
         </plugins>
     </build>
 

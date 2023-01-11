@@ -1,8 +1,5 @@
 package org.monarchinitiative.l2ci.gui.config;
 
-import org.monarchinitiative.l2ci.gui.resources.OptionalHpoResource;
-import org.monarchinitiative.l2ci.gui.resources.OptionalHpoaResource;
-import org.monarchinitiative.l2ci.gui.resources.OptionalMondoResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,20 +18,35 @@ import java.util.concurrent.Executors;
 public class L4CIConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(L4CIConfig.class);
 
-    public static final String CONFIG_FILE_BASENAME = "l4ci.properties";
-
-    @Bean
-    public OptionalHpoResource optionalHpoResource() { return new OptionalHpoResource(); }
-
-    @Bean
-    public OptionalHpoaResource optionalHpoaResource() { return new OptionalHpoaResource(); }
-
-    @Bean
-    public OptionalMondoResource optionalMondoResource() { return new OptionalMondoResource(); }
+    /**
+     * The name of property file we use to persist paths to local resources such as location of {@code hp.json}.
+     */
+    private static final String CONFIG_FILE_BASENAME = "l4ci.properties";
 
     @Bean
     public ExecutorService executorService() {
         return Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    }
+
+    /**
+     * Create path to directory where we will store the resources such as {@code hp.json}.
+     * The directory is created if it does not exist.
+     *
+     * @return path to data directory
+     * @throws IOException if unable to create the data directory
+     */
+    @Bean
+    public Path dataDirectory(File appHomeDir) throws IOException {
+        Path dataDirectory = appHomeDir.toPath().resolve("data");
+        if (!Files.isDirectory(dataDirectory)) {
+            LOGGER.debug("Creating a new data directory at {}", dataDirectory.toAbsolutePath());
+            if (!dataDirectory.toFile().mkdirs())
+                throw new IOException("Unable to create data directory at %s".formatted(dataDirectory.toAbsolutePath().toString()));
+        } else {
+            LOGGER.debug("Using data directory at {}", dataDirectory.toAbsolutePath());
+        }
+
+        return dataDirectory;
     }
 
     /**
@@ -95,21 +108,4 @@ public class L4CIConfig {
         return appHomeDir;
     }
 
-//    @Bean("appNameVersion")
-//    String appNameVersion(String appVersion, String appName) {
-//        return String.format("%s : %s", appName, appVersion);
-//    }
-//
-//
-//    @Bean("appVersion")
-//    String appVersion() {
-//        // this property is set in FenominalApplication#init()
-//        return System.getProperty(FenominalApplication.FENOMINAL_VERSION_PROP_KEY);
-//    }
-//
-//    @Bean("appName")
-//    String appName() {
-//        // this property is set in FenominalApplication#init()
-//        return System.getProperty(FenominalApplication.FENOMINAL_NAME_KEY);
-//    }
 }

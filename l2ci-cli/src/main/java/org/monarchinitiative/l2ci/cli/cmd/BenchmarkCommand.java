@@ -441,12 +441,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
             LOGGER.info("Path to VCF file was not provided.");
             return List.of();
         }
-        if (lirical.variantParserFactory().isEmpty()) {
-            LOGGER.warn("Cannot process the provided VCF file {}, resources are not set.", vcfPath.toAbsolutePath());
-            return List.of();
-        }
 
-        try (VariantParser variantParser = lirical.variantParserFactory().get().forPath(vcfPath)) {
+        try (VariantParser variantParser = lirical.variantParserFactory().forPath(vcfPath)) {
             // Read variants
             LOGGER.info("Reading background variants from {}.", vcfPath.toAbsolutePath());
             ProgressReporter progressReporter = new ProgressReporter(10_000);

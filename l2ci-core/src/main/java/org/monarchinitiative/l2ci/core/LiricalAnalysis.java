@@ -37,6 +37,7 @@ public class LiricalAnalysis {
 
     OutputOptions outputOptions;
 
+    // TODO - make interface with getters for LiricalResources, and use that instead of Properties to get LIRICAL resources
     public LiricalAnalysis(Lirical lirical, Properties pgProperties) {
         this.lirical = lirical;
         this.pgProperties = pgProperties;
@@ -102,8 +103,8 @@ public class LiricalAnalysis {
             vcfPath = Path.of(vcfFile);
         }
         String sampleId = data.getSampleId();
-        if (vcfPath != null && lirical.variantParserFactory().isPresent()) {
-            genes = readVariantsFromVcfFile(sampleId, vcfPath, lirical.variantParserFactory().get());
+        if (vcfPath != null) {
+            genes = readVariantsFromVcfFile(sampleId, vcfPath, lirical.variantParserFactory());
         }
 //            System.out.println(String.join(", ", sampleId, data.getAge().orElse(null).toString(), data.getSex().orElse(null).toString(),
 //                    presentTerms.toString(), excludedTerms.toString(), genes.toString()));

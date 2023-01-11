@@ -6,5 +6,4 @@
 
 #current_dir=$(dirname $(readlink ${0} || echo ${0}))
 
-java --add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls \
-  --module-path "lib" --module l2ci.gui
+java --module-path "lib" --module l2ci.gui

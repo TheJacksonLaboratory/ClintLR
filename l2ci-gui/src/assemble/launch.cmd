@@ -5,5 +5,4 @@
 :: ================================================================================================================== ::
 
 %JAVA_HOME%\bin\java^
- --add-exports=javafx.base/com.sun.javafx.event=org.controlsfx.controls^
  --module-path "lib" --module l2ci.gui

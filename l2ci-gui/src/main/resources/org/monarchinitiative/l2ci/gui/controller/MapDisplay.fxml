@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<fx:root xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      type="VBox"
+      prefHeight="300.0" prefWidth="600.0">
+    <children>
+        <TableView fx:id="tableView" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="diseaseName" text="Name"/>
+                <TableColumn fx:id="mondoId" text="Mondo ID"/>
+                <TableColumn fx:id="omimId" text="OMIM ID"/>
+<!--                <TableColumn fx:id="diseaseProb" text="Probability"/>-->
+                <TableColumn fx:id="multiplierValue" text="Multiplier value"/>
+<!--                <TableColumn fx:id="isFixed" text="Is fixed"/>-->
+            </columns>
+        </TableView>
+    </children>
+</fx:root>
