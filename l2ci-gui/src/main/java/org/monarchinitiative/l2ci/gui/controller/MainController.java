@@ -296,8 +296,8 @@ public class MainController {
         }
 
         if (pgProperties.getProperty("obographs.jar.path") == null) {
-            ClassLoader classLoader = MainController.class.getClassLoader();
-            String obographsPath = classLoader.getResource("obographs-cli-0.3.0.jar").getFile();
+            String mainDir = new File(".").getAbsolutePath();
+            String obographsPath = String.join(File.separator, mainDir.substring(0, mainDir.length()-2), "obographs-cli-0.3.0.jar");
             pgProperties.setProperty("obographs.jar.path", obographsPath);
         }
         logger.info("obographs jar located at " + pgProperties.getProperty("obographs.jar.path"));
@@ -305,10 +305,10 @@ public class MainController {
 
 
         ChangeListener<? super Object> listener = (obs, oldval, newval) -> activateIfResourcesAvailable();
-        optionalHpoResource.ontologyProperty().addListener(listener);
+//        optionalHpoResource.ontologyProperty().addListener(listener);
         optionalMondoResource.ontologyProperty().addListener(listener);
-        optionalHpoaResource.directAnnotMapProperty().addListener(listener);
-        optionalHpoaResource.indirectAnnotMapProperty().addListener(listener);
+//        optionalHpoaResource.directAnnotMapProperty().addListener(listener);
+//        optionalHpoaResource.indirectAnnotMapProperty().addListener(listener);
         logger.info("Done initialization");
         checkAll();
         logger.info("done activate");
@@ -328,8 +328,7 @@ public class MainController {
         }
     }
 
-    private void showProgress(Task task, String type, String taskMessage) {
-        publishMessage(taskMessage);
+    private Stage progressWindow(Task task, String taskMessage) {
         ProgressIndicator pb = new ProgressIndicator();
         pb.setProgress(0);
         pb.progressProperty().unbind();
@@ -338,23 +337,35 @@ public class MainController {
         window.show();
         window.toFront();
         window.setAlwaysOnTop(true);
+        return window;
+    }
+
+    private void updateProgressMessage(Stage window, Task task) {
+        Label progressLabel = (Label) window.getScene().getRoot().getChildrenUnmodifiable().get(0);
+        progressLabel.setMaxWidth(325);
+        progressLabel.setWrapText(true);
+        task.messageProperty().addListener((observable, oldValue, newValue) -> {
+            progressLabel.setText(newValue);
+        });
+    }
+    private void showProgress(Task task, String type, String taskMessage) {
+        publishMessage(taskMessage);
+        Stage window = progressWindow(task, taskMessage);
         switch (type) {
             case "startup" -> {
-                Label progressLabel = (Label) window.getScene().getRoot().getChildrenUnmodifiable().get(0);
-                progressLabel.setMaxWidth(325);
-                progressLabel.setWrapText(true);
-                task.messageProperty().addListener((observable, oldValue, newValue) -> {
-                    progressLabel.setText(newValue);
-                });
+                updateProgressMessage(window, task);
                 task.setOnSucceeded(e -> {
                     Ontology mondoOnt = optionalMondoResource.getOntology();
                     Ontology hpoOnt = optionalHpoResource.getOntology();
                     boolean hpoaEmpty = optionalHpoaResource.getDirectAnnotMap().isEmpty();
                     if (mondoOnt != null && hpoOnt != null && !hpoaEmpty) {
+                        MapBuildTask mapTask = new MapBuildTask(optionalMondoResource, pgProperties);
+                        Stage mapWindow = progressWindow(mapTask, "Making Map Files");
+                        updateProgressMessage(mapWindow, mapTask);
+                        mapTask.setOnSucceeded(w -> mapWindow.close());
+                        this.executor.submit(mapTask);
                         logger.info("Activating Ontology Tree.");
                         activateOntologyTree();
-                        AutoCompletionBinding<TermId> omimBinding = TextFields.bindAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
-                        omimBinding.prefWidthProperty().bind(autocompleteOmimTextfield.widthProperty());
                         publishMessage("Finished " + taskMessage);
                     } else {
                         StringBuilder msg = new StringBuilder();
@@ -377,6 +388,9 @@ public class MainController {
             }
             case "lirical" -> task.setOnSucceeded(e -> {
                 if (lirical != null) {
+                    if (lirical.variantParserFactory().isEmpty()) {
+                        PopUps.showInfoMessage("Path to Exomiser variant file not set (see File -> Show Resources menu). Variants will not be annotated in the current LIRICAL instance. \n\nTo annotate variants, set the path to the Exomiser variant file, and restart the program.", "Missing LIRICAL Resource");
+                    }
                     liricalAnalysis = new LiricalAnalysis(lirical, pgProperties);
                     liricalButton.setDisable(false);
                     publishMessage("Finished " + taskMessage);
@@ -418,6 +432,11 @@ public class MainController {
             pgProperties.setProperty("mondo.json.path", mondoPath);
             pgProperties.setProperty(OptionalMondoResource.MONDO_JSON_PATH_PROPERTY, mondoPath);
             logger.info("Loaded Ontology {} from file {}", ont.toString(), mondoPath);
+            MapBuildTask mapTask = new MapBuildTask(optionalMondoResource, pgProperties);
+            Stage mapWindow = progressWindow(mapTask, "Making Map Files");
+            updateProgressMessage(mapWindow, mapTask);
+            mapTask.setOnSucceeded(w -> mapWindow.close());
+            this.executor.submit(mapTask);
             activateOntologyTree();
             publishMessage("Loaded Ontology from file " + mondoPath);
         }
@@ -580,7 +599,7 @@ public class MainController {
         if (optionalMondoResource.getOntology() != null && !omimToMondoMap.isEmpty()) { // mondo JSON file is missing
             activateOntologyTree();
         } else {
-            logger.error("Could not activate resource");
+            logger.error("Could not activate Mondo resource");
         }
     }
 
@@ -687,10 +706,10 @@ public class MainController {
         root.setExpanded(true);
         ontologyTreeView.setShowRoot(false);
         ontologyTreeView.setRoot(root);
-        root.getChildren().remove(1, root.getChildren().size());
-        TreeItem<OntologyTermWrapper> diseasesTreeItem = root.getChildren().get(0);
+//        root.getChildren().remove(1, root.getChildren().size());
+//        TreeItem<OntologyTermWrapper> diseasesTreeItem = root.getChildren().get(0);
 //        diseasesTreeItem.getChildren().remove(1, diseasesTreeItem.getChildren().size());
-        List<TreeItem<OntologyTermWrapper>> mendelianDiseases = diseasesTreeItem.getChildren().get(0).getChildren();
+//        List<TreeItem<OntologyTermWrapper>> mendelianDiseases = diseasesTreeItem.getChildren().get(0).getChildren();
         ontologyTreeView.setCellFactory(tv -> new TreeCell<OntologyTermWrapper>() {
             private void updateTreeIcons(OntologyTermWrapper item, ImageView icon1, ImageView icon2) {
                 setGraphic(icon1);
@@ -763,7 +782,8 @@ public class MainController {
         });
         // TODO - tweak width, #rows
         AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
-
+        AutoCompletionBinding<TermId> omimBinding = TextFields.bindAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
+        omimBinding.prefWidthProperty().bind(autocompleteOmimTextfield.widthProperty());
 
         // show intro message in the infoWebView
         Platform.runLater(() -> {

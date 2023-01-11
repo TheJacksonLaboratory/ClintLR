@@ -66,7 +66,7 @@ public final class LiricalBuildTask extends Task<Void> {
                 LOGGER.info("Genome Build: " + genomeBuild);
                 liricalBuilder.genomeBuild(genomeBuild);
             } else {
-                PopUps.showInfoMessage("No Genome Build specified (see File -> Show Resources menu).", "LIRICAL Configuration Error");
+//                PopUps.showInfoMessage("No Genome Build specified (see File -> Show Resources menu).", "LIRICAL Configuration Error");
                 LOGGER.info("No Genome Build specified (see File -> Show Resources menu).");
             }
             addToBuilder(liricalBuilder, backgroundFrequency, "Background frequency");
@@ -86,7 +86,7 @@ public final class LiricalBuildTask extends Task<Void> {
                 LOGGER.info("Transcript Database: " + transcriptDatabase);
                 liricalBuilder.transcriptDatabase(transcriptDatabase);
             } else {
-                PopUps.showInfoMessage("No Transcript Database specified (see File -> Show Resources menu)", "Missing LIRICAL Resource");
+//                PopUps.showInfoMessage("No Transcript Database specified (see File -> Show Resources menu)", "Missing LIRICAL Resource");
                 LOGGER.info("No Transcript Database specified (see File -> Show Resources menu)");
             }
             updateProgress(0.5, 1);
@@ -95,7 +95,7 @@ public final class LiricalBuildTask extends Task<Void> {
             updateProgress(1, 1);
             LOGGER.info("Finished building LIRICAL");
         } else {
-            PopUps.showInfoMessage("No LIRICAL data directory set (see File -> Show Resources Menu). Aborting building LIRICAL.", "Error Building LIRICAL");
+//            PopUps.showInfoMessage("No LIRICAL data directory set (see File -> Show Resources Menu). Aborting building LIRICAL.", "Error Building LIRICAL");
             LOGGER.error("No LIRICAL data directory set (see File -> Show Resources Menu). Aborting building LIRICAL.");
             MainController.getController().lirical = null;
         }
@@ -134,7 +134,7 @@ public final class LiricalBuildTask extends Task<Void> {
                 builder.backgroundVariantFrequency(path);
             }
         } else {
-            PopUps.showInfoMessage("Path to " + fileName + " file not set (see File -> Show Resources menu).", "Missing LIRICAL Resource");
+//            PopUps.showInfoMessage("Path to " + fileName + " file not set (see File -> Show Resources menu).", "Missing LIRICAL Resource");
             LOGGER.info("Path to " + fileName + " file not set (see File -> Show Resources menu).");
         }
     }
