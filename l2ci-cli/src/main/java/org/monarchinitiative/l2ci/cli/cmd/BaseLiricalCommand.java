@@ -1,6 +1,6 @@
 package org.monarchinitiative.l2ci.cli.cmd;
 
-import org.monarchinitiative.lirical.configuration.GenotypeLrProperties;
+import org.monarchinitiative.l2ci.core.pretestprob.PretestProbability;
 import org.monarchinitiative.lirical.configuration.LiricalBuilder;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.AnalysisOptions;
@@ -151,26 +151,16 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
      */
     protected Lirical bootstrapLirical() throws LiricalDataException {
         LOGGER.info("Spooling up Lirical v{}", LIRICAL_VERSION);
-        GenomeBuild genomeBuild = parseGenomeBuild(getGenomeBuild());
 
-        GenotypeLrProperties genotypeLrProperties = new GenotypeLrProperties(runConfiguration.pathogenicityThreshold, runConfiguration.defaultVariantBackgroundFrequency, runConfiguration.strict);
         return LiricalBuilder.builder(dataSection.liricalDataDirectory)
-                .exomiserVariantDatabase(dataSection.exomiserDatabase)
-                .genomeBuild(genomeBuild)
-                .backgroundVariantFrequency(dataSection.backgroundFrequencyFile)
-//                .setDiseaseDatabases(runConfiguration.useOrphanet
-//                        ? DiseaseDatabase.allKnownDiseaseDatabases()
-//                        : Set.of(DiseaseDatabase.OMIM, DiseaseDatabase.DECIPHER))
-                .setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM))
-                .genotypeLrProperties(genotypeLrProperties)
-//                .transcriptDatabase(runConfiguration.transcriptDb)
-                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
+                .exomiserVariantDbPath(parseGenomeBuild(getGenomeBuild()), dataSection.exomiserDatabase)
+//                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
                 .build();
     }
 
     protected abstract String getGenomeBuild();
 
-    private GenomeBuild parseGenomeBuild(String genomeBuild) throws LiricalDataException {
+    protected GenomeBuild parseGenomeBuild(String genomeBuild) throws LiricalDataException {
         Optional<GenomeBuild> genomeBuildOptional = GenomeBuild.parse(genomeBuild);
         if (genomeBuildOptional.isEmpty())
             throw new LiricalDataException("Unknown genome build: '" + genomeBuild + "'");
@@ -186,6 +176,23 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
             pretestDiseaseProbability = PretestDiseaseProbability.of(preTestMap);
         }
         return AnalysisOptions.of(runConfiguration.globalAnalysisMode, pretestDiseaseProbability);
+    }
+
+    protected AnalysisOptions prepareAnalysisOptions(Lirical lirical, Map<TermId, Double> mondoPretestAdjustmentMap,
+                                                   Map<TermId, TermId> mondoToOmimMap, Map<TermId, List<TermId>> omimToMondoMap) throws LiricalDataException {
+        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoPretestAdjustmentMap, mondoToOmimMap, omimToMondoMap, lirical.phenotypeService().diseases().diseaseIds(), 1.0);
+        PretestDiseaseProbability pretestProba = PretestDiseaseProbability.of(diseaseIdToPretestProba);
+        return AnalysisOptions.builder()
+                .genomeBuild(parseGenomeBuild(getGenomeBuild()))
+                .transcriptDatabase(runConfiguration.transcriptDb)
+                .setDiseaseDatabases(List.of(DiseaseDatabase.OMIM, DiseaseDatabase.DECIPHER))
+                .variantDeleteriousnessThreshold(runConfiguration.pathogenicityThreshold)
+                .defaultVariantBackgroundFrequency(runConfiguration.defaultVariantBackgroundFrequency)
+                .useStrictPenalties(runConfiguration.strict)
+                .useGlobal(runConfiguration.globalAnalysisMode)
+                .pretestProbability(pretestProba)
+                .disregardDiseaseWithNoDeleteriousVariants(false)
+                .build();
     }
 
     protected static GenesAndGenotypes readVariantsFromVcfFile(String sampleId,

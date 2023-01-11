@@ -6,18 +6,22 @@ import org.apache.commons.csv.CSVPrinter;
 import org.monarchinitiative.l2ci.core.OptionalHpoaResource;
 import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
+import org.monarchinitiative.l2ci.core.io.OmimMapIO;
 import org.monarchinitiative.l2ci.core.pretestprob.PretestProbability;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
+import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
 import org.monarchinitiative.lirical.core.exception.LiricalException;
 import org.monarchinitiative.lirical.core.io.VariantParser;
 import org.monarchinitiative.lirical.core.model.*;
 import org.monarchinitiative.lirical.core.service.FunctionalVariantAnnotator;
 import org.monarchinitiative.lirical.core.service.HpoTermSanitizer;
 import org.monarchinitiative.lirical.core.service.VariantMetadataService;
+import org.monarchinitiative.lirical.io.LiricalDataException;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImporter;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImporters;
+import org.monarchinitiative.phenol.annotations.io.hpo.DiseaseDatabase;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Dbxref;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
@@ -32,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
@@ -53,6 +58,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkCommand.class);
 
+    private static final String OMIM_2_MONDO_NAME = "omim2mondo.csv";
+
     @CommandLine.Option(names = {"-p", "--phenopacket"},
             arity = "1..*",
             description = "Path(s) to phenopacket JSON file(s).")
@@ -68,12 +75,10 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     protected String mondoPath;
 
     @CommandLine.Option(names = {"-H", "--hpo"},
-            required = true,
             description = "Path to HPO Ontolgoy JSON file.")
     protected String hpoPath;
 
     @CommandLine.Option(names = {"-A", "--hpoa"},
-            required = true,
             description = "Path to phenotype.hpoa annotation JSON file.")
     protected String hpoaPath;
 
@@ -130,7 +135,22 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         // 2 - prepare the simulation data shared by all phenopackets.
         List<LiricalVariant> backgroundVariants = readBackgroundVariants(lirical);
         OntologyData ontologyData = loadOntologies();
-        Map<TermId, List<TermId>> omimToMondoMap = makeOmimMap(ontologyData.mondo);
+        Path dataDirectory = Path.of(String.join(File.separator, System.getProperty("user.home"), ".l4ci", "data"));
+        Path omimToMondoPath = dataDirectory.resolve(OMIM_2_MONDO_NAME);
+        Map<TermId, List<TermId>> omim2Mondo;
+        if (Files.exists(omimToMondoPath)) {
+            omim2Mondo = OmimMapIO.read(omimToMondoPath);
+        } else {
+            omim2Mondo = makeOmimMap(ontologyData.mondo);
+        }
+
+        // Flip the OMIM to Mondo map
+        Map<TermId, TermId> mondoToOmim = new HashMap<>();
+        for (Map.Entry<TermId, List<TermId>> e : omim2Mondo.entrySet()) {
+            for (TermId mondoId : e.getValue()) {
+                mondoToOmim.put(mondoId, e.getKey());
+            }
+        }
 
         Stream<String> rangeStream = null;
         List<String> rangeLines = null;
@@ -159,7 +179,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                     String broadFileName = targetFileName.substring(0, targetFileName.lastIndexOf(".")) + "_broad" + fileExt;
                     outputPaths.put("broad", Path.of(String.join(File.separator, path.toString(), broadFileName)));
                 }
-                runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, multiplier, omimToMondoMap, ontologyData);
+                runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, multiplier, mondoToOmim, omim2Mondo, ontologyData);
             }
         } else {
             HashMap<String, Path> outputPaths = new HashMap<>();
@@ -173,7 +193,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 String broadFileName = fileName.substring(0, fileName.lastIndexOf(".")) + "_broad" + fileExt;
                 outputPaths.put("broad", Path.of(String.join(File.separator, path.toString(), broadFileName)));
             }
-            runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, 1.0, omimToMondoMap, ontologyData);
+            runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, 1.0, mondoToOmim, omim2Mondo, ontologyData);
         }
         reportElapsedTime(start, System.currentTimeMillis());
         return 0;
@@ -195,7 +215,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return errors;
     }
 
-    protected void runAnalysis(Lirical lirical, List<LiricalVariant> backgroundVariants, HashMap<String, Path> outputPaths, List<String> rangeLines, Double multiplier, Map<TermId, List<TermId>> omimToMondoMap, OntologyData ontologyData) throws Exception {
+    protected void runAnalysis(Lirical lirical, List<LiricalVariant> backgroundVariants, HashMap<String, Path> outputPaths, List<String> rangeLines, Double multiplier, Map<TermId, TermId> mondoToOmimMap, Map<TermId, List<TermId>> omimToMondoMap, OntologyData ontologyData) throws Exception {
         String[] types = {"target", "broad", "narrow"};
         Set<TermId> omimIDs = omimToMondoMap.keySet();
         for (String type : types) {
@@ -219,8 +239,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                             case "broad" -> selectedDisease = targetDiseases.broadId();
                         }
                         Map<TermId, TermId> selectedDiseases = makeSelectedDiseasesMap(omimToMondoMap, selectedDisease.mondoId, ontologyData.mondo, omimIDs);
-                        Map<TermId, Double> pretestMap = makeSelectedDiseasePretestMap(omimToMondoMap, selectedDiseases, multiplier, ontologyData.optionalHpoaResource);
-                        AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap);
+                        Map<TermId, Double> pretestMap = makeSelectedDiseasePretestMap(selectedDiseases, multiplier);
+                        AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap, mondoToOmimMap, omimToMondoMap);
                         // 3 - prepare benchmark data per phenopacket
                         BenchmarkData benchmarkData = prepareBenchmarkData(lirical, backgroundVariants, phenopacketPath);
 
@@ -343,46 +363,37 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         }
     }
 
-    Map<TermId, Double> makeSelectedDiseasePretestMap(Map<TermId, List<TermId>> omimToMondoMap, Map<TermId, TermId> selectedTerms, double adjProb, OptionalHpoaResource optionalHpoaResource) {
+    Map<TermId, Double> makeSelectedDiseasePretestMap(Map<TermId, TermId> selectedTerms, double adjProb) {
         Map<TermId, Double> diseaseMap = new HashMap<>();
-        for (TermId omimId : omimToMondoMap.keySet()) {
-            diseaseMap.put(omimId, 1.0);
+        for (TermId omimId : selectedTerms.keySet()) {
+            diseaseMap.put(omimId, adjProb);
         }
-        if (optionalHpoaResource != null) {
-            for (TermId termId : optionalHpoaResource.getId2diseaseModelMap().keySet()) {
-                diseaseMap.put(termId, 1.0);
-            }
-        }
-        return PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb, new ArrayList<>());
+        return diseaseMap;
     }
 
     private Map<TermId, List<TermId>> makeOmimMap(Ontology mondo) {
-        Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
+        Map<TermId, List<TermId>> builder = new HashMap<>();
         for (Term mondoTerm : mondo.getTerms()) {
-                for (Dbxref ref : mondoTerm.getXrefs()) {
-                    String refName = ref.getName();
-                    if (refName.contains("OMIM:")) {
-                        Term omimTerm = Term.of(refName, refName);
-                        TermId omimID = omimTerm.id();
-                        if (!omimToMondoMap.containsKey(omimID)) {
-                            omimToMondoMap.put(omimID, new ArrayList<>());
-                        }
-                        List<TermId> termList = omimToMondoMap.get(omimID);
-                        termList.add(mondoTerm.id());
-                        omimToMondoMap.put(omimID, termList);
-                        break;
-                    }
+            for (Dbxref ref : mondoTerm.getXrefs()) {
+                String refName = ref.getName();
+                if (refName.startsWith("OMIM:")) {
+                    TermId omimId = TermId.of(refName);
+                    builder.computeIfAbsent(omimId, i -> new ArrayList<>())
+                            .add(mondoTerm.id());
+                    break;
                 }
             }
-        return omimToMondoMap;
+        }
+        return Map.copyOf(builder);
     }
 
-    Map<TermId, TermId> makeSelectedDiseasesMap(Map<TermId, List<TermId>> omimToMondoMap, TermId mondoId, Ontology mondo, Set<TermId> omimIDs) {
+    Map<TermId, TermId> makeSelectedDiseasesMap(Map<TermId, List<TermId>> omimToMondoMap, TermId mondoId,
+                                                Ontology mondo, Set<TermId> omimIDs) {
         HashMap<TermId, TermId> selectedTerms = new HashMap<>();
         for (TermId omimID : omimIDs) {
             List<TermId> mondoIDs = omimToMondoMap.get(omimID);
             if (mondoIDs.contains(mondoId)) {
-                Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT, mondo);
+                Set<Term> descendents = Relation.getTermRelations(mondo, mondoId, Relation.DESCENDENT);
                 descendents.forEach(d -> System.out.print(d.id() + " "));
                 for (Term descendent : descendents) {
                     for (TermId omimID2 : omimIDs) {
@@ -398,67 +409,35 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return selectedTerms;
     }
 
-    /**
-     * Get the relations of "term"
-     *
-     * @param termId Mondo Term ID of interest
-     * @param relation Relation of interest (ancestor, descendent, child, parent)
-     * @return relations of term (not including term itself).
-     */
-    private Set<Term> getTermRelations(TermId termId, Relation relation, Ontology mondo) {
-        Set<TermId> relationIds;
-        switch (relation) {
-            case ANCESTOR:
-                relationIds = getAncestorTerms(mondo, termId, false);
-                break;
-            case DESCENDENT:
-                relationIds = getDescendents(mondo, termId);
-                break;
-            case CHILD:
-                relationIds = getChildTerms(mondo, termId, false);
-                break;
-            case PARENT:
-                relationIds = getParentTerms(mondo, termId, false);
-                break;
-            default:
-                return Set.of();
-        }
-        Set<Term> relations = new HashSet<>();
-        relationIds.forEach(tid -> {
-            Term ht = mondo.getTermMap().get(tid);
-            relations.add(ht);
-        });
-        return relations;
-    }
-
     @Override
     protected String getGenomeBuild() {
         return genomeBuild;
     }
 
-    private List<LiricalVariant> readBackgroundVariants(Lirical lirical) throws LiricalParseException {
+    private List<LiricalVariant> readBackgroundVariants(Lirical lirical) throws LiricalDataException {
         if (vcfPath == null) {
             LOGGER.info("Path to VCF file was not provided.");
             return List.of();
         }
 
-        try (VariantParser variantParser = lirical.variantParserFactory().forPath(vcfPath)) {
-            // Read variants
+        List<LiricalVariant> variants = new ArrayList<>();
+        // Read variants
+        Optional<VariantParser> optionalVariantParser = lirical.variantParserFactory().forPath(vcfPath, parseGenomeBuild(getGenomeBuild()), runConfiguration.transcriptDb);
+        if (optionalVariantParser.isPresent()) {
             LOGGER.info("Reading background variants from {}.", vcfPath.toAbsolutePath());
+            VariantParser variantParser = optionalVariantParser.get();
             ProgressReporter progressReporter = new ProgressReporter(10_000);
-            List<LiricalVariant> variants = variantParser.variantStream()
+            variants = variantParser.variantStream()
                     .peek(v -> progressReporter.log())
                     .toList();
             progressReporter.summarize();
-            return variants;
-        } catch (Exception e) {
-            throw new LiricalParseException(e);
         }
+        return variants;
     }
 
     private BenchmarkData prepareBenchmarkData(Lirical lirical,
                                                List<LiricalVariant> backgroundVariants,
-                                               Path phenopacketPath) throws LiricalParseException {
+                                               Path phenopacketPath) throws LiricalParseException, LiricalDataException {
         LOGGER.info("Reading phenopacket from {}.", phenopacketPath.toAbsolutePath());
         PhenopacketData data = readPhenopacketData(phenopacketPath);
 
@@ -478,7 +457,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
             else {
                 // Annotate the causal variants found in the phenopacket.
                 FunctionalVariantAnnotator annotator = lirical.functionalVariantAnnotator();
-                VariantMetadataService metadataService = lirical.variantMetadataService();
+                VariantMetadataService metadataService = lirical.variantMetadataServiceFactory().getVariantMetadataService(parseGenomeBuild(getGenomeBuild())).get();
                 List<LiricalVariant> backgroundAndCausal = new ArrayList<>(backgroundVariants.size() + 10);
                 for (GenotypedVariant variant : data.getVariants()) {
                     List<TranscriptAnnotation> annotations = annotator.annotate(variant.variant());

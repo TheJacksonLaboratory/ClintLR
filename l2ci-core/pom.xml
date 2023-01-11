@@ -29,6 +29,10 @@
             <artifactId>lirical-configuration</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.monarchinitiative.lirical</groupId>
+            <artifactId>lirical-io</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
         </dependency>
