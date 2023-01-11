@@ -114,9 +114,9 @@ public class MainController {
     @FXML
     public HBox statusHBox;
     @FXML
-    private TextField autocompleteTextfield;
+    private AutoCompleteOntologyTextField autocompleteTextfield;
     @FXML
-    private TextField autocompleteOmimTextfield;
+    private AutoCompleteOntologyTextField autocompleteOmimTextfield;
 
     /**
      * The term that is currently selected in the Browser window.
@@ -366,6 +366,8 @@ public class MainController {
                         this.executor.submit(mapTask);
                         logger.info("Activating Ontology Tree.");
                         activateOntologyTree();
+                        autocompleteTextfield.setOntology(mondoOnt);
+                        autocompleteOmimTextfield.setOmimMap(omimLabelsAndMondoTermIdMap);
                         publishMessage("Finished " + taskMessage);
                     } else {
                         StringBuilder msg = new StringBuilder();
@@ -781,9 +783,9 @@ public class MainController {
             ontologyLabelsAndTermIdMap.put(term.id().getValue(), term.id());
         });
         // TODO - tweak width, #rows
-        AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
-        AutoCompletionBinding<TermId> omimBinding = TextFields.bindAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
-        omimBinding.prefWidthProperty().bind(autocompleteOmimTextfield.widthProperty());
+//        AutoCompletionBinding<String> mondoLabelBinding = TextFields.bindAutoCompletion(autocompleteTextfield, ontologyLabelsAndTermIdMap.keySet());
+//        AutoCompletionBinding<TermId> omimBinding = TextFields.bindAutoCompletion(autocompleteOmimTextfield, omimToMondoMap.keySet());
+//        omimBinding.prefWidthProperty().bind(autocompleteOmimTextfield.widthProperty());
 
         // show intro message in the infoWebView
         Platform.runLater(() -> {
@@ -1001,15 +1003,25 @@ public class MainController {
 
     @FXML
     public void goButtonAction() {
-        TermId id = ontologyLabelsAndTermIdMap.get(autocompleteTextfield.getText());
-        goToTerm(id);
+        Optional<TermId> opt = autocompleteTextfield.getSelectedId();
+        if (opt.isPresent()) {
+            TermId id = opt.get();
+            goToTerm(id);
+        } else {
+            System.out.println("Unable to get term id: ");
+        }
         autocompleteTextfield.clear();
     }
 
     @FXML
     public void omimButtonAction() {
-        TermId id = omimLabelsAndMondoTermIdMap.get(autocompleteOmimTextfield.getText());
-        goToTerm(id);
+        Optional<TermId> opt = autocompleteOmimTextfield.getSelectedId();
+        if (opt.isPresent()) {
+            TermId id = opt.get();
+            goToTerm(id);
+        } else {
+            System.out.println("Unable to get term id: ");
+        }
         autocompleteOmimTextfield.clear();
     }
 
