@@ -472,6 +472,7 @@ public class MainController {
     private void resetMultipliersAction(ActionEvent e) {
         LOGGER.debug("Resetting pretest probability multiplier values");
         mondoTreeView.clearMultipliers();
+        multiplierSlider.setValue(DEFAULT_MULTIPLIER_VALUE);
         e.consume();
     }
 
