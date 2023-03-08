@@ -21,6 +21,7 @@ public class Main implements Callable<Integer> {
                 .addSubcommand("download", new DownloadCommand())
                 .addSubcommand("stats", new MondoStatsCommand())
                 .addSubcommand("phenotype", new PhenotypicSeriesCommand())
+                .addSubcommand("batch", new BatchAnalysisCommand())
                 .addSubcommand("benchmark", new BenchmarkCommand())
                 .addSubcommand("ranges", new IntuitionRangesCommand());
         cline.setToggleBooleanFlags(false);
