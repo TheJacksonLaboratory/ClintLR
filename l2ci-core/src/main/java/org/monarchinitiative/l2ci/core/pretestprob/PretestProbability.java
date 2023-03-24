@@ -39,19 +39,17 @@ public class PretestProbability {
 //        return Map.copyOf(diseaseToPretestMap);
 //    }
 
-    public static Map<TermId, Double> of(Map<TermId, Double> mondoIdPretestAdjMap,
-                                         Map<TermId, TermId> mondoToOmim,
+    public static Map<TermId, Double> of(Map<TermId, Double> pretestAdjMap,
                                          Map<TermId, List<TermId>> omimToMondo,
                                          Collection<TermId> knownDiseaseIds,
                                          double defaultSliderValue) {
 
         Map<TermId, Double> pretestMap = new HashMap<>();
 
-        // Populate map with OMIM terms corresponding to the Mondo terms and pretest adjustment values
-        for (TermId mondoId : mondoIdPretestAdjMap.keySet()) {
-            TermId omimId = mondoToOmim.get(mondoId);
+        // Populate map with OMIM terms and pretest adjustment values
+        for (TermId omimId : pretestAdjMap.keySet()) {
             if (omimId != null) {
-                double pretestAdjValue = mondoIdPretestAdjMap.get(mondoId);
+                double pretestAdjValue = pretestAdjMap.get(omimId);
                 pretestMap.put(omimId, pretestAdjValue + defaultSliderValue);
             }
         }

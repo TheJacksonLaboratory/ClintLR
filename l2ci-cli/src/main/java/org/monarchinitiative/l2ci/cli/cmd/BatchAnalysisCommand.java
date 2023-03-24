@@ -15,6 +15,9 @@ import org.monarchinitiative.lirical.core.output.AnalysisResultsWriter;
 import org.monarchinitiative.lirical.core.output.OutputFormat;
 import org.monarchinitiative.lirical.core.output.OutputOptions;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
+import org.monarchinitiative.phenol.annotations.formats.GeneIdentifier;
+import org.monarchinitiative.phenol.annotations.formats.GeneIdentifiers;
+import org.monarchinitiative.phenol.annotations.formats.hpo.*;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,16 +114,16 @@ public class BatchAnalysisCommand extends BenchmarkCommand {
 
         if (multipliers != null) {
             for (Double multiplier : multipliers) {
-                runAnalysis(lirical, rangeLines, multiplier, mondoToOmim, omim2Mondo, ontologyData);
+                runAnalysis(lirical, rangeLines, multiplier, omim2Mondo, ontologyData);
             }
         } else {
-            runAnalysis(lirical, rangeLines, 1.0, mondoToOmim, omim2Mondo, ontologyData);
+            runAnalysis(lirical, rangeLines, 0.0, omim2Mondo, ontologyData);
         }
         reportElapsedTime(start, System.currentTimeMillis());
         return 0;
     }
 
-    protected void runAnalysis(Lirical lirical, List<String> rangeLines, Double multiplier, Map<TermId, TermId> mondoToOmimMap, Map<TermId, List<TermId>> omimToMondoMap, OntologyData ontologyData) throws Exception {
+    protected void runAnalysis(Lirical lirical, List<String> rangeLines, Double multiplier, Map<TermId, List<TermId>> omimToMondoMap, OntologyData ontologyData) throws Exception {
         String[] types = {"target"}; //, "narrow", "broad"};
         if (rangeLines != null)
             types = new String[]{"target", "narrow", "broad"};
@@ -146,8 +149,7 @@ public class BatchAnalysisCommand extends BenchmarkCommand {
                     LOGGER.info("Selected Disease = " + selectedDisease.mondoId());
                     Map<TermId, TermId> selectedDiseases = makeSelectedDiseasesMap(omimToMondoMap, selectedDisease.mondoId(), ontologyData.mondo(), omimIDs);
                     Map<TermId, Double> pretestMap = makeSelectedDiseasePretestMap(selectedDiseases, multiplier);
-                    AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap, mondoToOmimMap, omimToMondoMap);
-
+                    AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap, omimToMondoMap);
                     // Read phenotypic features.
                     PhenopacketData phenopacketData = readPhenopacketData(phenopacketPath);
 

@@ -85,7 +85,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     @CommandLine.Option(names = {"-m", "--multiplier"},
             split=",",
             arity = "1..*",
-            description = "Pretest Multiplier value.")
+            description = "Pretest Multiplier value(s).")
     protected List<Double> multipliers;
 
     @CommandLine.Option(names = {"--vcf"},
@@ -105,9 +105,9 @@ public class BenchmarkCommand extends BaseLiricalCommand {
             description = "Filename of the benchmark results CSV file. The CSV is compressed if the path has the '.gz' suffix")
     protected String outputName;
 
-    @CommandLine.Option(names = {"--html"},
-            description = "Whether to write out HTML files of the results (default: ${DEFAULT-VALUE})")
-    protected boolean writeHTML = false;
+//    @CommandLine.Option(names = {"--html"},
+//            description = "Whether to write out HTML files of the results (default: ${DEFAULT-VALUE})")
+//    protected boolean writeHTML = false;
 
     @CommandLine.Option(names = {"--phenotype-only"},
             description = "Run the benchmark with phenotypes only (default: ${DEFAULT-VALUE})")
@@ -187,7 +187,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                     String broadFileName = targetFileName.substring(0, targetFileName.lastIndexOf(".")) + "_broad" + fileExt;
                     outputPaths.put("broad", outputDir.resolve(broadFileName));
                 }
-                runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, multiplier, mondoToOmim, omim2Mondo, ontologyData);
+                runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, multiplier, omim2Mondo, ontologyData);
             }
         } else {
             HashMap<String, Path> outputPaths = new HashMap<>();
@@ -199,7 +199,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 String broadFileName = outputName.substring(0, outputName.lastIndexOf(".")) + "_broad" + fileExt;
                 outputPaths.put("broad", outputDir.resolve(broadFileName));
             }
-            runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, 1.0, mondoToOmim, omim2Mondo, ontologyData);
+            runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, 0.0, omim2Mondo, ontologyData);
         }
         reportElapsedTime(start, System.currentTimeMillis());
         return 0;
@@ -221,7 +221,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return errors;
     }
 
-    protected void runAnalysis(Lirical lirical, List<LiricalVariant> backgroundVariants, HashMap<String, Path> outputPaths, List<String> rangeLines, Double multiplier, Map<TermId, TermId> mondoToOmimMap, Map<TermId, List<TermId>> omimToMondoMap, OntologyData ontologyData) throws Exception {
+    protected void runAnalysis(Lirical lirical, List<LiricalVariant> backgroundVariants, HashMap<String, Path> outputPaths, List<String> rangeLines, Double multiplier, Map<TermId, List<TermId>> omimToMondoMap, OntologyData ontologyData) throws Exception {
         String[] types = {"target", "narrow", "broad"};
         Set<TermId> omimIDs = omimToMondoMap.keySet();
         for (String type : types) {
@@ -248,7 +248,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                         if (selectedDisease != null) {
                             Map<TermId, TermId> selectedDiseases = makeSelectedDiseasesMap(omimToMondoMap, selectedDisease.mondoId, ontologyData.mondo, omimIDs);
                             Map<TermId, Double> pretestMap = makeSelectedDiseasePretestMap(selectedDiseases, multiplier);
-                            AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap, mondoToOmimMap, omimToMondoMap);
+                            AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap, omimToMondoMap);
                             // 3 - prepare benchmark data per phenopacket
                             BenchmarkData benchmarkData = prepareBenchmarkData(lirical, backgroundVariants, phenopacketPath);
                             String sampleId = benchmarkData.analysisData().sampleId();
@@ -264,10 +264,10 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                             writeResults(phenopacketName, backgroundVcf, selectedDisease, selectedDiseases, multiplier, pretestMap, benchmarkData, results, printer);
 
                             // Write out the results into HTML file, if desired.
-                            if (writeHTML) {
-                                writeHTMLFile(selectedDisease, multiplier, phenopacketName, type,
-                                        lirical, sampleId, benchmarkData, results);
-                            }
+//                            if (writeHTML) {
+//                                writeHTMLFile(selectedDisease, multiplier, phenopacketName, type,
+//                                        lirical, sampleId, benchmarkData, results);
+//                            }
                         }
                     }
                 }

@@ -21,8 +21,16 @@ import org.monarchinitiative.lirical.core.service.PhenotypeService;
 import org.monarchinitiative.lirical.io.LiricalDataException;
 import org.monarchinitiative.lirical.io.LiricalDataResolver;
 import org.monarchinitiative.lirical.io.service.JannovarFunctionalVariantAnnotatorService;
+import org.monarchinitiative.phenol.annotations.assoc.DiseaseToGeneAssociationLoader;
+import org.monarchinitiative.phenol.annotations.assoc.GeneIdentifierLoaders;
+import org.monarchinitiative.phenol.annotations.assoc.GeneInfoGeneType;
 import org.monarchinitiative.phenol.annotations.formats.GeneIdentifier;
+import org.monarchinitiative.phenol.annotations.formats.GeneIdentifiers;
+import org.monarchinitiative.phenol.annotations.formats.hpo.DiseaseToGeneAssociation;
+import org.monarchinitiative.phenol.annotations.formats.hpo.DiseaseToGeneAssociations;
+import org.monarchinitiative.phenol.annotations.formats.hpo.HpoAssociationData;
 import org.monarchinitiative.phenol.annotations.io.hpo.DiseaseDatabase;
+import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,9 +207,12 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
         return AnalysisOptions.of(runConfiguration.globalAnalysisMode, pretestDiseaseProbability);
     }
 
-    protected AnalysisOptions prepareAnalysisOptions(Lirical lirical, Map<TermId, Double> mondoPretestAdjustmentMap,
-                                                   Map<TermId, TermId> mondoToOmimMap, Map<TermId, List<TermId>> omimToMondoMap) throws LiricalDataException {
-        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoPretestAdjustmentMap, mondoToOmimMap, omimToMondoMap, lirical.phenotypeService().diseases().diseaseIds(), 1.0);
+    protected AnalysisOptions prepareAnalysisOptions(Lirical lirical, Map<TermId, Double> pretestAdjustmentMap,
+                                                   Map<TermId, List<TermId>> omimToMondoMap) throws LiricalDataException {
+        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(pretestAdjustmentMap, omimToMondoMap, lirical.phenotypeService().diseases().diseaseIds(), 1.0);
+        for (TermId key : pretestAdjustmentMap.keySet()) {
+            LOGGER.info(key + ": " + diseaseIdToPretestProba.get(key));
+        }
         PretestDiseaseProbability pretestProba = PretestDiseaseProbability.of(diseaseIdToPretestProba);
         return AnalysisOptions.builder()
                 .genomeBuild(parseGenomeBuild(getGenomeBuild()))
@@ -247,6 +258,12 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
                 .setGenesWithVar(0) // TODO
                 .setGlobalMode(runConfiguration.globalAnalysisMode)
                 .build();
+    }
+
+    protected DiseaseToGeneAssociations getDisease2GeneAssociations() throws IOException {
+        Path homoSapiensGeneInfo = dataSection.liricalDataDirectory.resolve("homo_sapiens_gene_info.gz");
+        GeneIdentifiers geneIdentifiers = GeneIdentifierLoaders.forHumanGeneInfo(GeneInfoGeneType.DEFAULT).load(homoSapiensGeneInfo);
+        return DiseaseToGeneAssociationLoader.loadDiseaseToGeneAssociations(dataSection.liricalDataDirectory.resolve("mim2gene_medgen"), geneIdentifiers);
     }
 
     protected GenesAndGenotypes readVariants(Path vcfPath, Lirical lirical, GenomeBuild genomeBuild) throws Exception {

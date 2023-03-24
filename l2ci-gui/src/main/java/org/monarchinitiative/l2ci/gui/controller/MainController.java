@@ -550,7 +550,8 @@ public class MainController {
     }
 
     private AnalysisOptions prepareAnalysisOptions() {
-        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.multiplierValuesProperty(), optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
+        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.multiplierValuesProperty(), optionalServices.mondoOmimResources(),
+                optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE, globalCheckbox.isSelected());
         PretestDiseaseProbability pretestProba = PretestDiseaseProbability.of(diseaseIdToPretestProba);
         LiricalResources liricalResources = optionalResources.liricalResources();
         return AnalysisOptions.builder()
