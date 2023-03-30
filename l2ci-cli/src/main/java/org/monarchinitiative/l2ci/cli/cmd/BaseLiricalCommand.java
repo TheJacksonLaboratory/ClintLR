@@ -173,6 +173,13 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
      */
     protected Lirical bootstrapLirical() throws LiricalDataException {
         LOGGER.info("Spooling up Lirical v{}", LIRICAL_VERSION);
+        if (dataSection.exomiserDatabase == null) {
+            return LiricalBuilder.builder(dataSection.liricalDataDirectory)
+                   // .exomiserVariantDbPath(parseGenomeBuild(getGenomeBuild()), dataSection.exomiserDatabase)
+//                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
+                    .build();
+        }
+
 
         return LiricalBuilder.builder(dataSection.liricalDataDirectory)
                 .exomiserVariantDbPath(parseGenomeBuild(getGenomeBuild()), dataSection.exomiserDatabase)

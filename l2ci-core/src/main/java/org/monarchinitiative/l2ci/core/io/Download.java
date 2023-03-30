@@ -39,6 +39,7 @@ public class Download {
             case "HPOA" -> builder.hpDiseaseAnnotations();
             case "MONDO" -> builder.mondoJson();
         }
+       // DO WE NEED THIS builder.geneInfoHuman()
     }
 
     public void run() throws FileDownloadException {
