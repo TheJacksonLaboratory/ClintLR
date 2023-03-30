@@ -138,6 +138,8 @@ public class MainController {
     private TextField pathogenicityTextField;
     @FXML
     private CheckBox variantsCheckbox;
+    @FXML
+    private CheckBox globalCheckbox;
 
     @FXML
     private Label phenopacketLabel;
@@ -174,6 +176,7 @@ public class MainController {
         minDiagnosisSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10));
         pathogenicityTextField.setText(String.valueOf(optionalResources.liricalResources().getPathogenicityThreshold()));
         variantsCheckbox.setSelected(false);
+        globalCheckbox.setSelected(false);
 
         showMondoStats.disableProperty().bind(optionalServices.mondoProperty().isNull());
         copyrightLabel.setText("L4CI, v. " + appProperties.version() + ", © Monarch Initiative 2022");
@@ -472,6 +475,7 @@ public class MainController {
     private void resetMultipliersAction(ActionEvent e) {
         LOGGER.debug("Resetting pretest probability multiplier values");
         mondoTreeView.clearMultipliers();
+        multiplierSlider.setValue(DEFAULT_MULTIPLIER_VALUE);
         e.consume();
     }
 
@@ -522,6 +526,8 @@ public class MainController {
                 analysisOptions,
                 createOutputOptions());
 
+        liricalButton.disableProperty().bind(liricalTask.runningProperty());
+
         liricalTask.setOnSucceeded(e -> {
             Path report = liricalTask.getValue();
             if (Files.isRegularFile(report)) {
@@ -544,7 +550,8 @@ public class MainController {
     }
 
     private AnalysisOptions prepareAnalysisOptions() {
-        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.multiplierValuesProperty(), optionalServices.mondoOmimResources(), optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
+        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.multiplierValuesProperty(), optionalServices.mondoOmimResources(),
+                optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE, globalCheckbox.isSelected());
         PretestDiseaseProbability pretestProba = PretestDiseaseProbability.of(diseaseIdToPretestProba);
         LiricalResources liricalResources = optionalResources.liricalResources();
         return AnalysisOptions.builder()
@@ -554,13 +561,13 @@ public class MainController {
                 .variantDeleteriousnessThreshold(liricalResources.getPathogenicityThreshold())
                 .defaultVariantBackgroundFrequency(liricalResources.getDefaultVariantBackgroundFrequency())
                 .useStrictPenalties(liricalResources.isStrict())
-//                .useGlobal(true) // TODO - evaluate
+                .useGlobal(globalCheckbox.isSelected())
                 .pretestProbability(pretestProba)
                 .disregardDiseaseWithNoDeleteriousVariants(false) // TODO - evaluate
                 .build();
     }
 
-    private OutputOptions createOutputOptions() throws LiricalParseException {
+    private OutputOptions createOutputOptions() {
         double lrThresholdValue = lrThresholdTextFormatter.getValue();
 //        System.out.println(lrThresholdValue);
 

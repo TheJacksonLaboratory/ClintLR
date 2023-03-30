@@ -6,15 +6,20 @@ import org.apache.commons.csv.CSVPrinter;
 import org.monarchinitiative.l2ci.core.OptionalHpoaResource;
 import org.monarchinitiative.l2ci.core.Relation;
 import org.monarchinitiative.l2ci.core.io.HPOParser;
-import org.monarchinitiative.l2ci.core.pretestprob.PretestProbability;
+import org.monarchinitiative.l2ci.core.io.OmimMapIO;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.exception.LiricalException;
 import org.monarchinitiative.lirical.core.io.VariantParser;
 import org.monarchinitiative.lirical.core.model.*;
+import org.monarchinitiative.lirical.core.output.AnalysisResultsMetadata;
+import org.monarchinitiative.lirical.core.output.AnalysisResultsWriter;
+import org.monarchinitiative.lirical.core.output.OutputFormat;
+import org.monarchinitiative.lirical.core.output.OutputOptions;
 import org.monarchinitiative.lirical.core.service.FunctionalVariantAnnotator;
 import org.monarchinitiative.lirical.core.service.HpoTermSanitizer;
 import org.monarchinitiative.lirical.core.service.VariantMetadataService;
+import org.monarchinitiative.lirical.io.LiricalDataException;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImporter;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImporters;
@@ -30,13 +35,13 @@ import picocli.CommandLine;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
-import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.*;
-import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.getParentTerms;
+
 
 /**
  * Benchmark command runs LIRICAL on one or more phenopackets and writes prioritization results into a CSV table.
@@ -51,7 +56,9 @@ import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.getPa
         description = "Benchmark LIRICAL by analyzing a phenopacket (with or without VCF)")
 public class BenchmarkCommand extends BaseLiricalCommand {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkCommand.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkCommand.class);
+
+    protected static final String OMIM_2_MONDO_NAME = "omim2mondo.csv";
 
     @CommandLine.Option(names = {"-p", "--phenopacket"},
             arity = "1..*",
@@ -68,19 +75,17 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     protected String mondoPath;
 
     @CommandLine.Option(names = {"-H", "--hpo"},
-            required = true,
-            description = "Path to HPO Ontolgoy JSON file.")
+            description = "Path to HPO Ontology JSON file.")
     protected String hpoPath;
 
     @CommandLine.Option(names = {"-A", "--hpoa"},
-            required = true,
             description = "Path to phenotype.hpoa annotation JSON file.")
     protected String hpoaPath;
 
     @CommandLine.Option(names = {"-m", "--multiplier"},
             split=",",
             arity = "1..*",
-            description = "Pretest Multiplier value.")
+            description = "Pretest Multiplier value(s).")
     protected List<Double> multipliers;
 
     @CommandLine.Option(names = {"--vcf"},
@@ -91,10 +96,18 @@ public class BenchmarkCommand extends BaseLiricalCommand {
             description = "File containing ranges of terms for each phenopacket.")
     protected Path rangeFilePath;
 
-    @CommandLine.Option(names = {"-o", "--output"},
+    @CommandLine.Option(names = {"-O", "--outputDirectory"},
             required = true,
-            description = "Where to write the benchmark results CSV file. The CSV is compressed if the path has the '.gz' suffix")
-    protected Path outputPath;
+            description = "Where to write the benchmark results files.")
+    protected Path outputDir;
+
+    @CommandLine.Option(names = {"-o", "--outputFilename"},
+            description = "Filename of the benchmark results CSV file. The CSV is compressed if the path has the '.gz' suffix")
+    protected String outputName;
+
+//    @CommandLine.Option(names = {"--html"},
+//            description = "Whether to write out HTML files of the results (default: ${DEFAULT-VALUE})")
+//    protected boolean writeHTML = false;
 
     @CommandLine.Option(names = {"--phenotype-only"},
             description = "Run the benchmark with phenotypes only (default: ${DEFAULT-VALUE})")
@@ -117,7 +130,10 @@ public class BenchmarkCommand extends BaseLiricalCommand {
             File[] files = folder.listFiles();
             assert files != null;
             for (File file : files) {
-                phenopacketPaths.add(file.toPath());
+                BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+                if (basicFileAttributes.isRegularFile() && !basicFileAttributes.isDirectory() && !file.getName().startsWith(".")) {
+                    phenopacketPaths.add(file.toPath());
+                }
             }
         }
         List<String> errors = checkInput();
@@ -130,14 +146,28 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         // 2 - prepare the simulation data shared by all phenopackets.
         List<LiricalVariant> backgroundVariants = readBackgroundVariants(lirical);
         OntologyData ontologyData = loadOntologies();
-        Map<TermId, List<TermId>> omimToMondoMap = makeOmimMap(ontologyData.mondo);
+        Path dataDirectory = Path.of(String.join(File.separator, System.getProperty("user.home"), ".l4ci", "data"));
+        Path omimToMondoPath = dataDirectory.resolve(OMIM_2_MONDO_NAME);
+        Map<TermId, List<TermId>> omim2Mondo;
+        if (Files.exists(omimToMondoPath)) {
+            omim2Mondo = OmimMapIO.read(omimToMondoPath);
+        } else {
+            omim2Mondo = makeOmimMap(ontologyData.mondo);
+        }
 
-        Stream<String> rangeStream = null;
+        // Flip the OMIM to Mondo map
+        Map<TermId, TermId> mondoToOmim = new HashMap<>();
+        for (Map.Entry<TermId, List<TermId>> e : omim2Mondo.entrySet()) {
+            for (TermId mondoId : e.getValue()) {
+                mondoToOmim.put(mondoId, e.getKey());
+            }
+        }
+
         List<String> rangeLines = null;
-        if (new File(rangeFilePath.toString()).isFile()) {
+        if (rangeFilePath != null && Files.isRegularFile(rangeFilePath)) {
             try (InputStream is = Files.newInputStream(rangeFilePath)) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                rangeStream = reader.lines();
+                Stream<String> rangeStream = reader.lines();
                 rangeLines = rangeStream.toList();
                 LOGGER.debug("Read file {}.", rangeFilePath);
             } catch (Exception e) {
@@ -148,32 +178,28 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         if (multipliers != null) {
             for (Double multiplier : multipliers) {
                 HashMap<String, Path> outputPaths = new HashMap<>();
-                String fileName = outputPath.getFileName().toString();
-                String fileExt = fileName.substring(fileName.lastIndexOf("."));
-                Path path = outputPath.getParent();
-                String targetFileName = fileName.substring(0, fileName.lastIndexOf(".")) + "_" + multiplier + fileExt;
-                outputPaths.put("target", Path.of(String.join(File.separator, path.toString(), targetFileName)));
+                String fileExt = outputName.substring(outputName.lastIndexOf("."));
+                String targetFileName = outputName.substring(0, outputName.lastIndexOf(".")) + "_" + multiplier + fileExt;
+                outputPaths.put("target", outputDir.resolve(targetFileName));
                 if (rangeLines != null) {
                     String narrowFileName = targetFileName.substring(0, targetFileName.lastIndexOf(".")) + "_narrow" + fileExt;
-                    outputPaths.put("narrow", Path.of(String.join(File.separator, path.toString(), narrowFileName)));
+                    outputPaths.put("narrow", outputDir.resolve(narrowFileName));
                     String broadFileName = targetFileName.substring(0, targetFileName.lastIndexOf(".")) + "_broad" + fileExt;
-                    outputPaths.put("broad", Path.of(String.join(File.separator, path.toString(), broadFileName)));
+                    outputPaths.put("broad", outputDir.resolve(broadFileName));
                 }
-                runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, multiplier, omimToMondoMap, ontologyData);
+                runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, multiplier, omim2Mondo, ontologyData);
             }
         } else {
             HashMap<String, Path> outputPaths = new HashMap<>();
-            outputPaths.put("target", outputPath);
+            outputPaths.put("target", outputDir.resolve(outputName));
             if (rangeLines != null) {
-                String fileName = outputPath.getFileName().toString();
-                String fileExt = fileName.substring(fileName.lastIndexOf("."));
-                Path path = outputPath.getParent();
-                String narrowFileName = fileName.substring(0, fileName.lastIndexOf(".")) + "_narrow" + fileExt;
-                outputPaths.put("narrow", Path.of(String.join(File.separator, path.toString(), narrowFileName)));
-                String broadFileName = fileName.substring(0, fileName.lastIndexOf(".")) + "_broad" + fileExt;
-                outputPaths.put("broad", Path.of(String.join(File.separator, path.toString(), broadFileName)));
+                String fileExt = outputName.substring(outputName.lastIndexOf("."));
+                String narrowFileName = outputName.substring(0, outputName.lastIndexOf(".")) + "_narrow" + fileExt;
+                outputPaths.put("narrow", outputDir.resolve(narrowFileName));
+                String broadFileName = outputName.substring(0, outputName.lastIndexOf(".")) + "_broad" + fileExt;
+                outputPaths.put("broad", outputDir.resolve(broadFileName));
             }
-            runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, 1.0, omimToMondoMap, ontologyData);
+            runAnalysis(lirical, backgroundVariants, outputPaths, rangeLines, 0.0, omim2Mondo, ontologyData);
         }
         reportElapsedTime(start, System.currentTimeMillis());
         return 0;
@@ -196,7 +222,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     }
 
     protected void runAnalysis(Lirical lirical, List<LiricalVariant> backgroundVariants, HashMap<String, Path> outputPaths, List<String> rangeLines, Double multiplier, Map<TermId, List<TermId>> omimToMondoMap, OntologyData ontologyData) throws Exception {
-        String[] types = {"target", "broad", "narrow"};
+        String[] types = {"target", "narrow", "broad"};
         Set<TermId> omimIDs = omimToMondoMap.keySet();
         for (String type : types) {
             if (outputPaths.get(type) != null) {
@@ -206,6 +232,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                             "is_causal", "disease_id", "post_test_proba", "LR", "numerator", "denominator"); // header
 
                     for (Path phenopacketPath : phenopacketPaths) {
+                        System.out.println("Range Filepath: " + rangeFilePath + ", " + rangeLines.get(phenopacketPaths.indexOf(phenopacketPath)));
                         System.out.println(phenopacketPaths.indexOf(phenopacketPath) + " of " + phenopacketPaths.size() + ": " + type + " " + multiplier + " " + phenopacketPath);
                         TargetDiseases targetDiseases;
                         if (rangeLines != null) {
@@ -218,21 +245,30 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                             case "narrow" -> selectedDisease = targetDiseases.narrowId();
                             case "broad" -> selectedDisease = targetDiseases.broadId();
                         }
-                        Map<TermId, TermId> selectedDiseases = makeSelectedDiseasesMap(omimToMondoMap, selectedDisease.mondoId, ontologyData.mondo, omimIDs);
-                        Map<TermId, Double> pretestMap = makeSelectedDiseasePretestMap(omimToMondoMap, selectedDiseases, multiplier, ontologyData.optionalHpoaResource);
-                        AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap);
-                        // 3 - prepare benchmark data per phenopacket
-                        BenchmarkData benchmarkData = prepareBenchmarkData(lirical, backgroundVariants, phenopacketPath);
+                        if (selectedDisease != null) {
+                            Map<TermId, TermId> selectedDiseases = makeSelectedDiseasesMap(omimToMondoMap, selectedDisease.mondoId, ontologyData.mondo, omimIDs);
+                            Map<TermId, Double> pretestMap = makeSelectedDiseasePretestMap(selectedDiseases, multiplier);
+                            AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap, omimToMondoMap);
+                            // 3 - prepare benchmark data per phenopacket
+                            BenchmarkData benchmarkData = prepareBenchmarkData(lirical, backgroundVariants, phenopacketPath);
+                            String sampleId = benchmarkData.analysisData().sampleId();
 
-                        // 4 - run the analysis.
-                        LOGGER.info("Starting the analysis: {}", analysisOptions);
-                        LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
-                        AnalysisResults results = analysisRunner.run(benchmarkData.analysisData(), analysisOptions);
+                            // 4 - run the analysis.
+                            LOGGER.info("Starting the analysis: {}", analysisOptions);
+                            LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
+                            AnalysisResults results = analysisRunner.run(benchmarkData.analysisData(), analysisOptions);
 
-                        // 5 - summarize the results.
-                        String phenopacketName = phenopacketPath.toFile().getName();
-                        String backgroundVcf = vcfPath == null ? "" : vcfPath.toFile().getName();
-                        writeResults(phenopacketName, backgroundVcf, selectedDisease, selectedDiseases, multiplier, pretestMap, benchmarkData, results, printer);
+                            // 5 - summarize the results.
+                            String phenopacketName = phenopacketPath.toFile().getName();
+                            String backgroundVcf = vcfPath == null ? "" : vcfPath.toFile().getName();
+                            writeResults(phenopacketName, backgroundVcf, selectedDisease, selectedDiseases, multiplier, pretestMap, benchmarkData, results, printer);
+
+                            // Write out the results into HTML file, if desired.
+//                            if (writeHTML) {
+//                                writeHTMLFile(selectedDisease, multiplier, phenopacketName, type,
+//                                        lirical, sampleId, benchmarkData, results);
+//                            }
+                        }
                     }
                 }
                 System.out.println("Finished " + type);
@@ -241,9 +277,9 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         }
     }
 
-    private record OntologyData(Ontology mondo, Ontology hpo, OptionalHpoaResource optionalHpoaResource) {}
+    protected record OntologyData(Ontology mondo, Ontology hpo, OptionalHpoaResource optionalHpoaResource) {}
 
-    OntologyData loadOntologies() {
+    protected OntologyData loadOntologies() {
         String[] paths = {mondoPath, hpoPath, hpoaPath};
         String[] types = {"Mondo", "HPO", "HPOA"};
         Ontology mondo = null;
@@ -285,8 +321,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     }
 
 
-    private record DiseaseId(TermId mondoId, TermId omimId) {}
-    static DiseaseId getSelectedDisease(Map<TermId, List<TermId>> omimToMondoMap, Path phenopacketPath) throws Exception {
+    protected record DiseaseId(TermId mondoId, TermId omimId) {}
+    protected static DiseaseId getSelectedDisease(Map<TermId, List<TermId>> omimToMondoMap, Path phenopacketPath) throws Exception {
         PhenopacketData data = readPhenopacketData(phenopacketPath);
         List<TermId> diseaseIds = data.getDiseaseIds();
         TermId omimId = diseaseIds.get(0);
@@ -297,16 +333,16 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return new DiseaseId(mondoId, omimId);
     }
 
-    private record TargetDiseases(DiseaseId targetId, DiseaseId narrowId, DiseaseId broadId) {}
-    static TargetDiseases getSelectedDiseases(Map<TermId, List<TermId>> omimToMondoMap, Path phenopacketPath, List<String> rangeLines) throws Exception {
+    protected record TargetDiseases(DiseaseId targetId, DiseaseId narrowId, DiseaseId broadId) {}
+    protected static TargetDiseases getSelectedDiseases(Map<TermId, List<TermId>> omimToMondoMap, Path phenopacketPath, List<String> rangeLines) throws Exception {
         String phenopacketName = phenopacketPath.getFileName().toString();
         List<String> ids = new ArrayList<>();
         Term targetOmimTerm = null;
         for (String line : rangeLines) {
             if (line.contains(phenopacketName)) {
-                String[] items = line.split(",");
+                String[] items = line.split("\t");
                 for (String item : items) {
-                    if (item.contains("MONDO")) {
+                    if (item.contains("MONDO") && !item.contains("TO")) {
                         ids.add(item);
                     } else if (item.contains("OMIM")) {
                         targetOmimTerm = Term.of(item, item);
@@ -323,8 +359,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 TermId omimId = null;
                 TermId mondoId = Term.of(id, id).id();
                 if (ids.indexOf(id) == 0) {
-                    assert targetOmimTerm != null;
-                    omimId = targetOmimTerm.id();
+                    if (targetOmimTerm != null)
+                        omimId = targetOmimTerm.id();
                 } else {
                     for (TermId omimIdKey : omimToMondoMap.keySet()) {
                         List<TermId> mondoIds = omimToMondoMap.get(omimIdKey);
@@ -335,54 +371,52 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 }
                 diseaseIds.add(new DiseaseId(mondoId, omimId));
             }
+            DiseaseId narrowId = null;
+            DiseaseId broadId = null;
             DiseaseId targetId = diseaseIds.get(0);
-            DiseaseId narrowId = diseaseIds.get(1);
-            DiseaseId broadId = diseaseIds.get(2);
+            if (diseaseIds.size() > 1) {
+                narrowId = diseaseIds.get(1);
+            }
+            if (diseaseIds.size() > 2) {
+                broadId = diseaseIds.get(2);
+            }
+
 
             return new TargetDiseases(targetId, narrowId, broadId);
         }
     }
 
-    Map<TermId, Double> makeSelectedDiseasePretestMap(Map<TermId, List<TermId>> omimToMondoMap, Map<TermId, TermId> selectedTerms, double adjProb, OptionalHpoaResource optionalHpoaResource) {
+    protected Map<TermId, Double> makeSelectedDiseasePretestMap(Map<TermId, TermId> selectedTerms, double adjProb) {
         Map<TermId, Double> diseaseMap = new HashMap<>();
-        for (TermId omimId : omimToMondoMap.keySet()) {
-            diseaseMap.put(omimId, 1.0);
+        for (TermId omimId : selectedTerms.keySet()) {
+            diseaseMap.put(omimId, adjProb);
         }
-        if (optionalHpoaResource != null) {
-            for (TermId termId : optionalHpoaResource.getId2diseaseModelMap().keySet()) {
-                diseaseMap.put(termId, 1.0);
-            }
-        }
-        return PretestProbability.of(diseaseMap, selectedTerms.keySet(), adjProb, new ArrayList<>());
+        return diseaseMap;
     }
 
-    private Map<TermId, List<TermId>> makeOmimMap(Ontology mondo) {
-        Map<TermId, List<TermId>> omimToMondoMap = new HashMap<>();
+    protected Map<TermId, List<TermId>> makeOmimMap(Ontology mondo) {
+        Map<TermId, List<TermId>> builder = new HashMap<>();
         for (Term mondoTerm : mondo.getTerms()) {
-                for (Dbxref ref : mondoTerm.getXrefs()) {
-                    String refName = ref.getName();
-                    if (refName.contains("OMIM:")) {
-                        Term omimTerm = Term.of(refName, refName);
-                        TermId omimID = omimTerm.id();
-                        if (!omimToMondoMap.containsKey(omimID)) {
-                            omimToMondoMap.put(omimID, new ArrayList<>());
-                        }
-                        List<TermId> termList = omimToMondoMap.get(omimID);
-                        termList.add(mondoTerm.id());
-                        omimToMondoMap.put(omimID, termList);
-                        break;
-                    }
+            for (Dbxref ref : mondoTerm.getXrefs()) {
+                String refName = ref.getName();
+                if (refName.startsWith("OMIM:")) {
+                    TermId omimId = TermId.of(refName);
+                    builder.computeIfAbsent(omimId, i -> new ArrayList<>())
+                            .add(mondoTerm.id());
+                    break;
                 }
             }
-        return omimToMondoMap;
+        }
+        return Map.copyOf(builder);
     }
 
-    Map<TermId, TermId> makeSelectedDiseasesMap(Map<TermId, List<TermId>> omimToMondoMap, TermId mondoId, Ontology mondo, Set<TermId> omimIDs) {
+    Map<TermId, TermId> makeSelectedDiseasesMap(Map<TermId, List<TermId>> omimToMondoMap, TermId mondoId,
+                                                Ontology mondo, Set<TermId> omimIDs) {
         HashMap<TermId, TermId> selectedTerms = new HashMap<>();
         for (TermId omimID : omimIDs) {
             List<TermId> mondoIDs = omimToMondoMap.get(omimID);
             if (mondoIDs.contains(mondoId)) {
-                Set<Term> descendents = getTermRelations(mondoId, Relation.DESCENDENT, mondo);
+                Set<Term> descendents = Relation.getTermRelations(mondo, mondoId, Relation.DESCENDENT);
                 descendents.forEach(d -> System.out.print(d.id() + " "));
                 for (Term descendent : descendents) {
                     for (TermId omimID2 : omimIDs) {
@@ -398,67 +432,35 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return selectedTerms;
     }
 
-    /**
-     * Get the relations of "term"
-     *
-     * @param termId Mondo Term ID of interest
-     * @param relation Relation of interest (ancestor, descendent, child, parent)
-     * @return relations of term (not including term itself).
-     */
-    private Set<Term> getTermRelations(TermId termId, Relation relation, Ontology mondo) {
-        Set<TermId> relationIds;
-        switch (relation) {
-            case ANCESTOR:
-                relationIds = getAncestorTerms(mondo, termId, false);
-                break;
-            case DESCENDENT:
-                relationIds = getDescendents(mondo, termId);
-                break;
-            case CHILD:
-                relationIds = getChildTerms(mondo, termId, false);
-                break;
-            case PARENT:
-                relationIds = getParentTerms(mondo, termId, false);
-                break;
-            default:
-                return Set.of();
-        }
-        Set<Term> relations = new HashSet<>();
-        relationIds.forEach(tid -> {
-            Term ht = mondo.getTermMap().get(tid);
-            relations.add(ht);
-        });
-        return relations;
-    }
-
     @Override
     protected String getGenomeBuild() {
         return genomeBuild;
     }
 
-    private List<LiricalVariant> readBackgroundVariants(Lirical lirical) throws LiricalParseException {
+    private List<LiricalVariant> readBackgroundVariants(Lirical lirical) throws LiricalDataException {
         if (vcfPath == null) {
             LOGGER.info("Path to VCF file was not provided.");
             return List.of();
         }
 
-        try (VariantParser variantParser = lirical.variantParserFactory().forPath(vcfPath)) {
-            // Read variants
+        List<LiricalVariant> variants = new ArrayList<>();
+        // Read variants
+        Optional<VariantParser> optionalVariantParser = lirical.variantParserFactory().forPath(vcfPath, parseGenomeBuild(getGenomeBuild()), runConfiguration.transcriptDb);
+        if (optionalVariantParser.isPresent()) {
             LOGGER.info("Reading background variants from {}.", vcfPath.toAbsolutePath());
+            VariantParser variantParser = optionalVariantParser.get();
             ProgressReporter progressReporter = new ProgressReporter(10_000);
-            List<LiricalVariant> variants = variantParser.variantStream()
+            variants = variantParser.variantStream()
                     .peek(v -> progressReporter.log())
                     .toList();
             progressReporter.summarize();
-            return variants;
-        } catch (Exception e) {
-            throw new LiricalParseException(e);
         }
+        return variants;
     }
 
     private BenchmarkData prepareBenchmarkData(Lirical lirical,
                                                List<LiricalVariant> backgroundVariants,
-                                               Path phenopacketPath) throws LiricalParseException {
+                                               Path phenopacketPath) throws LiricalParseException, LiricalDataException {
         LOGGER.info("Reading phenopacket from {}.", phenopacketPath.toAbsolutePath());
         PhenopacketData data = readPhenopacketData(phenopacketPath);
 
@@ -477,8 +479,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 genes = GenesAndGenotypes.empty();
             else {
                 // Annotate the causal variants found in the phenopacket.
-                FunctionalVariantAnnotator annotator = lirical.functionalVariantAnnotator();
-                VariantMetadataService metadataService = lirical.variantMetadataService();
+                FunctionalVariantAnnotator annotator = getFunctionalVariantAnnotator(lirical, parseGenomeBuild(getGenomeBuild())); //lirical.functionalVariantAnnotator();
+                VariantMetadataService metadataService = lirical.variantMetadataServiceFactory().getVariantMetadataService(parseGenomeBuild(getGenomeBuild())).get();
                 List<LiricalVariant> backgroundAndCausal = new ArrayList<>(backgroundVariants.size() + 10);
                 for (GenotypedVariant variant : data.getVariants()) {
                     List<TranscriptAnnotation> annotations = annotator.annotate(variant.variant());
@@ -508,7 +510,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return new BenchmarkData(data.getDiseaseIds().get(0), analysisData);
     }
 
-    private static PhenopacketData readPhenopacketData(Path phenopacketPath) throws LiricalParseException {
+    protected static PhenopacketData readPhenopacketData(Path phenopacketPath) throws LiricalParseException {
         PhenopacketData data = null;
         try (InputStream is = Files.newInputStream(phenopacketPath)) {
             PhenopacketImporter v2 = PhenopacketImporters.v2();
@@ -585,5 +587,33 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     }
 
     private record BenchmarkData(TermId diseaseId, AnalysisData analysisData) {
+    }
+
+    private void writeHTMLFile(DiseaseId selectedDisease, double multiplier, String phenopacketName, String type,
+                                 Lirical lirical, String sampleId, BenchmarkData benchmarkData,
+                                 AnalysisResults results) throws Exception {
+        TermId diseaseId = selectedDisease.mondoId() == null ? selectedDisease.omimId() : selectedDisease.mondoId();
+        double multiplierValue = multiplier; //!selectedDiseases.containsKey(diseaseId) ? 1 : multiplier;
+        if (runConfiguration.globalAnalysisMode) {
+            multiplierValue = 0;
+        }
+        String diseaseIdString = diseaseId == null ? "NA" : diseaseId.toString();
+        String htmlFilename = String.join("_",
+                phenopacketName.replace(".json", ""),
+                type,
+                diseaseIdString.replace(":", ""),
+                "multiplier",
+                Double.toString(multiplierValue));
+        OutputOptions outputOptions = createOutputOptions(outputDir, htmlFilename);
+        GenesAndGenotypes gene2Genotypes = benchmarkData.analysisData.genes();
+        AnalysisResultsMetadata metadata = prepareAnalysisResultsMetadata(gene2Genotypes, lirical, sampleId);
+        Optional<AnalysisResultsWriter> htmlWriter = lirical.analysisResultsWriterFactory()
+                .getWriter(OutputFormat.HTML);
+        if (htmlWriter.isPresent()) {
+            htmlWriter.get()
+                    .process(benchmarkData.analysisData(), results, metadata, outputOptions);
+            // Finally, return path where the resulting HTML should land at.
+            outputDir.resolve(htmlFilename + ".html");
+        }
     }
 }

@@ -1,6 +1,7 @@
 package org.monarchinitiative.l2ci.cli.cmd;
 
-import org.monarchinitiative.lirical.configuration.GenotypeLrProperties;
+import org.monarchinitiative.l2ci.core.LiricalAnalysis;
+import org.monarchinitiative.l2ci.core.pretestprob.PretestProbability;
 import org.monarchinitiative.lirical.configuration.LiricalBuilder;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.AnalysisOptions;
@@ -11,9 +12,25 @@ import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseasePro
 import org.monarchinitiative.lirical.core.io.VariantParser;
 import org.monarchinitiative.lirical.core.io.VariantParserFactory;
 import org.monarchinitiative.lirical.core.model.*;
+import org.monarchinitiative.lirical.core.output.AnalysisResultsMetadata;
+import org.monarchinitiative.lirical.core.output.LrThreshold;
+import org.monarchinitiative.lirical.core.output.MinDiagnosisCount;
+import org.monarchinitiative.lirical.core.output.OutputOptions;
+import org.monarchinitiative.lirical.core.service.FunctionalVariantAnnotator;
+import org.monarchinitiative.lirical.core.service.PhenotypeService;
 import org.monarchinitiative.lirical.io.LiricalDataException;
+import org.monarchinitiative.lirical.io.LiricalDataResolver;
+import org.monarchinitiative.lirical.io.service.JannovarFunctionalVariantAnnotatorService;
+import org.monarchinitiative.phenol.annotations.assoc.DiseaseToGeneAssociationLoader;
+import org.monarchinitiative.phenol.annotations.assoc.GeneIdentifierLoaders;
+import org.monarchinitiative.phenol.annotations.assoc.GeneInfoGeneType;
 import org.monarchinitiative.phenol.annotations.formats.GeneIdentifier;
+import org.monarchinitiative.phenol.annotations.formats.GeneIdentifiers;
+import org.monarchinitiative.phenol.annotations.formats.hpo.DiseaseToGeneAssociation;
+import org.monarchinitiative.phenol.annotations.formats.hpo.DiseaseToGeneAssociations;
+import org.monarchinitiative.phenol.annotations.formats.hpo.HpoAssociationData;
 import org.monarchinitiative.phenol.annotations.io.hpo.DiseaseDatabase;
+import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +41,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -39,6 +59,8 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
     protected static final String LIRICAL_VERSION = PROPERTIES.getProperty("lirical.version", "unknown version");
 
     private static final String LIRICAL_BANNER = readBanner();
+
+    private static final String UNKNOWN_VERSION_PLACEHOLDER = "UNKNOWN VERSION";
 
     private static String readBanner() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(BaseLiricalCommand.class.getResourceAsStream("/banner.txt")), StandardCharsets.UTF_8))) {
@@ -151,26 +173,23 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
      */
     protected Lirical bootstrapLirical() throws LiricalDataException {
         LOGGER.info("Spooling up Lirical v{}", LIRICAL_VERSION);
-        GenomeBuild genomeBuild = parseGenomeBuild(getGenomeBuild());
 
-        GenotypeLrProperties genotypeLrProperties = new GenotypeLrProperties(runConfiguration.pathogenicityThreshold, runConfiguration.defaultVariantBackgroundFrequency, runConfiguration.strict);
         return LiricalBuilder.builder(dataSection.liricalDataDirectory)
-                .exomiserVariantDatabase(dataSection.exomiserDatabase)
-                .genomeBuild(genomeBuild)
-                .backgroundVariantFrequency(dataSection.backgroundFrequencyFile)
-//                .setDiseaseDatabases(runConfiguration.useOrphanet
-//                        ? DiseaseDatabase.allKnownDiseaseDatabases()
-//                        : Set.of(DiseaseDatabase.OMIM, DiseaseDatabase.DECIPHER))
-                .setDiseaseDatabases(Set.of(DiseaseDatabase.OMIM))
-                .genotypeLrProperties(genotypeLrProperties)
-//                .transcriptDatabase(runConfiguration.transcriptDb)
-                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
+                .exomiserVariantDbPath(parseGenomeBuild(getGenomeBuild()), dataSection.exomiserDatabase)
+//                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
                 .build();
+    }
+
+    protected FunctionalVariantAnnotator getFunctionalVariantAnnotator(Lirical lirical, GenomeBuild genomeBuild) throws LiricalDataException {
+        LiricalDataResolver liricalDataResolver = LiricalDataResolver.of(dataSection.liricalDataDirectory);
+        PhenotypeService phenotypeService = lirical.phenotypeService();
+        JannovarFunctionalVariantAnnotatorService jannovarService = JannovarFunctionalVariantAnnotatorService.of(liricalDataResolver, phenotypeService.associationData().getGeneIdentifiers());
+        return jannovarService.getFunctionalAnnotator(genomeBuild, runConfiguration.transcriptDb).get();
     }
 
     protected abstract String getGenomeBuild();
 
-    private GenomeBuild parseGenomeBuild(String genomeBuild) throws LiricalDataException {
+    protected GenomeBuild parseGenomeBuild(String genomeBuild) throws LiricalDataException {
         Optional<GenomeBuild> genomeBuildOptional = GenomeBuild.parse(genomeBuild);
         if (genomeBuildOptional.isEmpty())
             throw new LiricalDataException("Unknown genome build: '" + genomeBuild + "'");
@@ -186,6 +205,81 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
             pretestDiseaseProbability = PretestDiseaseProbability.of(preTestMap);
         }
         return AnalysisOptions.of(runConfiguration.globalAnalysisMode, pretestDiseaseProbability);
+    }
+
+    protected AnalysisOptions prepareAnalysisOptions(Lirical lirical, Map<TermId, Double> pretestAdjustmentMap,
+                                                   Map<TermId, List<TermId>> omimToMondoMap) throws LiricalDataException {
+        Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(pretestAdjustmentMap, omimToMondoMap, lirical.phenotypeService().diseases().diseaseIds(), 1.0);
+        for (TermId key : pretestAdjustmentMap.keySet()) {
+            LOGGER.info(key + ": " + diseaseIdToPretestProba.get(key));
+        }
+        PretestDiseaseProbability pretestProba = PretestDiseaseProbability.of(diseaseIdToPretestProba);
+        return AnalysisOptions.builder()
+                .genomeBuild(parseGenomeBuild(getGenomeBuild()))
+                .transcriptDatabase(runConfiguration.transcriptDb)
+                .setDiseaseDatabases(List.of(DiseaseDatabase.OMIM, DiseaseDatabase.DECIPHER))
+                .variantDeleteriousnessThreshold(runConfiguration.pathogenicityThreshold)
+                .defaultVariantBackgroundFrequency(runConfiguration.defaultVariantBackgroundFrequency)
+                .useStrictPenalties(runConfiguration.strict)
+                .useGlobal(runConfiguration.globalAnalysisMode)
+                .pretestProbability(pretestProba)
+                .disregardDiseaseWithNoDeleteriousVariants(false)
+                .build();
+    }
+
+    protected OutputOptions createOutputOptions(Path resultsDir, String outfilePrefix) {
+        double lrThresholdValue = 0.05;
+        LrThreshold lrThreshold = LrThreshold.setToUserDefinedThreshold(lrThresholdValue);
+
+        MinDiagnosisCount minDiagnosisCount = MinDiagnosisCount.setToUserDefinedMinCount(10);
+        float pathogenicityThreshold = runConfiguration.pathogenicityThreshold;
+        boolean displayAllVariants = false;
+
+        return new OutputOptions(lrThreshold,
+                minDiagnosisCount,
+                pathogenicityThreshold,
+                displayAllVariants,
+                resultsDir,
+                outfilePrefix);
+    }
+
+    protected AnalysisResultsMetadata prepareAnalysisResultsMetadata(GenesAndGenotypes gene2Genotypes, Lirical lirical, String sampleId) throws Exception {
+        FilteringStats filteringStats = gene2Genotypes.computeFilteringStats();
+        return AnalysisResultsMetadata.builder()
+                .setLiricalVersion(lirical.version().orElse(UNKNOWN_VERSION_PLACEHOLDER))
+                .setHpoVersion(lirical.phenotypeService().hpo().version().orElse(UNKNOWN_VERSION_PLACEHOLDER))
+                .setTranscriptDatabase(runConfiguration.transcriptDb.toString())
+                .setLiricalPath(dataSection.liricalDataDirectory.toAbsolutePath().toString())
+                .setExomiserPath(dataSection.exomiserDatabase.toAbsolutePath().toString())
+                .setAnalysisDate(getTodaysDate())
+                .setSampleName(sampleId)
+                .setnGoodQualityVariants(filteringStats.nGoodQualityVariants())
+                .setnFilteredVariants(filteringStats.nFilteredVariants())
+                .setGenesWithVar(0) // TODO
+                .setGlobalMode(runConfiguration.globalAnalysisMode)
+                .build();
+    }
+
+    protected DiseaseToGeneAssociations getDisease2GeneAssociations() throws IOException {
+        Path homoSapiensGeneInfo = dataSection.liricalDataDirectory.resolve("homo_sapiens_gene_info.gz");
+        GeneIdentifiers geneIdentifiers = GeneIdentifierLoaders.forHumanGeneInfo(GeneInfoGeneType.DEFAULT).load(homoSapiensGeneInfo);
+        return DiseaseToGeneAssociationLoader.loadDiseaseToGeneAssociations(dataSection.liricalDataDirectory.resolve("mim2gene_medgen"), geneIdentifiers);
+    }
+
+    protected GenesAndGenotypes readVariants(Path vcfPath, Lirical lirical, GenomeBuild genomeBuild) throws Exception {
+        if (vcfPath != null && Files.isRegularFile(vcfPath)) {
+            Optional<VariantParser> variantParser = lirical.variantParserFactory()
+                    .forPath(vcfPath, genomeBuild, runConfiguration.transcriptDb);
+            if (variantParser.isPresent()) {
+                List<LiricalVariant> variants;
+                try (VariantParser parser = variantParser.get()) {
+                    variants = parser.variantStream()
+                            .toList();
+                }
+                return prepareGenesAndGenotypes(variants);
+            }
+        }
+        return GenesAndGenotypes.empty();
     }
 
     protected static GenesAndGenotypes readVariantsFromVcfFile(String sampleId,
@@ -250,6 +344,15 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
         } else {
             LOGGER.info("Elapsed time " + (stopTime - startTime) * (1.0) / 1000 + " seconds.");
         }
+    }
+
+    /**
+     * @return a string with today's date in the format yyyy/MM/dd.
+     */
+    private static String getTodaysDate() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+        Date date = new Date();
+        return dateFormat.format(date);
     }
 
 }
