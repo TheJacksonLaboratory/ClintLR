@@ -268,7 +268,8 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
     }
 
     protected DiseaseToGeneAssociations getDisease2GeneAssociations() throws IOException {
-        Path homoSapiensGeneInfo = dataSection.liricalDataDirectory.resolve("homo_sapiens_gene_info.gz");
+        String geneInfoFilename = Files.exists(dataSection.liricalDataDirectory.resolve("homo_sapiens.gene_info.gz")) ? "homo_sapiens.gene_info.gz" : "Homo_sapiens.gene_info.gz";
+        Path homoSapiensGeneInfo = dataSection.liricalDataDirectory.resolve(geneInfoFilename);
         GeneIdentifiers geneIdentifiers = GeneIdentifierLoaders.forHumanGeneInfo(GeneInfoGeneType.DEFAULT).load(homoSapiensGeneInfo);
         return DiseaseToGeneAssociationLoader.loadDiseaseToGeneAssociations(dataSection.liricalDataDirectory.resolve("mim2gene_medgen"), geneIdentifiers);
     }

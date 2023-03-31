@@ -1,4 +1,4 @@
-import argparse, os, sys
+import argparse, os, sys, glob
 
 
 # this is the relative location of the jar file that gets built by mvn package
@@ -49,26 +49,50 @@ def parseArgs():
 
 def run_l4ci_and_extract_rank(input_phenopacket, correct_diagnosis):
     # todo - make tempfile
-	outfile_name = input_phenopacket + "-results.tsv"
-	l4ci_jar=os.path.abspath('../l2ci-cli/target/l2ci-cli-0.0.1.jar')
-	genes_file='scripts/bbs_genes.txt'
-	mondo_path = os.path.abspath('../data/mondo.json')
-	data = "/Users/robinp/.l4ci/data/lirical"
-	arg_list = ["java", "-jar", l4ci_jar, "genes", "--mondo", mondo_path, "-d", data, "-O", ".", "--genes", genes_file, "--phenopacket", input_phenopacket, "-o", outfile_name, "--phenotype-only"]
-	command = " ".join(arg_list)
-	print(command)
-	retval = os.system(command)
-	print(f"cmd returned {retval}")
-    
-	inpath = outfile_name
-	with open(inpath) as f:
-		for line in f:
-			print(line)
+    homeDir = os.path.expanduser("~")
+    outfile_path = os.path.join(homeDir, "test")
+    outfile_name = os.path.join(outfile_path, "test_results")
+    l4ci_jar=os.path.abspath('./l2ci-cli/target/l2ci-cli-0.0.1.jar')
+    genes_file='scripts/bbs_genes.txt'
+    mondo_path = os.path.abspath('./data/mondo.json')
+    data = os.path.abspath("./data")
+    exomiser = os.path.join(homeDir, "Exomiser/2109_hg19/2109_hg19/2109_hg19_variants.mv.db")
+    assembly = "hg19"
+    multiplier = "0,5,10"
+    arg_list = ["java", "-jar", l4ci_jar, "genes", "--mondo", mondo_path, "-d", data, "-e", exomiser, "--assembly", assembly,
+    "-O", outfile_path, "--genes", genes_file, "-B", input_phenopacket, "--phenotype-only", "-m", multiplier]
+    command = " ".join(arg_list)
+    print(command)
+    retval = os.system(command)
+    print(f"cmd returned {retval}")
+
+    inpath = ".".join([outfile_name, "tsv"])
+    with open(inpath, 'w') as f:
+	    f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "geneFile"]))
+	    for file in sorted(glob.glob("*.tsv")):
+	        if not file == outfile_name:
+	            with open(file) as pf:
+	                fileName = os.path.basename(pf.name)
+	                phenopacketName = fileName.split("target")[0][:-1] if "target" in fileName else fileName.split("genes")[0][:-1]
+	                pretestAdjustment = fileName.split("multiplier")[1][1:-4]
+	                targetOmim = [correct_diagnosis[key] for key in correct_diagnosis.keys() if key in phenopacketName]
+	                targetLine = [line for line in pf if targetOmim[0] in line]
+	                targetItems = targetLine[0].split("\t")
+	                rank = targetItems[0]
+	                diseaseId = targetItems[2]
+	                diseaseLabel = targetItems[1]
+	                pretestProb = targetItems[3]
+	                posttestProb = targetItems[4]
+	                genesFile = genes_file if "genes" in file else "N/A"
+	                f.write("\n")
+	                f.write("\t".join([phenopacketName, diseaseId, diseaseLabel, rank, pretestAdjustment, pretestProb, posttestProb, genesFile]))
+    print("Wrote results to: " + inpath)
 
 
-
-ppak = "/Users/robinp/Downloads/phenopackets/Inlora-2017-APTX-V-3.json"
-right_dx = "MONDO:0008842"
+homeDir = os.path.expanduser("~")
+ppak = os.path.join(homeDir, "phenopackets/Bardet_Biedel_Syndrome/")
+# right_dx = "OMIM:209900" #"MONDO:0008842"
+right_dx = {"Ajmal": "OMIM:209900", "Bee": "OMIM:615981", "Imani": "OMIM:615983", "Li": "OMIM:615982"}
 
 run_l4ci_and_extract_rank(input_phenopacket=ppak, correct_diagnosis=right_dx)
 

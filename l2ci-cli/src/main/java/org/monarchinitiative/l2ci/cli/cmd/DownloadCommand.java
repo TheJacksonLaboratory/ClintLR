@@ -28,7 +28,7 @@ public class DownloadCommand implements Callable<Integer>{
     public boolean overwrite;
 
     @Override
-    public Integer call() throws FileDownloadException {
+    public Integer call() throws Exception {
         String homeDir = new File(".").getAbsolutePath();
         String path = String.join(File.separator, homeDir.substring(0, homeDir.length() - 2), datadir);
         logger.info(String.format("Download resource files to %s", path));

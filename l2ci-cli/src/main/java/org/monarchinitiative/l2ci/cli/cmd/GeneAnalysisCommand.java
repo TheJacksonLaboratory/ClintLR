@@ -178,12 +178,17 @@ public class GeneAnalysisCommand extends BatchAnalysisCommand {
                     multiplierValue = 0;
                 }
                 String diseaseIdString = diseaseId == null ? "NA" : diseaseId.toString();
-                String outFilename = String.join("_",
-                        phenopacketName.replace(".json", ""),
-                        type,
-                        diseaseIdString.replace(":", ""),
-                        "multiplier",
-                        Double.toString(multiplierValue));
+                String outFilename;
+                if (outputName != null) {
+                    outFilename = outputName;
+                } else {
+                    outFilename = String.join("_",
+                            phenopacketName.replace(".json", ""),
+                            type,
+                            diseaseIdString.replace(":", ""),
+                            "multiplier",
+                            Double.toString(multiplierValue));
+                }
                 AnalysisResultsMetadata metadata = prepareAnalysisResultsMetadata(gene2Genotypes, lirical, sampleId);
                 writeResultsToFile(lirical, OutputFormat.parse(outputFormatArg), analysisData, results, metadata, outFilename);
             }
