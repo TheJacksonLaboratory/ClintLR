@@ -89,8 +89,9 @@ def run_l4ci_and_extract_rank(input_phenopacket, correct_diagnosis):
     print("Wrote results to: " + inpath)
 
 
-homeDir = os.path.expanduser("~")
-ppak = os.path.join(homeDir, "phenopackets/Bardet_Biedel_Syndrome/")
+#homeDir = os.path.expanduser("~")
+#ppak = os.path.join(homeDir, "phenopackets/Bardet_Biedel_Syndrome/")
+ppak = 'scripts/test_data'
 # right_dx = "OMIM:209900" #"MONDO:0008842"
 right_dx = {"Ajmal": "OMIM:209900", "Bee": "OMIM:615981", "Imani": "OMIM:615983", "Li": "OMIM:615982"}
 
