@@ -22,6 +22,7 @@ jobs:
 
       - name: Build documentation.
         run: |
+          cd docs/
           sphinx-build -b html . _build
           touch _build/.nojekyll
 
