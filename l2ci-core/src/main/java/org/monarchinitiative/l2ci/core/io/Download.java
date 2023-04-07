@@ -77,8 +77,8 @@ public class Download {
             try (InputStream is = new GZIPInputStream(new BufferedInputStream(Files.newInputStream(localGzippedMondoJson)))) {
                 if (overwrite) {
                     Files.deleteIfExists(target);
-                    Files.copy(is, target);
                 }
+                Files.copy(is, target);
             }
             Files.deleteIfExists(localGzippedMondoJson);
         }
