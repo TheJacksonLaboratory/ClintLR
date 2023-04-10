@@ -8,8 +8,9 @@ from google.protobuf.json_format import MessageToJson, Parse
 # this is the location of the jar file that gets built by mvn package
 scriptParent = os.path.dirname(sys.argv[0])
 parentPath = os.path.abspath(os.path.dirname(scriptParent))
-DEFAULT_L4CI_JAR=os.path.join(parentPath, 'l2ci-cli', 'target', 'l2ci-cli-0.0.1.jar')
-DEFAULT_DATA_DIR=os.path.join(parentPath, 'data')
+grandparentPath = os.path.abspath(os.path.dirname(parentPath))
+DEFAULT_L4CI_JAR=os.path.join(grandparentPath, 'l2ci-cli', 'target', 'L4CI.jar')
+DEFAULT_DATA_DIR=os.path.join(grandparentPath, 'data')
 DEFAULT_OUT_DIR=os.path.abspath(scriptParent) #"."
 DEFAULT_GENES_FILE=os.path.join(parentPath, 'scripts', 'bbs_genes.txt')
 DEFAULT_PRETEST_ADJUSTMENT="0"
@@ -36,10 +37,9 @@ def extract_correct_diagnosis_from_phenopacket(phenopacket_file):
          
 
    
-def run_l4ci_and_extract_rank(mondo_path, output_directory, input_phenopacket, correct_diagnosis, multiplier, genes_file):
+def run_l4ci_and_extract_rank(l4ci_jar, mondo_path, output_directory, input_phenopacket, correct_diagnosis, multiplier, genes_file):
     homeDir = os.path.expanduser("~")
     phenopacketName = os.path.basename(input_phenopacket).rsplit('.', 1)[0]
-    l4ci_jar=os.path.abspath('./l2ci-cli/target/l2ci-cli-0.0.1.jar')
     exomiser = os.path.join(homeDir, "Exomiser/2109_hg19/2109_hg19/2109_hg19_variants.mv.db")
 
     arg_list = ["java", "-jar", l4ci_jar, "genes", "-d", data_dir, "--genes", genes_file, "-O", output_directory, "-M", mondo_path,
@@ -80,9 +80,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     l4ci_jar = args.jar
     if not os.path.isfile(l4ci_jar):
+        print(f"Tried and failed to fine the L4CI jar file at {l4ci_jar}")
         raise ValueError("Could not find L4CI executable JAR file. Either build the L4CI package using maven for the default location or set path with -j/--jar")
     data_dir = args.data
     if not os.path.isdir(data_dir):
+        print(f"Tried and failed to find data directory at {data_dir}")
         raise ValueError("Could not find data dir. Consider running lc4i-cli download command or set path with -d/--data")
     mondoPath = os.path.join(data_dir, "mondo.json")
     outdir = args.outputDirectory
@@ -98,7 +100,13 @@ if __name__ == "__main__":
         inpath = ".".join([outfile_name, "tsv"])
         with open(inpath, 'wt') as f:
             f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "geneFile"]))
-            run_l4ci_and_extract_rank(mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop, correct_diagnosis=right_dx, multiplier=mult, genes_file=genes)
+            run_l4ci_and_extract_rank(l4ci_jar=l4ci_jar, 
+                                    mondo_path=mondoPath, 
+                                    output_directory=outdir, 
+                                    input_phenopacket=phenop, 
+                                    correct_diagnosis=right_dx, 
+                                    multiplier=mult, 
+                                    genes_file=genes)
             print("Wrote results to: " + inpath)
 
     elif os.path.isdir(phenop):
@@ -107,6 +115,12 @@ if __name__ == "__main__":
             f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "geneFile"]))
             for phenopFile in sorted(glob.glob(os.path.join(phenop, "*json"))):
                 right_dx = extract_correct_diagnosis_from_phenopacket(phenopFile)
-                run_l4ci_and_extract_rank(mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenopFile, correct_diagnosis=right_dx, multiplier=mult, genes_file=genes)
+                run_l4ci_and_extract_rank(l4ci_jar=l4ci_jar,
+                                        mondo_path=mondoPath, 
+                                        output_directory=outdir, 
+                                        input_phenopacket=phenopFile, 
+                                        correct_diagnosis=right_dx, 
+                                        multiplier=mult, 
+                                        genes_file=genes)
                 print("Wrote results to: " + inpath)
     

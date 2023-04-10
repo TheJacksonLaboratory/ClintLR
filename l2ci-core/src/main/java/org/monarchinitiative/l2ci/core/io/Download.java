@@ -53,12 +53,13 @@ public class Download {
         String mondoJsonName = looksCompressed ? "mondo.json.gz" : "mondo.json";
         // TODO add Homo_sapiens file to builder
         BioDownloader downloader = BioDownloader.builder(Path.of(path))
-                .custom(mondoJsonName, mondoJsonUrl)
+               // .custom(mondoJsonName, mondoJsonUrl)
                 .overwrite(overwrite)
                 .hpoJson()
                 .hpDiseaseAnnotations()
                 .hgnc()
                 .medgene2MIM()
+                .mondoJson()
                 .geneInfoHuman()
                 // Jannovar v0.35 transcript databases
                 .custom("hg19_ucsc.ser", createUrlOrExplode(hg19UcscURL))

@@ -2,9 +2,6 @@
   "id": "PMID:30850397-Imani-2019-BBS5-II:2",
   "subject": {
     "id": "II:2",
-    "ageAtCollection": {
-      "age": "P12Y"
-    },
     "sex": "MALE",
     "taxonomy": {
       "id": "NCBITaxon:9606",
@@ -61,7 +58,7 @@
       "id": "HP:0000486",
       "label": "Strabismus"
     },
-    "negated": true,
+    "excluded": true,
     "evidence": [{
       "evidenceCode": {
         "id": "ECO:0000033",
@@ -102,29 +99,6 @@
         "description": "Novel splicing variant c"
       }
     }]
-  }],
-  "genes": [{
-    "id": "NCBIGene:129880",
-    "symbol": "BBS5"
-  }],
-  "variants": [{
-    "vcfAllele": {
-      "genomeAssembly": "GRCh37",
-      "chr": "2",
-      "pos": 170343646,
-      "ref": "T",
-      "alt": "C"
-    },
-    "zygosity": {
-      "id": "GENO:0000136",
-      "label": "homozygous"
-    }
-  }],
-  "diseases": [{
-    "term": {
-      "id": "OMIM:615983",
-      "label": "BARDET-BIEDL SYNDROME 5; BBS5"
-    }
   }],
   "metaData": {
     "createdBy": "Hpo Case Annotator : 1.0.13-SNAPSHOT",
@@ -169,7 +143,7 @@
       "url": "https://www.omim.org",
       "namespacePrefix": "OMIM"
     }],
-    "phenopacketSchemaVersion": "1.0.0-RC3",
+    "phenopacketSchemaVersion": "2.0",
     "externalReferences": [{
       "id": "PMID:30850397",
       "description": "Novel splicing variant c"
