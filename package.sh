@@ -7,16 +7,16 @@
 
 ##
 # Static variables
-SRC_DIR=l2ci-gui
+SRC_DIR=l4ci-gui
 APP_NAME="L4CI"
 CMD_NAME="l4ci-gui"
 VERSION=1.0.0
 JAR_VERSION=0.0.1
 
 BUILD_DIR=${SRC_DIR}/target
-JAR_NAME="l2ci-gui-${JAR_VERSION}.jar"
-#JAR_NAME="l2ci-gui.jar"
-#MAIN_CLASS="org.monarchinitiative.l2ci.gui.MainApp"
+JAR_NAME="l4ci-gui-${JAR_VERSION}.jar"
+#JAR_NAME="l4ci-gui.jar"
+#MAIN_CLASS="org.monarchinitiative.l4ci.gui.MainApp"
 MAIN_CLASS="org.springframework.boot.loader.JarLauncher"
 VENDOR="The Jackson Laboratory"
 DESCRIPTION="L4CI is a Java application for incorporating clinical intuition into LIRICAL analysis."

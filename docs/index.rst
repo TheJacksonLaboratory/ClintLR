@@ -13,15 +13,15 @@ LIRICAL for clinical intuition
 
 
 .. toctree::
-    :caption: LC4I
-    :name: LC4I documentation
-    :maxdepth: 1
+   :caption: LC4I
+   :name: LC4I documentation
+   :maxdepth: 1
 
-    setup
-    #tutorial
-    #contributing
-    authors
-    LICENSE
+   setup
+   #tutorial
+   #contributing
+   authors
+   LICENSE
 
 
 

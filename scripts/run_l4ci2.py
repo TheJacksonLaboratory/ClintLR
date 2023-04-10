@@ -9,8 +9,8 @@ from google.protobuf.json_format import MessageToJson, Parse
 scriptParent = os.path.dirname(sys.argv[0])
 parentPath = os.path.abspath(os.path.dirname(scriptParent))
 grandparentPath = os.path.abspath(os.path.dirname(parentPath))
-DEFAULT_L4CI_JAR=os.path.join(grandparentPath, 'l2ci-cli', 'target', 'L4CI.jar')
-DEFAULT_DATA_DIR=os.path.join(grandparentPath, 'data')
+DEFAULT_L4CI_JAR=os.path.join(parentPath, 'l4ci-cli', 'target', 'L4CI.jar')
+DEFAULT_DATA_DIR=os.path.join(parentPath, 'data')
 DEFAULT_OUT_DIR=os.path.abspath(scriptParent) #"."
 DEFAULT_GENES_FILE=os.path.join(parentPath, 'scripts', 'bbs_genes.txt')
 DEFAULT_PRETEST_ADJUSTMENT="0"
@@ -74,13 +74,13 @@ if __name__ == "__main__":
     parser.add_argument("-j", "--jar", nargs='?', default=DEFAULT_L4CI_JAR, help="Path to Java executable JAR file.")
     parser.add_argument("-d", "--data", nargs='?', default=DEFAULT_DATA_DIR, help="Path to LIRICAL data directory.")
     parser.add_argument("-O", "--outputDirectory", nargs="?", default=DEFAULT_OUT_DIR, help="Path to directory to write the results files.")
-    parser.add_argument("-m", "--multiplier", nargs="+", default=DEFAULT_PRETEST_ADJUSTMENT, help="Comma-separated pretest adjustment values.")
+    parser.add_argument("-m", "--multiplier", default=DEFAULT_PRETEST_ADJUSTMENT, help="Comma-separated pretest adjustment values.")
     parser.add_argument("-G", "--genes", default=DEFAULT_GENES_FILE, help="Path to file containing a comma-separated list of gene symbols.")
     parser.add_argument("-p", "--phenopacket", required=True, help="Path(s) to phenopacket JSON file(s).")
     args = parser.parse_args()
     l4ci_jar = args.jar
     if not os.path.isfile(l4ci_jar):
-        print(f"Tried and failed to fine the L4CI jar file at {l4ci_jar}")
+        print(f"Tried and failed to find the L4CI jar file at {l4ci_jar}")
         raise ValueError("Could not find L4CI executable JAR file. Either build the L4CI package using maven for the default location or set path with -j/--jar")
     data_dir = args.data
     if not os.path.isdir(data_dir):

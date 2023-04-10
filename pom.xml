@@ -1,20 +1,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.monarchinitiative.l2ci</groupId>
-  <artifactId>l2ci</artifactId>
-  <version>0.0.1</version>
+  <groupId>org.monarchinitiative.l4ci</groupId>
+  <artifactId>l4ci</artifactId>
+  <version>0.1.0</version>
   <packaging>pom</packaging>
-  <name>l2ci</name>
+  <name>l4ci</name>
   <parent>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-parent</artifactId>
       <version>2.6.6</version>
   </parent>
     <modules>
-      <module>l2ci-core</module>
-      <module>l2ci-cli</module>
-      <module>l2ci-gui</module>
+      <module>l4ci-core</module>
+      <module>l4ci-cli</module>
+      <module>l4ci-gui</module>
     </modules>
 
     <url>https://github.com/TheJacksonLaboratory/L4CI</url>
@@ -27,7 +27,7 @@
       <maven.compiler.target>${java.version}</maven.compiler.target>
       <javafx.version>18</javafx.version>
       <phenol.version>2.0.0</phenol.version>
-      <lirical.version>2.0.0-RC2-SNAPSHOT</lirical.version>
+      <lirical.version>2.0.0-RC2</lirical.version>
       <phenopacket.version>2.0.2</phenopacket.version>
       <phenopacket-tools.version>1.0.0-RC1</phenopacket-tools.version>
       <protobuf.version>3.19.4</protobuf.version>

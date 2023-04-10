@@ -2,7 +2,7 @@ import argparse, os, sys, glob
 
 
 # this is the relative location of the jar file that gets built by mvn package
-DEFAULT_L4CI_JAR='../l2ci-cli/target/l2ci-cli-0.0.1.jar'
+DEFAULT_L4CI_JAR='../l4ci-cli/target/l4ci-cli-0.0.1.jar'
 
 def parseArgs():
 	parser = argparse.ArgumentParser(description="LIRICAL analysis of phenopackets (with or without VCF) using a gene list")
@@ -52,7 +52,7 @@ def run_l4ci_and_extract_rank(input_phenopacket, correct_diagnosis):
     homeDir = os.path.expanduser("~")
     outfile_path = os.path.join(homeDir, "test")
     outfile_name = os.path.join(outfile_path, "test_results")
-    l4ci_jar=os.path.abspath('./l2ci-cli/target/l2ci-cli-0.0.1.jar')
+    l4ci_jar=os.path.abspath('./l4ci-cli/target/l4ci-cli-0.0.1.jar')
     genes_file='scripts/bbs_genes.txt'
     mondo_path = os.path.abspath('./data/mondo.json')
     data = os.path.abspath("./data")

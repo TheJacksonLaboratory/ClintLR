@@ -6,17 +6,17 @@
 
 : :: :
 : : Static variables
-SET SRC_DIR=l2ci-gui
+SET SRC_DIR=l4ci-gui
 SET APP_NAME="L4CI"
 SET CMD_NAME="l4ci-gui"
 SET VERSION=1.0.0
-SET JAR_VERSION=0.0.1
+SET JAR_VERSION=0.1.0
 
 SET BUILD_DIR=%SRC_DIR%\target
 SET PACKAGE_DIR=%SRC_DIR%\pkg
-SET JAR_NAME=l2ci-gui-%JAR_VERSION%.jar
-: :JAR_NAME="l2ci-gui.jar"
-SET MAIN_CLASS=org.monarchinitiative.l2ci.gui.StockUIApp
+SET JAR_NAME=l4ci-gui-%JAR_VERSION%.jar
+: :JAR_NAME="l4ci-gui.jar"
+SET MAIN_CLASS=org.monarchinitiative.l4ci.gui.StockUIApp
 SET VENDOR="The Jackson Laboratory"
 SET DESCRIPTION="L4CI is a Java application for incorporating clinical intuition into LIRICAL analysis."
 SET COPYRIGHT="Copyright 2022, All rights reserved"
