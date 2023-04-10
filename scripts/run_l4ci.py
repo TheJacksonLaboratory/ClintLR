@@ -67,7 +67,7 @@ def run_l4ci_and_extract_rank(input_phenopacket, correct_diagnosis):
     print(f"cmd returned {retval}")
 
     inpath = ".".join([outfile_name, "tsv"])
-    with open(inpath, 'w') as f:
+    with open(inpath, 'wt') as f:
 	    f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "geneFile"]))
 	    for file in sorted(glob.glob("*.tsv")):
 	        if not file == outfile_name:
