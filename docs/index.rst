@@ -4,7 +4,7 @@
 LC4I
 ====
 
-LIRICAL for clinical intuition
+LIRICAL for Clinical Intuition
 
 
 
@@ -18,7 +18,7 @@ LIRICAL for clinical intuition
    :maxdepth: 1
 
    setup
-   #tutorial
+   tutorial
    #contributing
    authors
    LICENSE
