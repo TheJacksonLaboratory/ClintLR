@@ -29,5 +29,5 @@ LIRICAL for Clinical Intuition
 Feedback
 --------
 
-The best place to leave feedback, ask questions, and report bugs is the `LC4I Issue Tracker <https://github.com/TheJacksonLaboratory/L4CI/issues>`_.
+The best place to leave feedback, ask questions, and report bugs is the `L4CI Issue Tracker <https://github.com/TheJacksonLaboratory/L4CI/issues>`_.
 

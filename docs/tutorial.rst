@@ -21,17 +21,19 @@ Information for the selected term is displayed in an HTML window to the right of
     :align: center
     :alt: Screenshot of the L4CI interface
 
+    Screenshot of the L4CI interface (left) and the pretest probability adjustment values interface (right)
+
 Clinical intuition is incorporated into the LIRICAL algorithm by way of a slider in the L4CI interface.
 The slider increases the pretest probability values that get passed into LIRICAL for the selected term and its descendants.
 In the tree, an up arrow in the selected term’s icon indicates that the pretest probability has been increased for that term.
 The pretest adjustment values can be reset to defaults for all terms by clicking the Reset button below the tree view.
-The pretest probability values can be viewed in a separate interface (`File -> Probability Map -> Show Map Interface`).
+The pretest probability adjustment values can be viewed in a separate interface (`File -> Probability Map -> Show Map Interface`).
 If desired, the pretest probability values can be saved as a separate text file (`File -> Probability Map -> Save Map to File`), which can then be imported later.
 
-A phenopacket needs to be loaded (Load Phenopacket button) for the LIRICAL analysis to run correctly.
-The LIRICAL analysis parameters can be adjusted as well, and the LIRICAL algorithm can be run directly from L4CI using the Run LIRICAL button.
+A phenopacket needs to be loaded (**Load Phenopacket** button) for the LIRICAL analysis to run correctly.
+The LIRICAL analysis parameters can be adjusted as well, and the LIRICAL algorithm can be run directly from L4CI using the **Run LIRICAL** button.
 The LIRICAL analysis can be performed using only phenotypic information, or using both phenotypic + genotypic information
-by loading a VCF file into L4CI (Load VCF button) and then running LIRICAL.
+by loading a VCF file into L4CI (**Load VCF** button) and then running LIRICAL.
 
 
 
