@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+
+<fx:root xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+         type="VBox" >
+    <children>
+        <WebView fx:id="infoWebView" VBox.vgrow="ALWAYS"/>
+    </children>
+</fx:root>
