@@ -1,7 +1,7 @@
 .. _installation:
 
 ===============
-Setting up LC4I
+Setting up L4CI
 ===============
 
 L4CI is a desktop Java application that includes LIRICAL analysis. Therefore, L4CI requires LIRICAL to be installed.
@@ -18,7 +18,7 @@ build L4CI from source, then the build process described below requires
 `Java Development Kit 17 <https://www.oracle.com/java/technologies/downloads/>`_ or better.
 
 .. note::
-  The L4CI GUI requires JavaFx to run. If your Java installation does not include JavaFX, installations of Java that
+  The L4CI GUI requires JavaFX to run. If your Java installation does not include JavaFX, installations of Java that
   include JavaFX can be found `here <https://www.azul.com/downloads/?package=jdk-fx#zulu>`_
 
 Building from sources

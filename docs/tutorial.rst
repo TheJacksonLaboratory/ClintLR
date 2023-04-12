@@ -102,3 +102,6 @@ For example, to run analysis on all phenopackets in a directory using pretest ad
 use the following command::
 
   python path/to/pythonScript.py -p path/to/phenopacket/directory -m 5,10 -g path/to/genesFile.txt
+
+Individual phenopacket analysis results are saved as TSV files. Additionally, a summary file is created that includes the
+posttest probability values and rankings for the target disease at each pretest adjustment value for all phenopackets analyzed.

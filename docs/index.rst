@@ -1,7 +1,7 @@
 .. _home:
 
 ====
-LC4I
+L4CI
 ====
 
 LIRICAL for Clinical Intuition
@@ -13,8 +13,8 @@ LIRICAL for Clinical Intuition
 
 
 .. toctree::
-   :caption: LC4I
-   :name: LC4I documentation
+   :caption: L4CI
+   :name: L4CI documentation
    :maxdepth: 1
 
    setup
