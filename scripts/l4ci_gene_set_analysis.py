@@ -9,7 +9,7 @@ from google.protobuf.json_format import MessageToJson, Parse
 scriptParent = os.path.dirname(sys.argv[0])
 parentPath = os.path.abspath(os.path.dirname(scriptParent))
 grandparentPath = os.path.abspath(os.path.dirname(parentPath))
-DEFAULT_L4CI_JAR=os.path.join(parentPath, 'l4ci-cli', 'target', 'L4CI.jar')
+DEFAULT_L4CI_JAR=os.path.join(parentPath, 'l4ci-cli', 'target', 'L4CI-CLI.jar')
 DEFAULT_DATA_DIR=os.path.join(parentPath, 'data')
 DEFAULT_OUT_DIR=os.path.abspath(scriptParent) #"."
 DEFAULT_GENES_FILE=os.path.join(parentPath, 'scripts', 'bbs_genes.txt')

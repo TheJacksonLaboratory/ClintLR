@@ -205,7 +205,6 @@
     </dependencies>
 
     <build>
-      <finalName>L4CI</finalName>
       <pluginManagement>
         <plugins>
           <plugin>
