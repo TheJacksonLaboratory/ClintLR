@@ -132,7 +132,7 @@ public class LiricalRunTask extends Task<Path> {
         }
 
         LOGGER.debug("Trying to decode phenopacket at {} as legacy v1 format", phenopacketPath.toAbsolutePath());
-        try (InputStream is = Files.newInputStream(phenopacketPath)) {
+        try (InputStream is = new BufferedInputStream(Files.newInputStream(phenopacketPath))) {
             return PhenopacketImporters.v1().read(is);
         }
     }

@@ -521,7 +521,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         }
 
         if (data == null) {
-            try (InputStream is = Files.newInputStream(phenopacketPath)) {
+            try (InputStream is = new BufferedInputStream(Files.newInputStream(phenopacketPath))) {
                 PhenopacketImporter v1 = PhenopacketImporters.v1();
                 data = v1.read(is);
                 LOGGER.debug("Success!");
