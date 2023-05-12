@@ -178,7 +178,7 @@ public class BatchAnalysisCommand extends BenchmarkCommand {
                     String outFilename = String.join("_",
                             phenopacketName.replace(".json", ""),
                             type,
-                            diseaseIdString.replace(":", ""),
+//                            diseaseIdString.replace(":", ""),
                             "multiplier",
                             Double.toString(multiplierValue));
                     AnalysisResultsMetadata metadata = prepareAnalysisResultsMetadata(gene2Genotypes, lirical, sampleId);
