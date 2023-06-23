@@ -105,22 +105,27 @@ def extract_rank(output_file, output_file_name, phenopacket_analysis_file, pheno
 
 phenopacketNames = [os.path.splitext(os.path.basename(file))[0] for file in sorted(glob.glob(os.path.join(os.path.abspath("resources/phenopackets_v2/"), "*.json")))]
 multiplierValues = ["0.0", "1.0", "5.0", "10.0", "15.0", "20.0"]
+types = ["phenotype"]
 
 
 rule all:
   input:
-    expand(os.path.abspath("resources/batchOutput/{phenopacketName}_target_multiplier_{multiplierValue}.tsv.gz"),
-        phenopacketName=phenopacketNames,
-        multiplierValue=multiplierValues),
-    "resources/l4ci_batch_analysis_results.tsv"
+#     expand(os.path.abspath("resources/batchOutput/{type}/{phenopacketName}_target_multiplier_{multiplierValue}.tsv.gz"),
+#         phenopacketName=phenopacketNames,
+#         multiplierValue=multiplierValues,
+#         type=types),
+    expand(os.path.abspath("resources/batchOutput/{type}/global/{phenopacketName}_target_multiplier_0.0.tsv.gz"),
+            phenopacketName=phenopacketNames,
+            type=types),
+#     "resources/phenotype/l4ci_batch_analysis_results.tsv",
+    "resources/phenotype/l4ci_batch_analysis_results_uniform.tsv"
 
 
-rule runL4CIBatchAnalysis:
+rule runL4CIBatchAnalysisGenotype:
   input:
     os.path.abspath("resources/phenopackets_v2/{phenopacketName}.json")
   output:
-    os.path.abspath("resources/batchOutput/{phenopacketName}_target_multiplier_{multiplierValue}.tsv.gz")
-    "resources/l4ci_batch_analysis_results.tsv"
+    os.path.abspath("resources/batchOutput/genotype/{phenopacketName}_target_multiplier_{multiplierValue}.tsv.gz")
   params:
     cluster_opts='--mem-per-cpu=36G -t 48:00:00',
     resources_dir = resources_dir,
@@ -130,9 +135,9 @@ rule runL4CIBatchAnalysis:
     mondo_path = os.path.join(DEFAULT_DATA_DIR, "mondo.json"),
     vcf_file = os.path.abspath("scripts/project.NIST.hc.snps.indels.NIST7035.vcf"),
     CIranges_file = os.path.abspath("scripts/DiseaseIntuitionGroups.tsv"),
-    output_directory = os.path.abspath("resources/batchOutput")
+    output_directory = os.path.abspath("resources/batchOutput/genotype")
   log:
-    "resources/{phenopacketName}_multiplier_{multiplierValue}_Log.log"
+    "resources/genotype/{phenopacketName}_multiplier_{multiplierValue}_Log.log"
   shell:
     """
     (mkdir -p {params.resources_dir}
@@ -140,13 +145,140 @@ rule runL4CIBatchAnalysis:
     java -jar {params.l4ci_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" --vcf {params.vcf_file} -r {params.CIranges_file} -m {wildcards.multiplierValue} --compress -O {params.output_directory}) &> {log}
     """
 
-rule createOutputFile:
+rule runL4CIBatchAnalysisGenotypeUniform:
   input:
-    sorted(glob.glob(os.path.join(os.path.abspath("resources/batchOutput/"), "*.tsv.gz")))
+    os.path.abspath("resources/phenopackets_v2/{phenopacketName}.json")
   output:
-    "resources/l4ci_batch_analysis_results.tsv"
+    os.path.abspath("resources/batchOutput/genotype/global/{phenopacketName}_target_multiplier_0.0.tsv.gz")
+  params:
+    cluster_opts='--mem-per-cpu=36G -t 48:00:00',
+    resources_dir = resources_dir,
+    exomiser = exomiser,
+    data_dir = DEFAULT_DATA_DIR,
+    l4ci_jar = DEFAULT_L4CI_JAR,
+    mondo_path = os.path.join(DEFAULT_DATA_DIR, "mondo.json"),
+    vcf_file = os.path.abspath("scripts/project.NIST.hc.snps.indels.NIST7035.vcf"),
+    CIranges_file = os.path.abspath("scripts/DiseaseIntuitionGroups.tsv"),
+    output_directory = os.path.abspath("resources/batchOutput/genotype/global")
   log:
-    "resources/l4ci_batch_analysis_results_Log.log"
+    "resources/genotype/global/{phenopacketName}_uniform_Log.log"
+  shell:
+    """
+    (mkdir -p {params.resources_dir}
+    cd {params.resources_dir}
+    java -jar {params.l4ci_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" --vcf {params.vcf_file} -r {params.CIranges_file} -g --compress -O {params.output_directory}) &> {log}
+    """
+
+rule runL4CIBatchAnalysisPhenotype:
+  input:
+    os.path.abspath("resources/phenopackets_v2/{phenopacketName}.json")
+  output:
+    os.path.abspath("resources/batchOutput/phenotype/{phenopacketName}_target_multiplier_{multiplierValue}.tsv.gz")
+  params:
+    cluster_opts='--mem-per-cpu=36G -t 48:00:00',
+    resources_dir = resources_dir,
+    exomiser = exomiser,
+    data_dir = DEFAULT_DATA_DIR,
+    l4ci_jar = DEFAULT_L4CI_JAR,
+    mondo_path = os.path.join(DEFAULT_DATA_DIR, "mondo.json"),
+    vcf_file = os.path.abspath("scripts/project.NIST.hc.snps.indels.NIST7035.vcf"),
+    CIranges_file = os.path.abspath("scripts/DiseaseIntuitionGroups.tsv"),
+    output_directory = os.path.abspath("resources/batchOutput/phenotype")
+  log:
+    "resources/phenotype/{phenopacketName}_multiplier_{multiplierValue}_Log.log"
+  shell:
+    """
+    (mkdir -p {params.resources_dir}
+    cd {params.resources_dir}
+    java -jar {params.l4ci_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" -r {params.CIranges_file} -m {wildcards.multiplierValue} --compress -O {params.output_directory}) &> {log}
+    """
+
+rule runL4CIBatchAnalysisPhenotypeUniform:
+  input:
+    os.path.abspath("resources/phenopackets_v2/{phenopacketName}.json")
+  output:
+    os.path.abspath("resources/batchOutput/phenotype/global/{phenopacketName}_target_multiplier_{multiplierValue}.tsv.gz")
+  params:
+    cluster_opts='--mem-per-cpu=36G -t 48:00:00',
+    resources_dir = resources_dir,
+    exomiser = exomiser,
+    data_dir = DEFAULT_DATA_DIR,
+    l4ci_jar = DEFAULT_L4CI_JAR,
+    mondo_path = os.path.join(DEFAULT_DATA_DIR, "mondo.json"),
+    vcf_file = os.path.abspath("scripts/project.NIST.hc.snps.indels.NIST7035.vcf"),
+    CIranges_file = os.path.abspath("scripts/DiseaseIntuitionGroups.tsv"),
+    output_directory = os.path.abspath("resources/batchOutput/phenotype/global")
+  log:
+    "resources/phenotype/global/{phenopacketName}_multiplier_{multiplierValue}_Log.log"
+  shell:
+    """
+    (mkdir -p {params.resources_dir}
+    cd {params.resources_dir}
+    java -jar {params.l4ci_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" -r {params.CIranges_file} -g --compress -O {params.output_directory}) &> {log}
+    """
+
+rule createOutputFileGenotype:
+  input:
+    sorted(glob.glob(os.path.join(os.path.abspath("resources/batchOutput/genotype/"), "*.tsv.gz")))
+  output:
+    os.path.abspath("resources/genotype/l4ci_batch_analysis_results.tsv")
+  log:
+    os.path.abspath("resources/genotype/l4ci_batch_analysis_results_Log.log")
+  run:
+    with open(str(output), 'wt') as f:
+        print("Writing results file...")
+        f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
+        for phenop_analysis_file in sorted(input):
+            phenop = "_".join(phenop_analysis_file.split("_")[0:-3]).split("/")[-1]
+            phenopFile = "resources/phenopackets_v2/" + phenop + ".json"
+            right_dx = extract_correct_diagnosis_from_phenopacket(phenopFile)
+            extract_rank(output_file=f, output_file_name=str(output), phenopacket_analysis_file=phenop_analysis_file, phenopacket_name=phenop, correct_diagnosis=right_dx)
+        print("Wrote results to: " + str(output))
+
+rule createOutputFileGenotypeUniform:
+  input:
+    sorted(glob.glob(os.path.join(os.path.abspath("resources/batchOutput/genotype/global/"), "*.tsv.gz")))
+  output:
+    os.path.abspath("resources/genotype/l4ci_batch_analysis_results_uniform.tsv")
+  log:
+    os.path.abspath("resources/genotype/l4ci_batch_analysis_results_uniform_Log.log")
+  run:
+    with open(str(output), 'wt') as f:
+        print("Writing results file...")
+        f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
+        for phenop_analysis_file in sorted(input):
+            phenop = "_".join(phenop_analysis_file.split("_")[0:-3]).split("/")[-1]
+            phenopFile = "resources/phenopackets_v2/" + phenop + ".json"
+            right_dx = extract_correct_diagnosis_from_phenopacket(phenopFile)
+            extract_rank(output_file=f, output_file_name=str(output), phenopacket_analysis_file=phenop_analysis_file, phenopacket_name=phenop, correct_diagnosis=right_dx)
+        print("Wrote results to: " + str(output))
+
+
+rule createOutputFilePhenotype:
+  input:
+    sorted(glob.glob(os.path.join(os.path.abspath("resources/batchOutput/phenotype/"), "*.tsv.gz")))
+  output:
+    os.path.abspath("resources/phenotype/l4ci_batch_analysis_results.tsv")
+  log:
+    os.path.abspath("resources/phenotype/l4ci_batch_analysis_results_Log.log")
+  run:
+    with open(str(output), 'wt') as f:
+        print("Writing results file...")
+        f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
+        for phenop_analysis_file in sorted(input):
+            phenop = "_".join(phenop_analysis_file.split("_")[0:-3]).split("/")[-1]
+            phenopFile = "resources/phenopackets_v2/" + phenop + ".json"
+            right_dx = extract_correct_diagnosis_from_phenopacket(phenopFile)
+            extract_rank(output_file=f, output_file_name=str(output), phenopacket_analysis_file=phenop_analysis_file, phenopacket_name=phenop, correct_diagnosis=right_dx)
+        print("Wrote results to: " + str(output))
+
+rule createOutputFilePhenotypeUniform:
+  input:
+    sorted(glob.glob(os.path.join(os.path.abspath("resources/batchOutput/phenotype/global/"), "*.tsv.gz")))
+  output:
+    os.path.abspath("resources/phenotype/l4ci_batch_analysis_results_uniform.tsv")
+  log:
+    os.path.abspath("resources/phenotype/l4ci_batch_analysis_results_uniform_Log.log")
   run:
     with open(str(output), 'wt') as f:
         print("Writing results file...")
