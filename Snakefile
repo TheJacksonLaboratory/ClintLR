@@ -182,7 +182,7 @@ rule runL4CIBatchAnalysisPhenotype:
     l4ci_jar = DEFAULT_L4CI_JAR,
     mondo_path = os.path.join(DEFAULT_DATA_DIR, "mondo.json"),
     vcf_file = os.path.abspath("scripts/project.NIST.hc.snps.indels.NIST7035.vcf"),
-    CIranges_file = os.path.abspath("scripts/DiseaseIntuitionGroups.tsv"),
+    CIranges_file = os.path.abspath("scripts/DiseaseIntuitionGroupsTsv.tsv"),
     output_directory = os.path.abspath("resources/batchOutput/phenotype")
   log:
     "resources/phenotype/{phenopacketName}_multiplier_{multiplierValue}_Log.log"
