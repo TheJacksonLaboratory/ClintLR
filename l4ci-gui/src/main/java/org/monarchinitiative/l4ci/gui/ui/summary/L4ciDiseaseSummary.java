@@ -15,9 +15,12 @@ public class L4ciDiseaseSummary {
 
     private final Set<L4ciDiseaseItem> descendentTermSet;
 
+    private final double adjust;
+
     public L4ciDiseaseSummary(Term selectedDiseaseTerm, Ontology mondo, double adjustment) {
         this.selectedMondoTerm = selectedDiseaseTerm;
         Set<TermId> descendentIdSet = OntologyAlgorithm.getDescendents(mondo, selectedDiseaseTerm.id());
+        this.adjust = adjustment;
         descendentTermSet = new HashSet<>();
         for (TermId tid : descendentIdSet) {
             Term t = mondo.getTermMap().get(tid);
@@ -61,6 +64,7 @@ public class L4ciDiseaseSummary {
         return this.selectedMondoTerm.getName();
     }
 
-
-
+    public double getAdjust() {
+        return adjust;
+    }
 }

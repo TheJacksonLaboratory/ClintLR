@@ -58,11 +58,7 @@ public class DiseaseSummaryView extends VBox {
             infoWebEngine.loadContent(HTML_VIEW_PLACEHOLDER);
             return;
         }
-
-        List<HpoDisease> annotatedDiseases = List.of();
         String content = L4ciHtmlPageGenerator.getHTML(this.data.get());
-
         infoWebEngine.loadContent(content);
-
     }
 }

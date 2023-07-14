@@ -24,12 +24,12 @@ class L4ciHtmlPageGenerator {
         String termID = diseaseSummary.targetMondoId();
         String label = diseaseSummary.targetMondoLabel();
         String title = String.format("%s (%s)", label, termID);
-
+        double adjust = diseaseSummary.getAdjust();
         Set<L4ciDiseaseItem> descendentsWithOmim = diseaseSummary.diseaseItemsWithOmim();
         Set<L4ciDiseaseItem> descendentsWithNoOmim = diseaseSummary.diseaseItemsWithNoOmim();
-        String description = targetDiseaseDescription(termID, label,descendentsWithOmim.size(), descendentsWithNoOmim.size());
+        String description = targetDiseaseDescription(termID, label,descendentsWithOmim.size(), descendentsWithNoOmim.size(), adjust);
         String omimTable = getOmimTable(descendentsWithOmim);
-        String withoutOmimTable = getWithoutOmimTable(descendentsWithOmim);
+        String withoutOmimTable = getWithoutOmimTable(descendentsWithNoOmim);
         return String.format(HTML_TEMPLATE, CSS, title, description, omimTable, withoutOmimTable);
     }
 
@@ -38,7 +38,6 @@ class L4ciHtmlPageGenerator {
         StringBuilder sb = new StringBuilder();
         String title = String.format("Descendent diseases with associated gene (n=%d)", descendentsWithOmim.size());
         sb.append("<h3>").append(title).append("</h3>");
-        sb.append("<p>TODO -- Add information about how much the pretest prob is increased for these genes</p>");
         sb.append(String.format("""
                       <table class="zebra">
                         <caption  style="color:#222;text-shadow:0px 1px 2px #555;font-size:18px;">%s</caption>
@@ -107,8 +106,9 @@ class L4ciHtmlPageGenerator {
     }
 
 
-    private static String targetDiseaseDescription(String termID, String label, int withOmim, int withNoOmim) {
+    private static String targetDiseaseDescription(String termID, String label, int withOmim, int withNoOmim, double adjust) {
         return  "<h3>Target Mondo term: " + label + " (" + termID + ")</h3>" +
+                "<p>The pretest adjustment " + String.valueOf(adjust) + " TODO provide description</p>" +
                 "<ol>" +
                 "<li> Descendent diseases with associated genes in OMIM: " + withOmim + "</li>" +
                 "<li> Other descendents: " + withNoOmim + "</li>" +
