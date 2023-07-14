@@ -78,6 +78,9 @@
     -fx-text-fill: white;
 }
 
+.tooltip {
+    -fx-show-delay: 250ms;
+}
 
 .mymenu {
 -fx-shadow-highlight-color: transparent;

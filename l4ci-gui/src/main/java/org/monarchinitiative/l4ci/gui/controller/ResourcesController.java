@@ -162,8 +162,10 @@ public class ResourcesController {
 
     /**
      * Open DirChooser and ask user to provide a file where the local mondo.json file is located.
+     * DEPRECATING BECAUSE WE WANT USER TO JUST DOWNLOAD NOT TO SET (DO NOT PROVIDE UNNECESSARY OPTIONS)
      */
-    @FXML
+    //@FXML
+    @Deprecated(forRemoval = true)
     private void setMondoFileButtonAction(Event e) {
         loadFileType(FileType.MONDO);
         e.consume();
@@ -189,8 +191,11 @@ public class ResourcesController {
 
     /**
      * Open DirChooser and ask user to provide the LIRCAL data directory.
+     * DEPRECATING BECAUSE IT ADDS COMPLICATION
+     * NOW THE USER COULD USE THIS TO SET TO AN INVALID DIRECTORY AND WE DO NOT CHECK FOR IT
      */
-    @FXML
+   // @FXML
+    @Deprecated(forRemoval = true)
     private void setLiricalDataDirButtonAction(ActionEvent e) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Set Path to LIRICAL Data Directory");
