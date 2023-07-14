@@ -51,6 +51,7 @@ import org.monarchinitiative.l4ci.gui.tasks.LiricalRunTask;
 import org.monarchinitiative.l4ci.gui.ui.mondotree.MondoTreeView;
 import org.monarchinitiative.l4ci.gui.ui.summary.DiseaseSummaryView;
 import org.monarchinitiative.l4ci.gui.resources.OptionalServices;
+import org.monarchinitiative.l4ci.gui.ui.summary.L4ciDiseaseSummary;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
@@ -228,7 +229,11 @@ public class MainController {
         mondoTreeView.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousMondoItem, newMondoItem) -> {
                     if (newMondoItem != null) {
-                        diseaseSummaryView.dataProperty().set(newMondoItem.getValue());
+                        Ontology mondo = this.mondoTreeView.mondoProperty().get();
+                        Term selectedDiseaseTerm = newMondoItem.getValue().term();
+                        double adjustment = this.multiplierSlider.getValue();
+                        L4ciDiseaseSummary summary = new L4ciDiseaseSummary(selectedDiseaseTerm, mondo, adjustment);
+                        diseaseSummaryView.dataProperty().set(summary);
                     }
                 });
 

@@ -17,31 +17,107 @@ import java.util.stream.Collectors;
  *
  * @author <a href="mailto:peter.robinson@jax.org">Peter Robinson</a>
  */
-class HpoHtmlPageGenerator {
+class L4ciHtmlPageGenerator {
     /**@return A String with the HTML for representing one HPO term and the diseases it is annotated to. */
-    static String getHTML(Term term, List<HpoDisease> annotatedDiseases) {
+    static String getHTML(L4ciDiseaseSummary diseaseSummary) {
 
-        String termID = term.id().getValue();
-        String synonyms = (term.getSynonyms() == null) ? "" : term.getSynonyms().stream().map(TermSynonym::getValue)
-                .collect(Collectors.joining("; "));
-        String definition = (term.getDefinition() == null) ? "" : term.getDefinition();
-        String comment = (term.getComment() == null) ? "-" : term.getComment();
-        String diseaseTable = getDiseaseTableHTML(annotatedDiseases, termID);
-        List<SimpleXref> pmids=term.getPmidXrefs();
-        List<Dbxref> xrefs = term.getXrefs();
+        String termID = diseaseSummary.targetMondoId();
+        String label = diseaseSummary.targetMondoLabel();
+        String title = String.format("%s (%s)", label, termID);
 
-        String pmidList;
-        if (pmids.isEmpty())
-            pmidList="-";
-        else
-            pmidList= pmids.stream().map(SimpleXref::getCurie).collect(Collectors.joining(": "));
-        String xrefList;
-        if (xrefs.isEmpty())
-            xrefList="-";
-        else
-            xrefList= xrefs.stream().map(Dbxref::getName).collect(Collectors.joining(", "));
-        return String.format(HTML_TEMPLATE, CSS, term.getName(), termID, definition, comment, synonyms, pmidList, xrefList, diseaseTable);
+        Set<L4ciDiseaseItem> descendentsWithOmim = diseaseSummary.diseaseItemsWithOmim();
+        Set<L4ciDiseaseItem> descendentsWithNoOmim = diseaseSummary.diseaseItemsWithNoOmim();
+        String description = targetDiseaseDescription(termID, label,descendentsWithOmim.size(), descendentsWithNoOmim.size());
+        String omimTable = getOmimTable(descendentsWithOmim);
+        String withoutOmimTable = getWithoutOmimTable(descendentsWithOmim);
+        return String.format(HTML_TEMPLATE, CSS, title, description, omimTable, withoutOmimTable);
     }
+
+
+    private static String getOmimTable(Set<L4ciDiseaseItem> descendentsWithOmim) {
+        StringBuilder sb = new StringBuilder();
+        String title = String.format("Descendent diseases with associated gene (n=%d)", descendentsWithOmim.size());
+        sb.append("<h3>").append(title).append("</h3>");
+        sb.append("<p>TODO -- Add information about how much the pretest prob is increased for these genes</p>");
+        sb.append(String.format("""
+                      <table class="zebra">
+                        <caption  style="color:#222;text-shadow:0px 1px 2px #555;font-size:18px;">%s</caption>
+                        <thead>
+                          <tr>
+                           <th>Disease</th><th>Mondo ID</th><th>OMIM ID</th>
+                          </tr>
+                        </thead>
+                    """, "diseases"));
+
+        for (L4ciDiseaseItem ldi : descendentsWithOmim) {
+            String OmimId;
+            if (ldi.getOmimId().isPresent()) {
+                OmimId = ldi.getOmimId().get().getValue();
+            } else {
+                OmimId = "n/a";
+            }
+            String row =  String.format("""
+                        <tr>
+                                <td>%s</td>
+                                <td>%s</td>
+                                <td>%s</td>
+                              
+                              </tr>
+                        """,
+                    ldi.getMondoLabel(),
+                    ldi.getMondoId(),
+                    OmimId);
+            sb.append(row);
+        }
+        sb.append("\n");
+        return sb.toString();
+    }
+
+
+
+    private static String getWithoutOmimTable(Set<L4ciDiseaseItem> descendentsWithNoOmim) {
+        StringBuilder sb = new StringBuilder();
+        String title = String.format("Descendent diseases with no associated gene (n=%d)", descendentsWithNoOmim.size());
+        sb.append("<h3>").append(title).append("</h3>");
+        sb.append("<p>TODO -- Add information about how much the pretest prob is increased for these genes if at all</p>");
+        sb.append(String.format("""
+                      <table class="zebra">
+                        <caption  style="color:#222;text-shadow:0px 1px 2px #555;font-size:18px;">%s</caption>
+                        <thead>
+                          <tr>
+                           <th>Disease</th><th>Mondo ID</th>
+                          </tr>
+                        </thead>
+                    """, "diseases"));
+
+        for (L4ciDiseaseItem ldi : descendentsWithNoOmim) {
+            String row =  String.format("""
+                        <tr>
+                                <td>%s</td>
+                                <td>%s</td>
+ 
+                              </tr>
+                        """,
+                    ldi.getMondoLabel(),
+                    ldi.getMondoId());
+            sb.append(row);
+        }
+        sb.append("\n");
+        return sb.toString();
+    }
+
+
+    private static String targetDiseaseDescription(String termID, String label, int withOmim, int withNoOmim) {
+        return  "<h3>Target Mondo term: " + label + " (" + termID + ")</h3>" +
+                "<ol>" +
+                "<li> Descendent diseases with associated genes in OMIM: " + withOmim + "</li>" +
+                "<li> Other descendents: " + withNoOmim + "</li>" +
+                "</ol>\n";
+    }
+
+
+
+
 
     /**
      * Produce HTML for for the list of all disease to which an HPO term is annotated.
@@ -231,12 +307,8 @@ class HpoHtmlPageGenerator {
             "<meta charset=\"UTF-8\"><title>HPO tree browser</title></head>" +
             "<body>" +
             "<h1>%s</h1>" +
-            "<p><b>ID:</b> %s</p>" +
-            "<p><b>Definition:</b> %s</p>" +
-            "<p><b>Comment:</b> %s</p>" +
-            "<p><b>Synonyms:</b> %s</p>" +
-            "<p><b>PMID:</b> %s</p>" +
-            "<p><b>Xrefs:</b> %s</p>" +
+            "<p>%s</p>" +
+            "%s" +
             "%s" +
             "</body></html>";
 
