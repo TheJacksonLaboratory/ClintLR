@@ -12,7 +12,6 @@
          <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
              <MenuBar>
                  <Menu mnemonicParsing="false" text="File">
-                     <MenuItem onAction="#showResourcesInterface" text="Show Resources"/>
                      <!--
                        <MenuItem onAction="#downloadMondoFile" text="Download Mondo JSON File" />
                        <MenuItem onAction="#loadMondoFile" text="Load Local Mondo JSON File" />
@@ -26,7 +25,7 @@
                      <MenuItem mnemonicParsing="false" onAction="#close" text="Close"/>
                  </Menu>
                  <Menu mnemonicParsing="false" text="Edit">
-                     <MenuItem mnemonicParsing="false" text="Delete"/>
+                     <MenuItem onAction="#showResourcesInterface" text="Show Resources"/>
                  </Menu>
                  <Menu mnemonicParsing="false" text="Help">
                      <MenuItem mnemonicParsing="false" text="About"/>
@@ -103,7 +102,7 @@
                               </VBox.margin>
                           </Label>
                           <HBox>
-                              <Slider fx:id="multiplierSlider" prefWidth="200" min="1" max="10" value="1"
+                              <Slider fx:id="multiplierSlider" prefWidth="200" min="0" max="10" value="0"
                                       majorTickUnit="2" showTickLabels="true" showTickMarks="true">
                                   <VBox.margin>
                                       <Insets bottom="5.0" left="15.0" top="5.0"/>
@@ -165,11 +164,6 @@
                               </TextField>
                           </HBox>
                           <CheckBox fx:id="variantsCheckbox" mnemonicParsing="false" text="Display All Variants">
-                              <HBox.margin>
-                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                              </HBox.margin>
-                          </CheckBox>
-                          <CheckBox fx:id="globalCheckbox" mnemonicParsing="false" text="Global Mode">
                               <HBox.margin>
                                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
                               </HBox.margin>

@@ -17,10 +17,16 @@ public class L4ciDiseaseSummary {
 
     private final double adjust;
 
-    public L4ciDiseaseSummary(Term selectedDiseaseTerm, Ontology mondo, double adjustment) {
+    private final int nTotalDiseases;
+
+    private final double pretestProbability;
+
+    public L4ciDiseaseSummary(Term selectedDiseaseTerm, Ontology mondo, double adjustment, int nTotalDiseases, double pretestProbability) {
         this.selectedMondoTerm = selectedDiseaseTerm;
         Set<TermId> descendentIdSet = OntologyAlgorithm.getDescendents(mondo, selectedDiseaseTerm.id());
         this.adjust = adjustment;
+        this.nTotalDiseases = nTotalDiseases;
+        this.pretestProbability = pretestProbability;
         descendentTermSet = new HashSet<>();
         for (TermId tid : descendentIdSet) {
             Term t = mondo.getTermMap().get(tid);
@@ -66,5 +72,13 @@ public class L4ciDiseaseSummary {
 
     public double getAdjust() {
         return adjust;
+    }
+
+    public int getNTotalDiseases() {
+        return nTotalDiseases;
+    }
+
+    public double getPretestProbability() {
+        return pretestProbability;
     }
 }

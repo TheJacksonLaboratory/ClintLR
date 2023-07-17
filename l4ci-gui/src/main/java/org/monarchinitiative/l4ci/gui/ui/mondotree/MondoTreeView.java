@@ -23,8 +23,8 @@ import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.*;
 
 public class MondoTreeView extends TreeView<OntologyTermWrapper> {
 
-    // The default multiplier is 1.0, a no-op.
-    static final double DEFAULT_MULTIPLIER_VALUE = 1.;
+    // The default multiplier is 0.0, a no-op.
+    static final double DEFAULT_MULTIPLIER_VALUE = 0.;
     private static final Logger LOGGER = LoggerFactory.getLogger(MondoTreeView.class);
     private final ObjectProperty<Ontology> mondo = new SimpleObjectProperty<>();
     private final MapProperty<TermId, Double> multiplierValues = new SimpleMapProperty<>(FXCollections.observableHashMap());

@@ -74,8 +74,8 @@ public class MainController {
     // (e.g. `.1`, `.123`, `1.234`).
     private static final Pattern NONNEGATIVE_FLOAT = Pattern.compile("(\\d+\\.?)|(\\d*\\.\\d+)");
 
-    // Default multiplier value is 1. and it must match the multiplier in the `MainView.fxml`.
-    private static final double DEFAULT_MULTIPLIER_VALUE = 1.;
+    // Default multiplier value is 0. and it must match the multiplier in the `MainView.fxml`.
+    private static final double DEFAULT_MULTIPLIER_VALUE = 0.;
 
     private static final double DEFAULT_LR_THRESHOLD = 0.05;
     private final AppProperties appProperties;
@@ -144,8 +144,6 @@ public class MainController {
     private TextField pathogenicityTextField;
     @FXML
     private CheckBox variantsCheckbox;
-    @FXML
-    private CheckBox globalCheckbox;
 
     @FXML
     private Label phenopacketLabel;
@@ -182,7 +180,6 @@ public class MainController {
         minDiagnosisSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10));
         pathogenicityTextField.setText(String.valueOf(optionalResources.liricalResources().getPathogenicityThreshold()));
         variantsCheckbox.setSelected(false);
-        globalCheckbox.setSelected(false);
 
         showMondoStats.disableProperty().bind(optionalServices.mondoProperty().isNull());
         copyrightLabel.setText("L4CI, v. " + appProperties.version() + ", © Monarch Initiative 2022");
@@ -231,8 +228,21 @@ public class MainController {
                     if (newMondoItem != null) {
                         Ontology mondo = this.mondoTreeView.mondoProperty().get();
                         Term selectedDiseaseTerm = newMondoItem.getValue().term();
-                        double adjustment = this.multiplierSlider.getValue();
-                        L4ciDiseaseSummary summary = new L4ciDiseaseSummary(selectedDiseaseTerm, mondo, adjustment);
+                        MapProperty<TermId, Double> multiplierValuesProperty = mondoTreeView.multiplierValuesProperty();
+                        Double adjustment = multiplierValuesProperty.get(selectedDiseaseTerm.id());
+                        if (adjustment == null) {
+                            adjustment = DEFAULT_MULTIPLIER_VALUE;
+                        }
+                        MondoOmimResources mondoOmimResources = optionalServices.mondoOmimResources();
+                        Map<TermId, Double> pretestMap = PretestProbability.of(multiplierValuesProperty, mondoOmimResources,
+                                optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
+                        int nTotalDiseases = pretestMap.size();
+                        Map<TermId, TermId> mondoToOmim = mondoOmimResources.mondoToOmimProperty();
+                        Double pretestProb = 1./nTotalDiseases;
+                        if (mondoToOmim.get(selectedDiseaseTerm.id()) != null) {
+                            pretestProb = pretestMap.get(mondoToOmim.get(selectedDiseaseTerm.id()));
+                        }
+                        L4ciDiseaseSummary summary = new L4ciDiseaseSummary(selectedDiseaseTerm, mondo, adjustment, nTotalDiseases, pretestProb);
                         diseaseSummaryView.dataProperty().set(summary);
                     }
                 });
@@ -561,7 +571,7 @@ public class MainController {
 
     private AnalysisOptions prepareAnalysisOptions() {
         Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.multiplierValuesProperty(), optionalServices.mondoOmimResources(),
-                optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE, globalCheckbox.isSelected());
+                optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
         PretestDiseaseProbability pretestProba = PretestDiseaseProbability.of(diseaseIdToPretestProba);
         LiricalResources liricalResources = optionalResources.liricalResources();
         return AnalysisOptions.builder()
@@ -571,7 +581,6 @@ public class MainController {
                 .variantDeleteriousnessThreshold(liricalResources.getPathogenicityThreshold())
                 .defaultVariantBackgroundFrequency(liricalResources.getDefaultVariantBackgroundFrequency())
                 .useStrictPenalties(liricalResources.isStrict())
-                .useGlobal(globalCheckbox.isSelected())
                 .pretestProbability(pretestProba)
                 .disregardDiseaseWithNoDeleteriousVariants(false) // TODO - evaluate
                 .build();

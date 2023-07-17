@@ -17,8 +17,7 @@ public class PretestProbability {
     public static Map<TermId, Double> of(Map<TermId, Double> mondoIdPretestAdjMap,
                                          MondoOmimResources mm,
                                          Collection<TermId> knownDiseaseIds,
-                                         double defaultSliderValue,
-                                         boolean globalMode) {
+                                         double defaultSliderValue) {
 
         Map<TermId, Double> pretestMap = new HashMap<>();
 
@@ -29,9 +28,6 @@ public class PretestProbability {
             TermId omimId = mondoToOmim.get(mondoId);
             if (omimId != null) {
                 double pretestAdjValue = mondoIdPretestAdjMap.get(mondoId);
-                if (globalMode) {
-                    pretestAdjValue = 0.0;
-                }
                 pretestMap.put(omimId, pretestAdjValue + defaultSliderValue);
             }
         }
@@ -45,12 +41,11 @@ public class PretestProbability {
 
         if (knownDiseaseIds != null)
             for (TermId termId : knownDiseaseIds)
-                if (!pretestMap.containsKey(termId))
+                if (!pretestMap.containsKey(termId) & termId.getId().contains("OMIM:"))
                     pretestMap.put(termId, defaultSliderValue);
 
         // Replace slider values in map with normalized pretest probabilities
         double mapSum = pretestMap.values().stream().reduce(0.0, Double::sum);
-        System.out.println(mapSum);
         pretestMap.forEach((key, value) -> pretestMap.replace(key, value / mapSum));
 
         return Map.copyOf(pretestMap);
