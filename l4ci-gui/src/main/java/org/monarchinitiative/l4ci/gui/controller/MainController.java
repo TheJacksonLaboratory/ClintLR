@@ -48,6 +48,9 @@ import org.monarchinitiative.l4ci.gui.model.DiseaseWithMultiplier;
 import org.monarchinitiative.l4ci.gui.resources.LiricalResources;
 import org.monarchinitiative.l4ci.gui.resources.OptionalResources;
 import org.monarchinitiative.l4ci.gui.tasks.LiricalRunTask;
+import org.monarchinitiative.l4ci.gui.ui.HelpViewFactory;
+import org.monarchinitiative.l4ci.gui.ui.MondoStatsViewFactory;
+import org.monarchinitiative.l4ci.gui.ui.logviewer.LogViewerFactory;
 import org.monarchinitiative.l4ci.gui.ui.mondotree.MondoTreeView;
 import org.monarchinitiative.l4ci.gui.ui.summary.DiseaseSummaryView;
 import org.monarchinitiative.l4ci.gui.resources.OptionalServices;
@@ -152,6 +155,19 @@ public class MainController {
     private Label vcfLabel;
     private final ObjectProperty<Path> vcfPath = new SimpleObjectProperty<>();
 
+    public void showHelpWindow(ActionEvent e) {
+        LOGGER.trace("Show help window");
+        HelpViewFactory.openHelpDialog();
+        e.consume();
+    }
+
+    public void aboutWindow(ActionEvent e) {
+        String title = "L4CI";
+        String msg = "LIRICAL for Clinical Intution (L4CI).";
+        PopUps.showInfoMessage(title, msg);
+        e.consume();
+    }
+
 
     private enum MessageType {
         INFO, WARNING, ERROR
@@ -234,6 +250,12 @@ public class MainController {
                             adjustment = DEFAULT_MULTIPLIER_VALUE;
                         }
                         MondoOmimResources mondoOmimResources = optionalServices.mondoOmimResources();
+                        Lirical lirical =  optionalServices.getLirical();
+                        if (lirical == null) {
+                            PopUps.showInfoMessage("Cannot complete request to show diseases because LIRICAL is not initialized (See setup menu)",
+                                    "LIRICAL NULL");
+                            return;
+                        }
                         Map<TermId, Double> pretestMap = PretestProbability.of(multiplierValuesProperty, mondoOmimResources,
                                 optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
                         int nTotalDiseases = pretestMap.size();
@@ -315,7 +337,17 @@ public class MainController {
     @FXML
     private void showMondoStatsAction(ActionEvent e) {
         MondoStats mondo = new MondoStats(optionalServices.getMondo());
-        mondo.run();
+        Stage thisStage = (Stage) this.contentPane.getScene().getWindow();
+        MondoStatsViewFactory factory = new MondoStatsViewFactory(thisStage, mondo);
+        factory.popup();
+        e.consume();
+    }
+
+    @FXML
+    public void showLog(ActionEvent e) {
+        String TODO = "x";
+        LogViewerFactory factory = new LogViewerFactory(TODO);
+        factory.display();
         e.consume();
     }
 

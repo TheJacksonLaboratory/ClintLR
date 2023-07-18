@@ -12,23 +12,26 @@
          <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
              <MenuBar>
                  <Menu mnemonicParsing="false" text="File">
-                     <!--
-                       <MenuItem onAction="#downloadMondoFile" text="Download Mondo JSON File" />
-                       <MenuItem onAction="#loadMondoFile" text="Load Local Mondo JSON File" />
-                       -->
-                     <MenuItem fx:id="showMondoStats" onAction="#showMondoStatsAction" text="Show Mondo Stats"/>
                      <Menu text="Probability Map">
                          <MenuItem onAction="#loadMapOutputFile" text="Load Map from File"/>
                          <MenuItem onAction="#saveMapOutputFile" text="Save Map to File"/>
                          <MenuItem onAction="#showMapInterface" text="Show Map Interface"/>
                      </Menu>
-                     <MenuItem mnemonicParsing="false" onAction="#close" text="Close"/>
+                     <MenuItem mnemonicParsing="false" onAction="#close" text="Exit"/>
                  </Menu>
-                 <Menu mnemonicParsing="false" text="Edit">
-                     <MenuItem onAction="#showResourcesInterface" text="Show Resources"/>
+                 <Menu mnemonicParsing="false" text="Setup">
+                     <MenuItem onAction="#showResourcesInterface" text="Init/show L4CI Resources"/>
                  </Menu>
+                 <Menu mnemonicParsing="false" text="View">
+                     <MenuItem fx:id="showMondoStats" onAction="#showMondoStatsAction" text="Show Mondo Stats"/>
+                     <MenuItem onAction="#showLog" text="Show Log"/>
+                 </Menu>
+             </MenuBar>
+             <Region styleClass="menu-bar" HBox.hgrow="SOMETIMES" />
+             <MenuBar HBox.hgrow="NEVER">
                  <Menu mnemonicParsing="false" text="Help">
-                     <MenuItem mnemonicParsing="false" text="About"/>
+                     <MenuItem mnemonicParsing="false" onAction="#showHelpWindow" text="Help" />
+                     <MenuItem mnemonicParsing="false" onAction="#aboutWindow" text="About" />
                  </Menu>
              </MenuBar>
          </HBox>
