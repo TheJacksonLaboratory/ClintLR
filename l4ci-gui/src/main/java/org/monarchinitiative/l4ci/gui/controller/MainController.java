@@ -220,6 +220,10 @@ public class MainController {
 
         // Show path to Mondo file
         treeLabel.textProperty().bind(showAbsolutePathIfPresent(optionalResources.ontologyResources().mondoPathProperty()));
+        if (optionalResources.ontologyResources().mondoPathProperty().getValue() == null) {
+            PopUps.showInfoMessage("Path to Mondo file is not set. Download Mondo and LIRICAL resources (Setup -> Init/show L4CI Resources).",
+                    "Mondo Path");
+        }
 
         // Set up the Mondo tree
         mondoTreeView.disableProperty().bind(optionalServices.mondoProperty().isNull());

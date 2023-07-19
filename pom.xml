@@ -27,7 +27,7 @@
       <maven.compiler.target>${java.version}</maven.compiler.target>
       <javafx.version>18</javafx.version>
       <phenol.version>2.0.0</phenol.version>
-      <lirical.version>2.0.0-RC2-SNAPSHOT</lirical.version>
+      <lirical.version>2.0.0-RC2</lirical.version>
       <phenopacket.version>2.0.2</phenopacket.version>
       <phenopacket-tools.version>1.0.0-RC1</phenopacket-tools.version>
       <protobuf.version>3.19.4</protobuf.version>
@@ -35,6 +35,14 @@
       <slf4j.version>1.7.30</slf4j.version>
       <commons.io>2.8.0</commons.io>
     </properties>
+
+    <repositories>
+      <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+      </repository>
+    </repositories>
+
 
     <scm>
       <connection>scm:git:git@github.com/TheJacksonLaboratory/L4CI.git</connection>

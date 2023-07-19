@@ -10,7 +10,7 @@
 <BorderPane fx:id="contentPane" prefHeight="1000.0" prefWidth="1200.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.l4ci.gui.controller.MainController">
      <top>
          <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
-             <MenuBar>
+             <MenuBar HBox.hgrow="SOMETIMES">
                  <Menu mnemonicParsing="false" text="File">
                      <Menu text="Probability Map">
                          <MenuItem onAction="#loadMapOutputFile" text="Load Map from File"/>
@@ -27,7 +27,6 @@
                      <MenuItem onAction="#showLog" text="Show Log"/>
                  </Menu>
              </MenuBar>
-             <Region styleClass="menu-bar" HBox.hgrow="SOMETIMES" />
              <MenuBar HBox.hgrow="NEVER">
                  <Menu mnemonicParsing="false" text="Help">
                      <MenuItem mnemonicParsing="false" onAction="#showHelpWindow" text="Help" />
