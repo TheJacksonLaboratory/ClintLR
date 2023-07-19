@@ -11,7 +11,7 @@ import java.io.File;
 import java.util.Map;
 
 public class HPOParser {
-    private static Logger LOGGER = LoggerFactory.getLogger(HPOParser.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HPOParser.class);
 
     private Ontology hpo = null;
 
