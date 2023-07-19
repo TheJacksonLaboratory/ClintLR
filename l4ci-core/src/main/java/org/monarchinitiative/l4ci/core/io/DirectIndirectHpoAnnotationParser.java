@@ -78,14 +78,15 @@ public class DirectIndirectHpoAnnotationParser {
             return;
         }
         logger.trace("doParse in DirectIndirectParser");
-        HpoDiseaseLoader hpoDiseaseLoader = HpoDiseaseLoaders.defaultLoader(ontology, HpoDiseaseLoaderOptions.defaultOptions());
+        HpoDiseaseLoader hpoDiseaseLoader = HpoDiseaseLoaders.defaultLoader(ontology, HpoDiseaseLoaderOptions.defaultOmim());
         HpoDiseases diseases = hpoDiseaseLoader.load(Path.of(this.pathToPhenotypeAnnotationTab));
         Map<TermId, HpoDisease> diseaseMap = diseases.diseaseById();
+        logger.info("DirectIndirectParser diseases: " + diseaseMap.size());
         directAnnotationMap=new HashMap<>();
         totalAnnotationMap=new HashMap<>();
         Map<TermId, Set<HpoDisease>> tempmap = new HashMap<>();
         if (diseaseMap==null) {
-            System.out.println("disease map was null after parse of "+pathToPhenotypeAnnotationTab);
+            logger.error("disease map was null after parse of "+pathToPhenotypeAnnotationTab);
         }
         for (TermId diseaseId : diseaseMap.keySet()) {
             HpoDisease disease = diseaseMap.get(diseaseId);

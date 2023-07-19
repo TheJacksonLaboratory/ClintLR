@@ -40,7 +40,7 @@ public class PopUps {
         al.setTitle(windowTitle);
         al.setHeaderText(null);
         al.setContentText(text);
-        al.show();
+        al.showAndWait();
     }
 
 

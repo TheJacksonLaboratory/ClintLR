@@ -48,9 +48,13 @@ import org.monarchinitiative.l4ci.gui.model.DiseaseWithMultiplier;
 import org.monarchinitiative.l4ci.gui.resources.LiricalResources;
 import org.monarchinitiative.l4ci.gui.resources.OptionalResources;
 import org.monarchinitiative.l4ci.gui.tasks.LiricalRunTask;
+import org.monarchinitiative.l4ci.gui.ui.HelpViewFactory;
+import org.monarchinitiative.l4ci.gui.ui.MondoStatsViewFactory;
+import org.monarchinitiative.l4ci.gui.ui.logviewer.LogViewerFactory;
 import org.monarchinitiative.l4ci.gui.ui.mondotree.MondoTreeView;
 import org.monarchinitiative.l4ci.gui.ui.summary.DiseaseSummaryView;
 import org.monarchinitiative.l4ci.gui.resources.OptionalServices;
+import org.monarchinitiative.l4ci.gui.ui.summary.L4ciDiseaseSummary;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
@@ -73,8 +77,8 @@ public class MainController {
     // (e.g. `.1`, `.123`, `1.234`).
     private static final Pattern NONNEGATIVE_FLOAT = Pattern.compile("(\\d+\\.?)|(\\d*\\.\\d+)");
 
-    // Default multiplier value is 1. and it must match the multiplier in the `MainView.fxml`.
-    private static final double DEFAULT_MULTIPLIER_VALUE = 1.;
+    // Default multiplier value is 0. and it must match the multiplier in the `MainView.fxml`.
+    private static final double DEFAULT_MULTIPLIER_VALUE = 0.;
 
     private static final double DEFAULT_LR_THRESHOLD = 0.05;
     private final AppProperties appProperties;
@@ -143,8 +147,6 @@ public class MainController {
     private TextField pathogenicityTextField;
     @FXML
     private CheckBox variantsCheckbox;
-    @FXML
-    private CheckBox globalCheckbox;
 
     @FXML
     private Label phenopacketLabel;
@@ -152,6 +154,19 @@ public class MainController {
     @FXML
     private Label vcfLabel;
     private final ObjectProperty<Path> vcfPath = new SimpleObjectProperty<>();
+
+    public void showHelpWindow(ActionEvent e) {
+        LOGGER.trace("Show help window");
+        HelpViewFactory.openHelpDialog();
+        e.consume();
+    }
+
+    public void aboutWindow(ActionEvent e) {
+        String title = "L4CI";
+        String msg = "LIRICAL for Clinical Intution (L4CI).";
+        PopUps.showInfoMessage(title, msg);
+        e.consume();
+    }
 
 
     private enum MessageType {
@@ -181,7 +196,6 @@ public class MainController {
         minDiagnosisSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 20, 10));
         pathogenicityTextField.setText(String.valueOf(optionalResources.liricalResources().getPathogenicityThreshold()));
         variantsCheckbox.setSelected(false);
-        globalCheckbox.setSelected(false);
 
         showMondoStats.disableProperty().bind(optionalServices.mondoProperty().isNull());
         copyrightLabel.setText("L4CI, v. " + appProperties.version() + ", © Monarch Initiative 2022");
@@ -206,6 +220,10 @@ public class MainController {
 
         // Show path to Mondo file
         treeLabel.textProperty().bind(showAbsolutePathIfPresent(optionalResources.ontologyResources().mondoPathProperty()));
+        if (optionalResources.ontologyResources().mondoPathProperty().getValue() == null) {
+            PopUps.showInfoMessage("Path to Mondo file is not set. Download Mondo and LIRICAL resources (Setup -> Init/show L4CI Resources).",
+                    "Mondo Path");
+        }
 
         // Set up the Mondo tree
         mondoTreeView.disableProperty().bind(optionalServices.mondoProperty().isNull());
@@ -228,7 +246,30 @@ public class MainController {
         mondoTreeView.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousMondoItem, newMondoItem) -> {
                     if (newMondoItem != null) {
-                        diseaseSummaryView.dataProperty().set(newMondoItem.getValue());
+                        Ontology mondo = this.mondoTreeView.mondoProperty().get();
+                        Term selectedDiseaseTerm = newMondoItem.getValue().term();
+                        MapProperty<TermId, Double> multiplierValuesProperty = mondoTreeView.multiplierValuesProperty();
+                        Double adjustment = multiplierValuesProperty.get(selectedDiseaseTerm.id());
+                        if (adjustment == null) {
+                            adjustment = DEFAULT_MULTIPLIER_VALUE;
+                        }
+                        MondoOmimResources mondoOmimResources = optionalServices.mondoOmimResources();
+                        Lirical lirical =  optionalServices.getLirical();
+                        if (lirical == null) {
+                            PopUps.showInfoMessage("Cannot complete request to show diseases because LIRICAL is not initialized (See setup menu)",
+                                    "LIRICAL NULL");
+                            return;
+                        }
+                        Map<TermId, Double> pretestMap = PretestProbability.of(multiplierValuesProperty, mondoOmimResources,
+                                optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
+                        int nTotalDiseases = pretestMap.size();
+                        Map<TermId, TermId> mondoToOmim = mondoOmimResources.mondoToOmimProperty();
+                        Double pretestProb = 1./nTotalDiseases;
+                        if (mondoToOmim.get(selectedDiseaseTerm.id()) != null) {
+                            pretestProb = pretestMap.get(mondoToOmim.get(selectedDiseaseTerm.id()));
+                        }
+                        L4ciDiseaseSummary summary = new L4ciDiseaseSummary(selectedDiseaseTerm, mondo, adjustment, nTotalDiseases, pretestProb);
+                        diseaseSummaryView.dataProperty().set(summary);
                     }
                 });
 
@@ -300,7 +341,17 @@ public class MainController {
     @FXML
     private void showMondoStatsAction(ActionEvent e) {
         MondoStats mondo = new MondoStats(optionalServices.getMondo());
-        mondo.run();
+        Stage thisStage = (Stage) this.contentPane.getScene().getWindow();
+        MondoStatsViewFactory factory = new MondoStatsViewFactory(thisStage, mondo);
+        factory.popup();
+        e.consume();
+    }
+
+    @FXML
+    public void showLog(ActionEvent e) {
+        String TODO = "x";
+        LogViewerFactory factory = new LogViewerFactory(TODO);
+        factory.display();
         e.consume();
     }
 
@@ -556,7 +607,7 @@ public class MainController {
 
     private AnalysisOptions prepareAnalysisOptions() {
         Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(mondoTreeView.multiplierValuesProperty(), optionalServices.mondoOmimResources(),
-                optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE, globalCheckbox.isSelected());
+                optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
         PretestDiseaseProbability pretestProba = PretestDiseaseProbability.of(diseaseIdToPretestProba);
         LiricalResources liricalResources = optionalResources.liricalResources();
         return AnalysisOptions.builder()
@@ -566,7 +617,6 @@ public class MainController {
                 .variantDeleteriousnessThreshold(liricalResources.getPathogenicityThreshold())
                 .defaultVariantBackgroundFrequency(liricalResources.getDefaultVariantBackgroundFrequency())
                 .useStrictPenalties(liricalResources.isStrict())
-                .useGlobal(globalCheckbox.isSelected())
                 .pretestProbability(pretestProba)
                 .disregardDiseaseWithNoDeleteriousVariants(false) // TODO - evaluate
                 .build();

@@ -162,8 +162,10 @@ public class ResourcesController {
 
     /**
      * Open DirChooser and ask user to provide a file where the local mondo.json file is located.
+     * DEPRECATING BECAUSE WE WANT USER TO JUST DOWNLOAD NOT TO SET (DO NOT PROVIDE UNNECESSARY OPTIONS)
      */
-    @FXML
+    //@FXML
+    @Deprecated(forRemoval = true)
     private void setMondoFileButtonAction(Event e) {
         loadFileType(FileType.MONDO);
         e.consume();
@@ -189,8 +191,11 @@ public class ResourcesController {
 
     /**
      * Open DirChooser and ask user to provide the LIRCAL data directory.
+     * DEPRECATING BECAUSE IT ADDS COMPLICATION
+     * NOW THE USER COULD USE THIS TO SET TO AN INVALID DIRECTORY AND WE DO NOT CHECK FOR IT
      */
-    @FXML
+   // @FXML
+    @Deprecated(forRemoval = true)
     private void setLiricalDataDirButtonAction(ActionEvent e) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Set Path to LIRICAL Data Directory");
@@ -265,26 +270,34 @@ public class ResourcesController {
      */
     @FXML
     private void downloadMondoFileButtonAction(ActionEvent e) {
-        // Construct Mondo URL
-        URL mondoUrl;
-        try {
-            mondoUrl = new URL(appProperties.mondoJsonUrl());
-        } catch (MalformedURLException ex) {
-            PopUps.showException("Download Mondo JSON", ex.getMessage(), ex);
-            return;
+        Path mondoPath = optionalResources.ontologyResources().mondoPathProperty().getValue();
+        if (mondoPath != null) {
+            Path mondoDir = mondoPath.getParent();
+            String message = String.join(" ", "Path to Mondo file already set. To download new Mondo file, delete all files in",
+                                        mondoDir.toString(), "and restart L4CI");
+            PopUps.showInfoMessage(message,"Download Mondo");
+        } else {
+            // Construct Mondo URL
+            URL mondoUrl;
+            try {
+                mondoUrl = new URL(appProperties.mondoJsonUrl());
+            } catch (MalformedURLException ex) {
+                PopUps.showException("Download Mondo JSON", ex.getMessage(), ex);
+                return;
+            }
+            LOGGER.debug("Downloading Mondo JSON from {}", mondoUrl);
+
+            DownloadMondoTask downloadMondoTask = new DownloadMondoTask(mondoUrl, dataDirectory);
+            downloadMondoTask.setOnSucceeded(event -> optionalResources.ontologyResources().setMondoPath(downloadMondoTask.getValue()));
+            downloadMondoTask.setOnFailed(event -> PopUps.showException(
+                    "Download MONDO JSON file",
+                    event.getSource().getException().getMessage(),
+                    event.getSource().getException())
+            );
+
+            executorService.submit(downloadMondoTask);
+            e.consume();
         }
-        LOGGER.debug("Downloading Mondo JSON from {}", mondoUrl);
-
-        DownloadMondoTask downloadMondoTask = new DownloadMondoTask(mondoUrl, dataDirectory);
-        downloadMondoTask.setOnSucceeded(event -> optionalResources.ontologyResources().setMondoPath(downloadMondoTask.getValue()));
-        downloadMondoTask.setOnFailed(event -> PopUps.showException(
-                "Download MONDO JSON file",
-                event.getSource().getException().getMessage(),
-                event.getSource().getException())
-        );
-
-        executorService.submit(downloadMondoTask);
-        e.consume();
     }
 
     private enum FileType {
