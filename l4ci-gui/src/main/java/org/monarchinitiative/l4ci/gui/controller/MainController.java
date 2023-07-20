@@ -50,6 +50,7 @@ import org.monarchinitiative.l4ci.gui.resources.OptionalResources;
 import org.monarchinitiative.l4ci.gui.tasks.LiricalRunTask;
 import org.monarchinitiative.l4ci.gui.ui.HelpViewFactory;
 import org.monarchinitiative.l4ci.gui.ui.MondoStatsViewFactory;
+import org.monarchinitiative.l4ci.gui.ui.OntologyTermWrapper;
 import org.monarchinitiative.l4ci.gui.ui.logviewer.LogViewerFactory;
 import org.monarchinitiative.l4ci.gui.ui.mondotree.MondoTreeView;
 import org.monarchinitiative.l4ci.gui.ui.summary.DiseaseSummaryView;
@@ -328,13 +329,16 @@ public class MainController {
         int nTotalDiseases = pretestMap.size();
         Map<TermId, TermId> mondoToOmim = mondoOmimResources.mondoToOmimProperty();
         Double pretestProb = 1./nTotalDiseases;
-        Term selectedDiseaseTerm = mondoTreeView.getSelectionModel().getSelectedItem().getValue().getTerm();
-        TermId selectedTermOmimId = mondoToOmim.get(selectedDiseaseTerm.id());
-        if (selectedTermOmimId != null) {
-            pretestProb = pretestMap.get(selectedTermOmimId);
+        TreeItem<OntologyTermWrapper> selectedItem = mondoTreeView.getSelectionModel().getSelectedItem();
+        if (selectedItem != null) {
+            Term selectedDiseaseTerm = selectedItem.getValue().getTerm();
+            TermId selectedTermOmimId = mondoToOmim.get(selectedDiseaseTerm.id());
+            if (selectedTermOmimId != null) {
+                pretestProb = pretestMap.get(selectedTermOmimId);
+            }
+            L4ciDiseaseSummary summary = new L4ciDiseaseSummary(selectedDiseaseTerm, mondo, adjustment, nTotalDiseases, pretestProb, pretestMap);
+            diseaseSummaryView.dataProperty().set(summary);
         }
-        L4ciDiseaseSummary summary = new L4ciDiseaseSummary(selectedDiseaseTerm, mondo, adjustment, nTotalDiseases, pretestProb);
-        diseaseSummaryView.dataProperty().set(summary);
     }
 
     private static StringBinding showAbsolutePathIfPresent(ObjectProperty<Path> pathProperty) {
