@@ -6,6 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.monarchinitiative.l4ci.gui.config.AppProperties;
+import org.monarchinitiative.l4ci.gui.config.L4CIConfig;
 import org.monarchinitiative.l4ci.gui.config.LiricalProperties;
 import org.monarchinitiative.l4ci.gui.controller.MainController;
 import org.monarchinitiative.l4ci.gui.resources.OptionalResources;
@@ -20,6 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 @SpringBootApplication@EnableConfigurationProperties({
@@ -35,6 +38,12 @@ public class MainApp  extends Application {
     @Override
     public void init() {
         String[] args = getParameters().getRaw().toArray(String[]::new);
+        //Set before the logger starts. The property will be picked up by logback.xml
+//        System.setProperty("log.name", "~./l4ci/l4ci.log");
+//        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+//        LocalDateTime now = LocalDateTime.now();
+//        String dtime = dtf.format(now);
+//        LOGGER.trace("Starting L4CI: " + dtime);
         context = new SpringApplicationBuilder(MainApp.class)
                 .headless(false)
                 .run(args);

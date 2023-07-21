@@ -63,7 +63,7 @@ public class PretestProbability {
 
         if (knownDiseaseIds != null)
             for (TermId termId : knownDiseaseIds)
-                if (!pretestMap.containsKey(termId))
+                if (!pretestMap.containsKey(termId) & termId.getId().contains("OMIM:"))
                     pretestMap.put(termId, defaultSliderValue);
 
         // Replace slider values in map with normalized pretest probabilities

@@ -413,9 +413,9 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     Map<TermId, TermId> makeSelectedDiseasesMap(Map<TermId, List<TermId>> omimToMondoMap, TermId mondoId,
                                                 Ontology mondo, Set<TermId> omimIDs) {
         HashMap<TermId, TermId> selectedTerms = new HashMap<>();
-        for (TermId omimID : omimIDs) {
-            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
-            if (mondoIDs.contains(mondoId)) {
+//        for (TermId omimID : omimIDs) {
+//            List<TermId> mondoIDs = omimToMondoMap.get(omimID);
+//            if (mondoIDs.contains(mondoId)) {
                 Set<Term> descendents = Relation.getTermRelations(mondo, mondoId, Relation.DESCENDENT);
                 descendents.forEach(d -> System.out.print(d.id() + " "));
                 for (Term descendent : descendents) {
@@ -427,8 +427,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                         }
                     }
                 }
-            }
-        }
+//            }
+//        }
         return selectedTerms;
     }
 
@@ -521,7 +521,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         }
 
         if (data == null) {
-            try (InputStream is = Files.newInputStream(phenopacketPath)) {
+            try (InputStream is = new BufferedInputStream(Files.newInputStream(phenopacketPath))) {
                 PhenopacketImporter v1 = PhenopacketImporters.v1();
                 data = v1.read(is);
                 LOGGER.debug("Success!");

@@ -8,6 +8,25 @@ This tutorial shows how to use L4CI to perform LIRICAL analysis of phenopackets 
 
 
 
+Exomiser data
+^^^^^^^^^^^^^
+
+L4CI uses the Exomiser variant database that is available
+from the `Exomiser FTP site <http://data.monarchinitiative.org/exomiser/latest/index.html>`_. The versions current as of
+this writing are  ``2302_hg19.zip`` (for the HG19/GRCh37 Genome Assembly) and  ``2302_hg38.zip`` (for the HG38/GRCh38 Genome Assembly).
+Choose the appropriate genome build, and download and extract the corresponding file.
+
+
+Test data
+^^^^^^^^^
+
+We will use a VCF file that is available in the Exomiser distribution file (e.g., exomiser-cli-13.2.0-distribution.zip),
+which is available from the same FTP site.  The file is called ``Pfeiffer.vcf``
+and can be found in the ``examples`` folder of the unzipped Exomiser distribution file. This file spikes a pathogenic FGFR3
+variant into a public VCF file and can be used to test L4CI.
+
+
+
 Running L4CI Analysis
 ~~~~~~~~~~~~~~~~~~~~~
 

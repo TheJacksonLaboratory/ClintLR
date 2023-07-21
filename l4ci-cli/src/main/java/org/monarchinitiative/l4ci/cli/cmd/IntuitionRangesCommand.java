@@ -223,7 +223,7 @@ public class IntuitionRangesCommand implements Callable<Integer> {
 
     private static PhenopacketData readPhenopacketData(Path phenopacketPath) throws LiricalParseException {
         PhenopacketData data = null;
-        try (InputStream is = Files.newInputStream(phenopacketPath)) {
+        try (InputStream is = new BufferedInputStream(Files.newInputStream(phenopacketPath))) {
             PhenopacketImporter v2 = PhenopacketImporters.v2();
             data = v2.read(is);
             LOGGER.debug("Success!");
@@ -232,7 +232,7 @@ public class IntuitionRangesCommand implements Callable<Integer> {
         }
 
         if (data == null) {
-            try (InputStream is = Files.newInputStream(phenopacketPath)) {
+            try (InputStream is = new BufferedInputStream(Files.newInputStream(phenopacketPath))) {
                 PhenopacketImporter v1 = PhenopacketImporters.v1();
                 data = v1.read(is);
                 LOGGER.debug("Success!");

@@ -19,7 +19,7 @@ public class DiseaseSummaryView extends VBox {
     private static final String HTML_VIEW_PLACEHOLDER = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>HPO tree browser</title></head>" +
             "<body><p>Click on Mondo term in the tree browser to display additional information</p></body></html>";
 
-    private final ObjectProperty<DiseaseSummary> data = new SimpleObjectProperty<>();
+    private final ObjectProperty<L4ciDiseaseSummary> data = new SimpleObjectProperty<>();
 
     @FXML
     private WebView infoWebView;
@@ -44,7 +44,7 @@ public class DiseaseSummaryView extends VBox {
         data.addListener((obs, old, novel) -> updateDescription(novel));
     }
 
-    public ObjectProperty<DiseaseSummary> dataProperty() {
+    public ObjectProperty<L4ciDiseaseSummary> dataProperty() {
         return data;
     }
 
@@ -53,16 +53,12 @@ public class DiseaseSummaryView extends VBox {
      *
      * @param diseaseSummary currently selected {@link TreeItem} containing {@link Term}
      */
-    private void updateDescription(DiseaseSummary diseaseSummary) {
+    private void updateDescription(L4ciDiseaseSummary diseaseSummary) {
         if (diseaseSummary == null) {
             infoWebEngine.loadContent(HTML_VIEW_PLACEHOLDER);
             return;
         }
-
-        List<HpoDisease> annotatedDiseases = List.of();
-        String content = HpoHtmlPageGenerator.getHTML(diseaseSummary.getTerm(), annotatedDiseases);
-
+        String content = L4ciHtmlPageGenerator.getHTML(this.data.get());
         infoWebEngine.loadContent(content);
-
     }
 }

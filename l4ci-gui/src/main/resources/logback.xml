@@ -1,36 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- We're not interested in seeing all events produced by the following libraries: -->
-    <logger name="de.charite.compbio.jannovar" level="WARN" />
-    <logger name="org.monarchinitiative.phenol" level="DEBUG" />
-    <logger name="org.springframework" level="WARN" />
+<appender name="FileAppender" class="ch.qos.logback.core.FileAppender">
+    <file>${log.name}</file>
+    <append>true</append>
+    <immediateFlush>true</immediateFlush>
+    <encoder>
+        <pattern>[%level] [%d{yyyy-MM-dd'T'HH:mm:ss}] - %class{0} - %msg%n</pattern>
+    </encoder>
 
-    <property name="pattern" value="%d{HH:mm:ss.SSS} [%-5thread] %-5level %logger{36} - %msg%n"/>
+</appender>
 
-    <!-- We write INFO and above events to console. -->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
-        <encoder>
-            <pattern>${pattern}</pattern>
-        </encoder>
-    </appender>
+<logger name="org.monarchinitiative.fenominal" level="WARN"/>
+<logger name="org.monarchinitiative.phenol" level="WARN"/>
+<logger name="org.springframework.boot" level="ERROR"/>
 
-    <!-- We write DEBUG and above events into the l4ci.log file. -->
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>DEBUG</level>
-        </filter>
-        <file>l4ci.log</file>
-        <append>false</append>
-        <encoder>
-            <pattern>${pattern}</pattern>
-        </encoder>
-    </appender>
-
-    <root>
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-    </root>
+<root level="info">
+    <appender-ref ref="FileAppender"/>
+</root>
 </configuration>

@@ -1,5 +1,6 @@
 package org.monarchinitiative.l4ci.core;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,7 +73,7 @@ public class LiricalAnalysis {
         logger.info("Reading phenopacket from {}.", phenopacketPath.toAbsolutePath());
 
         PhenopacketData data = null;
-        try (InputStream is = Files.newInputStream(phenopacketPath)) {
+        try (InputStream is = new BufferedInputStream(Files.newInputStream(phenopacketPath))) {
             PhenopacketImporter v2 = PhenopacketImporters.v2();
             data = v2.read(is);
             logger.info("Success!");
@@ -81,7 +82,7 @@ public class LiricalAnalysis {
         }
 
         if (data == null) {
-            try (InputStream is = Files.newInputStream(phenopacketPath)) {
+            try (InputStream is = new BufferedInputStream(Files.newInputStream(phenopacketPath))) {
                 PhenopacketImporter v1 = PhenopacketImporters.v1();
                 data = v1.read(is);
             } catch (IOException e) {
