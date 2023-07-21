@@ -28,7 +28,7 @@ public class PretestProbability {
             TermId omimId = mondoToOmim.get(mondoId);
             if (omimId != null) {
                 double pretestAdjValue = mondoIdPretestAdjMap.get(mondoId);
-                pretestMap.put(omimId, pretestAdjValue + defaultSliderValue);
+                pretestMap.put(omimId, pretestAdjValue + 1. + defaultSliderValue);
             }
         }
 
@@ -36,13 +36,13 @@ public class PretestProbability {
         // Add default slider values for remaining Mondo and HPOA terms to map
         for (TermId omimId : mm.getOmimToMondo().keySet())
             if (!pretestMap.containsKey(omimId))
-                pretestMap.put(omimId, defaultSliderValue);
+                pretestMap.put(omimId, 1. + defaultSliderValue);
 
 
         if (knownDiseaseIds != null)
             for (TermId termId : knownDiseaseIds)
                 if (!pretestMap.containsKey(termId) & termId.getId().contains("OMIM:"))
-                    pretestMap.put(termId, defaultSliderValue);
+                    pretestMap.put(termId, 1. + defaultSliderValue);
 
         // Replace slider values in map with normalized pretest probabilities
         double mapSum = pretestMap.values().stream().reduce(0.0, Double::sum);

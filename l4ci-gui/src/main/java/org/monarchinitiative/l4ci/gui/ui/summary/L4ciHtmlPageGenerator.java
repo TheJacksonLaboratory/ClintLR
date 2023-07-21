@@ -8,6 +8,7 @@ import org.monarchinitiative.phenol.annotations.formats.hpo.category.HpoCategory
 import org.monarchinitiative.phenol.ontology.data.*;
 
 
+import java.io.PrintStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,17 +30,81 @@ class L4ciHtmlPageGenerator {
         double pretestProbability = diseaseSummary.getPretestProbability();
         Set<L4ciDiseaseItem> descendentsWithOmim = diseaseSummary.diseaseItemsWithOmim();
         Set<L4ciDiseaseItem> descendentsWithNoOmim = diseaseSummary.diseaseItemsWithNoOmim();
-        String description = targetDiseaseDescription(termID, label,descendentsWithOmim.size(), descendentsWithNoOmim.size(), adjust);
+        double defaultProbability = 1./nTotalDiseases;
+        double adjustedProbability = defaultProbability;
+        Map<TermId, Double> pretestMap = diseaseSummary.getPretestMap();
+        List<TermId> descOmimIds = descendentsWithOmim.stream().filter(ldi -> ldi.getOmimId().isPresent()).map(ldi -> ldi.getOmimId().get()).toList();
+        for (TermId omimId : descOmimIds) {
+            Double probability = pretestMap.get(omimId);
+            if (probability != null) {
+                if (probability > defaultProbability) {
+                    adjustedProbability = probability;
+                }
+            }
+        }
+        TermId nonAdjustedOmimId = pretestMap.keySet().stream().filter(id -> !descOmimIds.contains(id)).findFirst().get();
+        Double nonAdjustedProbability = pretestMap.get(nonAdjustedOmimId);
+
+        String description = targetDiseaseDescription(termID, label, descendentsWithOmim.size(), descendentsWithNoOmim.size(),
+                                                        adjust, nTotalDiseases, pretestProbability);
+        String probabilityTable = getProbabilityTable(label, descendentsWithOmim, nTotalDiseases, adjustedProbability, nonAdjustedProbability);
         String omimTable = getOmimTable(descendentsWithOmim);
-        String withoutOmimTable = getWithoutOmimTable(descendentsWithNoOmim, nTotalDiseases, pretestProbability);
-        return String.format(HTML_TEMPLATE, CSS, title, description, omimTable, withoutOmimTable);
+        String withoutOmimTable = getWithoutOmimTable(descendentsWithNoOmim);
+        return String.format(HTML_TEMPLATE, CSS, title, description, probabilityTable, omimTable, withoutOmimTable);
     }
 
 
+    private static String getProbabilityTable(String targetLabel, Set<L4ciDiseaseItem> descendentsWithOmim, int nTotalDiseases, double adjustedProbability, double nonAdjustedProbability) {
+        StringBuilder sb = new StringBuilder();
+//        String title = "Pretest Probabilities Before and After Adjustment";
+//        sb.append("<h3>").append(title).append("</h3>");
+        sb.append(String.format("""
+                      <table class="zebra">
+                        <caption  style="color:#222;text-shadow:0px 1px 2px #555;font-size:18px;">%s</caption>
+                        <thead>
+                          <tr>
+                           <th>Diseases</th><th>Count</th><th>Pretest Probability Before Adjustment</th><th>Pretest Probability After Adjustment</th>
+                          </tr>
+                        </thead>
+                    """, "Pretest Probabilities Before and After Adjustment"));
+
+
+        String row1 =  String.format("""
+                    <tr>
+                            <td>Diseases that are subtypes of %s</td>
+                            <td>%s</td>
+                            <td>%.2e</td>
+                            <td>%.2e</td>
+                          
+                          </tr>
+                    """,
+                targetLabel,
+                descendentsWithOmim.size(),
+                1./nTotalDiseases,
+                adjustedProbability);
+        sb.append(row1);
+
+        String row2 =  String.format("""
+                    <tr>
+                            <td>Other diseases</td>
+                            <td>%s</td>
+                            <td>%.2e</td>
+                            <td>%.2e</td>
+                          
+                          </tr>
+                    """,
+                nTotalDiseases - descendentsWithOmim.size(),
+                1./nTotalDiseases,
+                nonAdjustedProbability);
+        sb.append(row2);
+        sb.append("\n");
+        return sb.toString();
+    }
+
     private static String getOmimTable(Set<L4ciDiseaseItem> descendentsWithOmim) {
         StringBuilder sb = new StringBuilder();
-        String title = String.format("Descendent diseases with associated gene (n=%d)", descendentsWithOmim.size());
-        sb.append("<h3>").append(title).append("</h3>");
+//        String title = String.format("Descendent diseases with associated gene (n=%d)", descendentsWithOmim.size());
+//        sb.append("<h3>").append(title).append("</h3>");
         sb.append(String.format("""
                       <table class="zebra">
                         <caption  style="color:#222;text-shadow:0px 1px 2px #555;font-size:18px;">%s</caption>
@@ -48,7 +113,7 @@ class L4ciHtmlPageGenerator {
                            <th>Disease</th><th>Mondo ID</th><th>OMIM ID</th>
                           </tr>
                         </thead>
-                    """, "diseases"));
+                    """, String.format("\nDescendent diseases with associated gene (n=%d)", descendentsWithOmim.size())));
 
         for (L4ciDiseaseItem ldi : descendentsWithOmim) {
             String OmimId;
@@ -70,18 +135,16 @@ class L4ciHtmlPageGenerator {
                     OmimId);
             sb.append(row);
         }
-        sb.append("\n");
+        sb.append("\n\n");
         return sb.toString();
     }
 
 
 
-    private static String getWithoutOmimTable(Set<L4ciDiseaseItem> descendentsWithNoOmim, int nTotalDiseases, double pretestProbability) {
+    private static String getWithoutOmimTable(Set<L4ciDiseaseItem> descendentsWithNoOmim) {
         StringBuilder sb = new StringBuilder();
-        String title = String.format("Descendent diseases with no associated gene (n=%d)", descendentsWithNoOmim.size());
-        sb.append("<h3>").append(title).append("</h3>");
-        sb.append("<p>").append("Total No. Diseases: ").append(nTotalDiseases).append("</p>");
-        sb.append("<p>").append("Pretest Probability: ").append(String.format("%.2e", pretestProbability)).append("</p>");
+//        String title = String.format("Descendent diseases with no associated gene (n=%d)", descendentsWithNoOmim.size());
+//        sb.append("<h3>").append(title).append("</h3>");
         sb.append(String.format("""
                       <table class="zebra">
                         <caption  style="color:#222;text-shadow:0px 1px 2px #555;font-size:18px;">%s</caption>
@@ -90,7 +153,7 @@ class L4ciHtmlPageGenerator {
                            <th>Disease</th><th>Mondo ID</th>
                           </tr>
                         </thead>
-                    """, "diseases"));
+                    """, String.format("\nDescendent diseases with no associated gene (n=%d)", descendentsWithNoOmim.size())));
 
         for (L4ciDiseaseItem ldi : descendentsWithNoOmim) {
             String row =  String.format("""
@@ -109,9 +172,12 @@ class L4ciHtmlPageGenerator {
     }
 
 
-    private static String targetDiseaseDescription(String termID, String label, int withOmim, int withNoOmim, double adjust) {
+    private static String targetDiseaseDescription(String termID, String label, int withOmim, int withNoOmim,
+                                                   double adjust, int nTotalDiseases, double pretestProbability) {
         return  "<h3>Target Mondo term: " + label + " (" + termID + ")</h3>" +
                 "<p>The Pretest Adjustment is " + String.format("%.2f", adjust) + "</p>" +
+                "<p>Total No. Diseases: " + nTotalDiseases + "</p>" +
+                "<p>Pretest Probability: " + String.format("%.2e", pretestProbability) + "</p>" +
                 "<ol>" +
                 "<li> Descendent diseases with associated genes in OMIM: " + withOmim + "</li>" +
                 "<li> Other descendents: " + withNoOmim + "</li>" +
@@ -311,6 +377,7 @@ class L4ciHtmlPageGenerator {
             "<body>" +
             "<h1>%s</h1>" +
             "<p>%s</p>" +
+            "%s" +
             "%s" +
             "%s" +
             "</body></html>";

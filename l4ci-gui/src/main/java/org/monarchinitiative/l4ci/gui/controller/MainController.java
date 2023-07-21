@@ -50,6 +50,7 @@ import org.monarchinitiative.l4ci.gui.resources.OptionalResources;
 import org.monarchinitiative.l4ci.gui.tasks.LiricalRunTask;
 import org.monarchinitiative.l4ci.gui.ui.HelpViewFactory;
 import org.monarchinitiative.l4ci.gui.ui.MondoStatsViewFactory;
+import org.monarchinitiative.l4ci.gui.ui.OntologyTermWrapper;
 import org.monarchinitiative.l4ci.gui.ui.logviewer.LogViewerFactory;
 import org.monarchinitiative.l4ci.gui.ui.mondotree.MondoTreeView;
 import org.monarchinitiative.l4ci.gui.ui.summary.DiseaseSummaryView;
@@ -246,30 +247,11 @@ public class MainController {
         mondoTreeView.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previousMondoItem, newMondoItem) -> {
                     if (newMondoItem != null) {
-                        Ontology mondo = this.mondoTreeView.mondoProperty().get();
-                        Term selectedDiseaseTerm = newMondoItem.getValue().term();
-                        MapProperty<TermId, Double> multiplierValuesProperty = mondoTreeView.multiplierValuesProperty();
-                        Double adjustment = multiplierValuesProperty.get(selectedDiseaseTerm.id());
+                        Double adjustment = newMondoItem.getValue().getMultiplier();
                         if (adjustment == null) {
                             adjustment = DEFAULT_MULTIPLIER_VALUE;
                         }
-                        MondoOmimResources mondoOmimResources = optionalServices.mondoOmimResources();
-                        Lirical lirical =  optionalServices.getLirical();
-                        if (lirical == null) {
-                            PopUps.showInfoMessage("Cannot complete request to show diseases because LIRICAL is not initialized (See setup menu)",
-                                    "LIRICAL NULL");
-                            return;
-                        }
-                        Map<TermId, Double> pretestMap = PretestProbability.of(multiplierValuesProperty, mondoOmimResources,
-                                optionalServices.getLirical().phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
-                        int nTotalDiseases = pretestMap.size();
-                        Map<TermId, TermId> mondoToOmim = mondoOmimResources.mondoToOmimProperty();
-                        Double pretestProb = 1./nTotalDiseases;
-                        if (mondoToOmim.get(selectedDiseaseTerm.id()) != null) {
-                            pretestProb = pretestMap.get(mondoToOmim.get(selectedDiseaseTerm.id()));
-                        }
-                        L4ciDiseaseSummary summary = new L4ciDiseaseSummary(selectedDiseaseTerm, mondo, adjustment, nTotalDiseases, pretestProb);
-                        diseaseSummaryView.dataProperty().set(summary);
+                        updateHTMLDescription(adjustment);
                     }
                 });
 
@@ -323,9 +305,40 @@ public class MainController {
                     LOGGER.warn("Unknown observable changed: {}", obs);
                 }
             } finally {
+                updateHTMLDescription(multiplier.getValue());
                 updatingMultiplier = false;
             }
         };
+    }
+
+    private void updateHTMLDescription(Double adjustment) {
+        if (adjustment == null) {
+            adjustment = DEFAULT_MULTIPLIER_VALUE;
+        }
+        Lirical lirical =  optionalServices.getLirical();
+        if (lirical == null) {
+            PopUps.showInfoMessage("Cannot complete request to show diseases because LIRICAL is not initialized (See setup menu)",
+                    "LIRICAL NULL");
+            return;
+        }
+        Ontology mondo = mondoTreeView.mondoProperty().get();
+        MapProperty<TermId, Double> multiplierValuesProperty = mondoTreeView.multiplierValuesProperty();
+        MondoOmimResources mondoOmimResources = optionalServices.mondoOmimResources();
+        Map<TermId, Double> pretestMap = PretestProbability.of(multiplierValuesProperty, mondoOmimResources,
+                lirical.phenotypeService().diseases().diseaseIds(), DEFAULT_MULTIPLIER_VALUE);
+        int nTotalDiseases = pretestMap.size();
+        Map<TermId, TermId> mondoToOmim = mondoOmimResources.mondoToOmimProperty();
+        Double pretestProb = 1./nTotalDiseases;
+        TreeItem<OntologyTermWrapper> selectedItem = mondoTreeView.getSelectionModel().getSelectedItem();
+        if (selectedItem != null) {
+            Term selectedDiseaseTerm = selectedItem.getValue().getTerm();
+            TermId selectedTermOmimId = mondoToOmim.get(selectedDiseaseTerm.id());
+            if (selectedTermOmimId != null) {
+                pretestProb = pretestMap.get(selectedTermOmimId);
+            }
+            L4ciDiseaseSummary summary = new L4ciDiseaseSummary(selectedDiseaseTerm, mondo, adjustment, nTotalDiseases, pretestProb, pretestMap);
+            diseaseSummaryView.dataProperty().set(summary);
+        }
     }
 
     private static StringBinding showAbsolutePathIfPresent(ObjectProperty<Path> pathProperty) {

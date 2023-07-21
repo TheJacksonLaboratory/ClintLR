@@ -4,6 +4,7 @@ import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
 import org.monarchinitiative.phenol.ontology.data.*;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -21,12 +22,15 @@ public class L4ciDiseaseSummary {
 
     private final double pretestProbability;
 
-    public L4ciDiseaseSummary(Term selectedDiseaseTerm, Ontology mondo, double adjustment, int nTotalDiseases, double pretestProbability) {
+    private final Map<TermId, Double> pretestMap;
+
+    public L4ciDiseaseSummary(Term selectedDiseaseTerm, Ontology mondo, double adjustment, int nTotalDiseases, double pretestProbability, Map<TermId, Double> pretestMap) {
         this.selectedMondoTerm = selectedDiseaseTerm;
         Set<TermId> descendentIdSet = OntologyAlgorithm.getDescendents(mondo, selectedDiseaseTerm.id());
         this.adjust = adjustment;
         this.nTotalDiseases = nTotalDiseases;
         this.pretestProbability = pretestProbability;
+        this.pretestMap = pretestMap;
         descendentTermSet = new HashSet<>();
         for (TermId tid : descendentIdSet) {
             Term t = mondo.getTermMap().get(tid);
@@ -81,4 +85,6 @@ public class L4ciDiseaseSummary {
     public double getPretestProbability() {
         return pretestProbability;
     }
+
+    public Map<TermId, Double> getPretestMap() {return pretestMap;}
 }
