@@ -99,7 +99,7 @@ Kluijtmans-1996-CBS-patient.json	MONDO:0009352	OMIM:236200	classic homocystinuri
 Gong-2015-CBS-III_3.json	MONDO:0009352	OMIM:236200	classic homocystinuria	MONDO:0019222	inborn disorder of methionine cycle and sulfur amino acid metabolism	MONDO:0019052	inborn errors of metabolism	TRUE	
 Zhu-2017-AIRE-V-1.json	MONDO:0009411	OMIM:240300	autoimmune polyendocrine syndrome type 1	MONDO:0016165	genetic hypoparathyroidism	MONDO:0016165	genetic hypoparathyroidism	TRUE	
 Carre-2014-FOXE1-patient.json	MONDO:0009437	OMIM:241850	Bamforth-Lazarus syndrome	MONDO:0015778	syndromic hypothyroidism	MONDO:0015514	genetic endocrine growth disease	TRUE	
-Alzahrani-2018-EPG5-18-month_son.json	MONDO:0009452	OMIM:242840	Vici syndrome	MONDO:0015159	multiple congenital anomalies/dysmorphic syndrome-intellectual disability	MONDO:0019042	multiple congenital anomalies/dysmorphic syndrome	TRUE	
+Alzahrani-2018-EPG5-18-month_son.json	MONDO:0009452	OMIM:242840	Vici syndrome	MONDO:0015823	primary immunodeficiency due to a defect in adaptive immunity	MONDO:0003778	inborn error of immunity	TRUE
 Romero-Quintana-2013-CTSC-Case_1P1.json	MONDO:0009490	OMIM:245000	Papillon-Lefevre disease	MONDO:0019287	ectodermal dysplasia syndrome	MONDO:0021026	genetic epidermal appendage anomaly	TRUE	
 Zerkaoui-2015-GALC-child.json	MONDO:0009499	OMIM:245200	Krabbe disease	MONDO:0019245	lysosomal lipid storage disorder	MONDO:0019052	inborn errors of metabolism	TRUE	
 Falik_Zaccai-2014-INSR-ISR1.json	MONDO:0009517	OMIM:246200	Donohue syndrome	MONDO:0005015	diabetes mellitus	MONDO:0015161	multiple congenital anomalies/dysmorphic syndrome without intellectual disability	TRUE	

@@ -60,15 +60,19 @@ public class PretestProbability {
             if (!pretestMap.containsKey(omimId))
                 pretestMap.put(omimId, defaultSliderValue);
 
+        System.out.println("Pretest Map Size after adding all Mondo diseases = " + pretestMap.size());
+
 
         if (knownDiseaseIds != null)
             for (TermId termId : knownDiseaseIds)
-                if (!pretestMap.containsKey(termId) & termId.getId().contains("OMIM:"))
+                if (!pretestMap.containsKey(termId) & termId.getPrefix().equals("OMIM"))
                     pretestMap.put(termId, defaultSliderValue);
 
         // Replace slider values in map with normalized pretest probabilities
         double mapSum = pretestMap.values().stream().reduce(0.0, Double::sum);
         pretestMap.forEach((key, value) -> pretestMap.replace(key, value / mapSum));
+
+        System.out.println("Pretest Map Size after adding all diseases = " + pretestMap.size());
 
         return Map.copyOf(pretestMap);
     }
