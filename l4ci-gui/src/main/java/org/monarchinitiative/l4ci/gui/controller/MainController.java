@@ -626,7 +626,7 @@ public class MainController {
         return AnalysisOptions.builder()
                 .genomeBuild(liricalResources.getGenomeBuild())
                 .transcriptDatabase(liricalResources.getTranscriptDatabase())
-                .setDiseaseDatabases(List.of(DiseaseDatabase.OMIM, DiseaseDatabase.DECIPHER))
+                .setDiseaseDatabases(List.of(DiseaseDatabase.OMIM))
                 .variantDeleteriousnessThreshold(liricalResources.getPathogenicityThreshold())
                 .defaultVariantBackgroundFrequency(liricalResources.getDefaultVariantBackgroundFrequency())
                 .useStrictPenalties(liricalResources.isStrict())

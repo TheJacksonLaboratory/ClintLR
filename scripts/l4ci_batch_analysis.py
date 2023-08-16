@@ -13,7 +13,7 @@ DEFAULT_L4CI_JAR=os.path.join(parentPath, 'l4ci-cli', 'target', 'L4CI-CLI.jar')
 DEFAULT_DATA_DIR=os.path.join(parentPath, 'data')
 DEFAULT_OUT_DIR=os.path.abspath(scriptParent) #"."
 DEFAULT_VCF_FILE=os.path.join(parentPath, 'scripts', 'project.NIST.hc.snps.indels.NIST7035.vcf')
-DEFAULT_CIRANGES_FILE=os.path.join(parentPath, 'scripts', 'DiseaseIntuitionGroups.tsv')
+DEFAULT_CIRANGES_FILE=os.path.join(parentPath, 'scripts', 'DiseaseIntuitionGroupsTsv.tsv')
 DEFAULT_PRETEST_ADJUSTMENT="0"
 
 
@@ -40,10 +40,10 @@ def extract_CIrange_selected_term(CIranges_file, phenopacket_name, CIrange):
     CIrangeTerm, CIrangeLabel = "", ""
     with open(CIranges_file, 'r') as cf:
         extractPhenopacketLine = [line for line in cf if phenopacket_name in line]
-        if len(extractPhenopacketLine) > 0:
+        if len(extractPhenopacketLine) > 0 and "FALSE" not in extractPhenopacketLine:
             phenopacketLine = extractPhenopacketLine[0]
             rangeItems = phenopacketLine.split("\t")
-            mondoTerms = [item for item in rangeItems if "MONDO" in item]
+            mondoTerms = [item for item in rangeItems if "MONDO:" in item]
             if CIrange == "target":
                 if len(mondoTerms) > 0:
                     CIrangeTerm = mondoTerms[0]
@@ -60,9 +60,8 @@ def extract_CIrange_selected_term(CIranges_file, phenopacket_name, CIrange):
     return CIrangeTerm, CIrangeLabel
 
    
-def run_l4ci_and_extract_rank(l4ci_jar, mondo_path, output_directory, input_phenopacket, correct_diagnosis, multiplier, vcf_file, CIranges_file):
+def run_l4ci(l4ci_jar, mondo_path, output_directory, input_phenopacket, multiplier, vcf_file, CIranges_file):
     homeDir = os.path.expanduser("~")
-    phenopacketName = os.path.basename(input_phenopacket).rsplit('.', 1)[0]
     exomiser = os.path.join(homeDir, "Exomiser/2109_hg19/2109_hg19/2109_hg19_variants.mv.db")
 
     arg_list = ["java", "-jar", l4ci_jar, "batch", "-M", mondo_path, "-d", data_dir, "-e", exomiser, "-p", input_phenopacket,
@@ -73,6 +72,10 @@ def run_l4ci_and_extract_rank(l4ci_jar, mondo_path, output_directory, input_phen
     retval = os.system(command)
     print(f"cmd returned {retval}")
 
+    #extract_rank_and_write_to_summary_file(input_phenopacket, correct_diagnosis, CIranges_file)
+
+def extract_rank_and_write_to_summary_file(input_phenopacket, correct_diagnosis, CIranges_file):
+    phenopacketName = os.path.basename(input_phenopacket).rsplit('.', 1)[0]
 
     for file in sorted(glob.glob(os.path.join(os.path.dirname(inpath), "*tsv.gz"))):
         if not file == inpath and phenopacketName in file:
@@ -103,7 +106,7 @@ def run_l4ci_and_extract_rank(l4ci_jar, mondo_path, output_directory, input_phen
                     f.write("\n")
                     f.write("\t".join([phenopacketName, diseaseId, diseaseLabel, rank, pretestAdjustment, pretestProb, posttestProb, CIrange, CIrangeTerm, CIrangeLabel]))
 
-  
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="LIRICAL analysis of phenopackets (with or without VCF) using a gene list")
     parser.add_argument("-j", "--jar", nargs='?', default=DEFAULT_L4CI_JAR, help="Path to Java executable JAR file.")
@@ -137,14 +140,9 @@ if __name__ == "__main__":
         inpath = ".".join([outfile_name, "tsv"])
         with open(inpath, 'wt') as f:
             f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
-            run_l4ci_and_extract_rank(l4ci_jar=l4ci_jar, 
-                                    mondo_path=mondoPath, 
-                                    output_directory=outdir, 
-                                    input_phenopacket=phenop, 
-                                    correct_diagnosis=right_dx, 
-                                    multiplier=mult, 
-                                    vcf_file=vcf,
-                                    CIranges_file=ranges)
+            run_l4ci(l4ci_jar=l4ci_jar, mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop,
+                     multiplier=mult, vcf_file=vcf, CIranges_file=ranges)
+            extract_rank_and_write_to_summary_file(input_phenopacket=phenop, correct_diagnosis=right_dx, CIranges_file=ranges)
             print("Wrote results to: " + inpath)
 
     elif os.path.isdir(phenop):
@@ -153,14 +151,9 @@ if __name__ == "__main__":
             f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
             for phenopFile in sorted(glob.glob(os.path.join(phenop, "*json"))):
                 right_dx = extract_correct_diagnosis_from_phenopacket(phenopFile)
-                run_l4ci_and_extract_rank(l4ci_jar=l4ci_jar,
-                                        mondo_path=mondoPath, 
-                                        output_directory=outdir, 
-                                        input_phenopacket=phenopFile, 
-                                        correct_diagnosis=right_dx, 
-                                        multiplier=mult,
-                                        vcf_file=vcf,
-                                        CIranges_file=ranges)
+                # run_l4ci(l4ci_jar=l4ci_jar, mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop,
+                #          multiplier=mult, vcf_file=vcf, CIranges_file=ranges)
+                extract_rank_and_write_to_summary_file(input_phenopacket=phenopFile, correct_diagnosis=right_dx, CIranges_file=ranges)
             print("Wrote results to: " + inpath)
 
 

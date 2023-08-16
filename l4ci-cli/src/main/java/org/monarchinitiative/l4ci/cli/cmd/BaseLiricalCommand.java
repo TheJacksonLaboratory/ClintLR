@@ -217,10 +217,10 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
             LOGGER.info(key + ": " + diseaseIdToPretestProba.get(key));
         }
         PretestDiseaseProbability pretestProba = PretestDiseaseProbability.of(diseaseIdToPretestProba);
-        return AnalysisOptions.builder()
+        AnalysisOptions analysisOptions = AnalysisOptions.builder()
                 .genomeBuild(parseGenomeBuild(getGenomeBuild()))
                 .transcriptDatabase(runConfiguration.transcriptDb)
-                .setDiseaseDatabases(List.of(DiseaseDatabase.OMIM, DiseaseDatabase.DECIPHER))
+                .setDiseaseDatabases(List.of(DiseaseDatabase.OMIM))
                 .variantDeleteriousnessThreshold(runConfiguration.pathogenicityThreshold)
                 .defaultVariantBackgroundFrequency(runConfiguration.defaultVariantBackgroundFrequency)
                 .useStrictPenalties(runConfiguration.strict)
@@ -228,6 +228,7 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
                 .pretestProbability(pretestProba)
                 .disregardDiseaseWithNoDeleteriousVariants(false)
                 .build();
+        return analysisOptions;
     }
 
     protected OutputOptions createOutputOptions(Path resultsDir, String outfilePrefix) {
