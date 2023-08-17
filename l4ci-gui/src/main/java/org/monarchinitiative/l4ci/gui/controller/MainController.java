@@ -362,8 +362,8 @@ public class MainController {
 
     @FXML
     public void showLog(ActionEvent e) {
-        String TODO = "x";
-        LogViewerFactory factory = new LogViewerFactory(TODO);
+        String logFile = "l4ci-gui/l4ci.log";
+        LogViewerFactory factory = new LogViewerFactory(logFile);
         factory.display();
         e.consume();
     }
