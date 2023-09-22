@@ -26,11 +26,12 @@ def extract_correct_diagnosis_from_phenopacket(phenopacket_file):
         data = f.read()
         jsondata = json.loads(data)
         phenopacket = Parse(json.dumps(jsondata), Phenopacket())
-        if len(phenopacket.diseases) == 1:
-            diseaseId = phenopacket.diseases[0].term.id
-            diagnosis_curie = diseaseId
-        elif len(phenopacket.diseases) > 1:
+        interpretations = phenopacket.interpretations
+        if len(interpretations) != 1:
             raise ValueError(f"Error: phenopacket has two different diagnoses!")
+        disease = interpretations[0].diagnosis.disease
+        diseaseId = disease.id
+        diagnosis_curie = diseaseId
     if diagnosis_curie is None:
        raise ValueError(f"Could not extract diagnosis from {phenopacket_file}")
     return diagnosis_curie
@@ -132,7 +133,7 @@ if __name__ == "__main__":
     vcf = args.vcf
     ranges = args.ranges
 
-    outfile_name = os.path.join(outdir, "l4ci_batch_analysis_results")
+    outfile_name = os.path.join(outdir, "Tran_analysis_results")
 
 
     if os.path.isfile(phenop):
@@ -140,8 +141,8 @@ if __name__ == "__main__":
         inpath = ".".join([outfile_name, "tsv"])
         with open(inpath, 'wt') as f:
             f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
-            run_l4ci(l4ci_jar=l4ci_jar, mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop,
-                     multiplier=mult, vcf_file=vcf, CIranges_file=ranges)
+            # run_l4ci(l4ci_jar=l4ci_jar, mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop,
+            #          multiplier=mult, vcf_file=vcf, CIranges_file=ranges)
             extract_rank_and_write_to_summary_file(input_phenopacket=phenop, correct_diagnosis=right_dx, CIranges_file=ranges)
             print("Wrote results to: " + inpath)
 

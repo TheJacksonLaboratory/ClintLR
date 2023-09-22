@@ -26,7 +26,7 @@ public class AutoCompleteOntologyTextField extends TextField {
 
     private final ObjectProperty<Ontology> ontology = new SimpleObjectProperty<>();
 
-    private final ObjectProperty<Map<TermId, List<TermId>>> omim2Mondo = new SimpleObjectProperty<>();
+    private final ObjectProperty<Map<TermId, TermId>> omim2Mondo = new SimpleObjectProperty<>();
     /** The maximum number of autocomplete entries to show (default 10). */
     private final int maxEntries;
     /**
@@ -42,9 +42,9 @@ public class AutoCompleteOntologyTextField extends TextField {
     /** Key: an ontology term label or synonym label; value: the corresponding termid. This is used
      * to return the TermId of the selected item rather than a String*/
     private final Map<String, TermId> labelToTermMap = new HashMap<>();
-    /** Key: an OMIM ID label; value: the corresponding list of Mondo termids. This is used
-     * to return the TermIds of the selected item rather than a String*/
-    private final Map<String, List<TermId>> labelToTermsMap = new HashMap<>();
+    /** Key: an OMIM ID label; value: the corresponding Mondo termid. This is used
+     * to return the TermId of the selected item rather than a String*/
+    private final Map<String, TermId> omimLabelToMondoTermMap = new HashMap<>();
     /** The popup used to select an entry. */
     private final ContextMenu entriesPopup;
 
@@ -107,15 +107,15 @@ public class AutoCompleteOntologyTextField extends TextField {
 
         omim2Mondo.addListener((obs, old, novel) -> {
             if (novel == null) {
-                labelToTermsMap.clear();
+                omimLabelToMondoTermMap.clear();
                 omimLabels.clear();
             } else {
                 for (var entry : novel.entrySet()) {
                     TermId omimId = entry.getKey();
-                    List<TermId> mondoIds = entry.getValue();
-                    labelToTermsMap.put(omimId.getValue(), mondoIds);
+                    TermId mondoId = entry.getValue();
+                    omimLabelToMondoTermMap.put(omimId.getValue(), mondoId);
                 }
-                omimLabels.addAll(labelToTermsMap.keySet());
+                omimLabels.addAll(omimLabelToMondoTermMap.keySet());
             }
         });
     }
@@ -125,16 +125,16 @@ public class AutoCompleteOntologyTextField extends TextField {
         return Optional.ofNullable(labelToTermMap.get(selected));
     }
 
-    public Optional<List<TermId>> getSelectedIds() {
+    public Optional<TermId> getSelectedMondoId() {
         String selected = getText();
-        return Optional.ofNullable(labelToTermsMap.get(selected));
+        return Optional.ofNullable(omimLabelToMondoTermMap.get(selected));
     }
 
     public ObjectProperty<Ontology> ontologyProperty() {
         return ontology;
     }
 
-    public ObjectProperty<Map<TermId, List<TermId>>> omim2MondoProperty() {return omim2Mondo; }
+    public ObjectProperty<Map<TermId, TermId>> omim2MondoProperty() {return omim2Mondo; }
 
     /**
      * Populate the entry set with the given search results.  Display is limited to 10 entries, for performance.

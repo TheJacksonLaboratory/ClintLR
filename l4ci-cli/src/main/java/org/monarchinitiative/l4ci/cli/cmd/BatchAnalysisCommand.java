@@ -1,12 +1,10 @@
 package org.monarchinitiative.l4ci.cli.cmd;
 
-import org.monarchinitiative.l4ci.core.io.OmimMapIO;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.AnalysisData;
 import org.monarchinitiative.lirical.core.analysis.AnalysisOptions;
 import org.monarchinitiative.lirical.core.analysis.AnalysisResults;
 import org.monarchinitiative.lirical.core.analysis.LiricalAnalysisRunner;
-import org.monarchinitiative.lirical.core.exception.LiricalException;
 import org.monarchinitiative.lirical.core.model.Age;
 import org.monarchinitiative.lirical.core.model.GenesAndGenotypes;
 import org.monarchinitiative.lirical.core.model.Sex;
@@ -23,10 +21,10 @@ import picocli.CommandLine;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
+import java.util.Set;
 
 
 /**
@@ -57,45 +55,12 @@ public class BatchAnalysisCommand extends BenchmarkCommand {
     public Integer call() throws Exception {
         printBanner();
         long start = System.currentTimeMillis();
-        // The batch analysis has a logic of its own, hence the `call()` method is overridden.
-        // 0 - check input
-        if (batchDir != null) {
-            phenopacketPaths = new ArrayList<>();
-            File folder = new File(batchDir);
-            File[] files = folder.listFiles();
-            assert files != null;
-            for (File file : files) {
-                BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-                if (basicFileAttributes.isRegularFile() && !basicFileAttributes.isDirectory() && !file.getName().startsWith(".")) {
-                    phenopacketPaths.add(file.toPath());
-                }
-            }
-        }
-        List<String> errors = checkInput();
-        if (!errors.isEmpty())
-            throw new LiricalException(String.format("Errors: %s", String.join(", ", errors)));
 
-        // 1 - bootstrap LIRICAL.
-        Lirical lirical = bootstrapLirical();
+        Lirical lirical = prepareLirical();
 
-        // 2 - prepare the simulation data shared by all phenopackets.
         OntologyData ontologyData = loadOntologies();
-        Path dataDirectory = Path.of(String.join(File.separator, System.getProperty("user.home"), ".l4ci", "data"));
-        Path omimToMondoPath = dataDirectory.resolve(OMIM_2_MONDO_NAME);
-        Map<TermId, List<TermId>> omim2Mondo;
-        if (Files.exists(omimToMondoPath)) {
-            omim2Mondo = OmimMapIO.read(omimToMondoPath);
-        } else {
-            omim2Mondo = makeOmimMap(ontologyData.mondo());
-        }
 
-        // Flip the OMIM to Mondo map
-        Map<TermId, TermId> mondoToOmim = new HashMap<>();
-        for (Map.Entry<TermId, List<TermId>> e : omim2Mondo.entrySet()) {
-            for (TermId mondoId : e.getValue()) {
-                mondoToOmim.put(mondoId, e.getKey());
-            }
-        }
+        Map<TermId, TermId> omim2Mondo = getOmimMap(ontologyData);
 
         List<String> rangeLines = null;
         if (rangeFilePath != null && Files.isRegularFile(rangeFilePath)) {
@@ -120,7 +85,7 @@ public class BatchAnalysisCommand extends BenchmarkCommand {
         return 0;
     }
 
-    protected void runAnalysis(Lirical lirical, List<String> rangeLines, Double multiplier, Map<TermId, List<TermId>> omimToMondoMap, OntologyData ontologyData) throws Exception {
+    protected void runAnalysis(Lirical lirical, List<String> rangeLines, Double multiplier, Map<TermId, TermId> omimToMondoMap, OntologyData ontologyData) throws Exception {
         String[] types = {"target"}; //, "narrow", "broad"};
         if (rangeLines != null)
             types = new String[]{"target", "narrow", "broad"};

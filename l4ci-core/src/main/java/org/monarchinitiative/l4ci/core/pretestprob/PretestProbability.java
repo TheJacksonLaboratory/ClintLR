@@ -40,7 +40,7 @@ public class PretestProbability {
 //    }
 
     public static Map<TermId, Double> of(Map<TermId, Double> pretestAdjMap,
-                                         Map<TermId, List<TermId>> omimToMondo,
+                                         Map<TermId, TermId> omimToMondo,
                                          Collection<TermId> knownDiseaseIds,
                                          double defaultSliderValue) {
 

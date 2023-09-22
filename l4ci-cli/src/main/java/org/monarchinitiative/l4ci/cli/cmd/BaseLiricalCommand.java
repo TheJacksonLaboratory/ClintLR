@@ -211,7 +211,7 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
     }
 
     protected AnalysisOptions prepareAnalysisOptions(Lirical lirical, Map<TermId, Double> pretestAdjustmentMap,
-                                                   Map<TermId, List<TermId>> omimToMondoMap) throws LiricalDataException {
+                                                   Map<TermId, TermId> omimToMondoMap) throws LiricalDataException {
         Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(pretestAdjustmentMap, omimToMondoMap, lirical.phenotypeService().diseases().diseaseIds(), 1.0);
         for (TermId key : pretestAdjustmentMap.keySet()) {
             LOGGER.info(key + ": " + diseaseIdToPretestProba.get(key));
