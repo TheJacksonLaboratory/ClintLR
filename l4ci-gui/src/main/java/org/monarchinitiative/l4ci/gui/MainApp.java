@@ -39,7 +39,7 @@ public class MainApp  extends Application {
     public void init() {
         String[] args = getParameters().getRaw().toArray(String[]::new);
         //Set before the logger starts. The property will be picked up by logback.xml
-//        System.setProperty("log.name", "~./l4ci/l4ci.log");
+        System.setProperty("log.name", "l4ci-gui/l4ci.log");
 //        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 //        LocalDateTime now = LocalDateTime.now();
 //        String dtime = dtf.format(now);

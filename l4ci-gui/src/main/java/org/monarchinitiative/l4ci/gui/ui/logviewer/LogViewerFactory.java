@@ -30,7 +30,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.monarchinitiative.l4ci.gui.PopUps;
-import org.springframework.beans.factory.annotation.Autowired;
 
 
 import java.io.BufferedReader;

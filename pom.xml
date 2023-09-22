@@ -167,17 +167,18 @@
           <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
           <artifactId>lirical-io</artifactId>
           <version>${lirical.version}</version>
+          <exclusions>
+            <exclusion>
+              <!-- Used by HtsJDK under the hood, we're excluding due to module path conflict. -->
+              <groupId>commons-logging</groupId>
+              <artifactId>commons-logging</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
           <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
           <artifactId>lirical-configuration</artifactId>
           <version>${lirical.version}</version>
-          <exclusions>
-            <exclusion>
-              <groupId>commons-logging</groupId>
-              <artifactId>commons-logging</artifactId>
-            </exclusion>
-          </exclusions>
         </dependency>
         <dependency>
           <groupId>org.phenopackets.phenopackettools</groupId>
