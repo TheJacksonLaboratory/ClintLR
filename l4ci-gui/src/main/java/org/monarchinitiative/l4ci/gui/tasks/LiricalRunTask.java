@@ -89,7 +89,7 @@ public class LiricalRunTask extends Task<Path> {
                 .setExomiserPath(getExomiserPathForGenomeBuild(liricalResources, analysisOptions.genomeBuild()))
                 .setAnalysisDate(getTodaysDate())
                 .setSampleName(analysisData.sampleId())
-                .setnGoodQualityVariants(filteringStats.nGoodQualityVariants())
+                .setnPassingVariants(filteringStats.nPassingVariants())
                 .setnFilteredVariants(filteringStats.nFilteredVariants())
                 .setGenesWithVar(0) // TODO
                 .setGlobalMode(analysisOptions.useGlobal())

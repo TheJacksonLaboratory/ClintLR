@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.monarchinitiative.l4ci</groupId>
         <artifactId>l4ci</artifactId>
-        <version>0.1.0</version>
+        <version>0.3.0</version>
     </parent>
 
     <name>l4ci-core</name>
@@ -29,7 +29,7 @@
             <!--            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>-->
             <groupId>org.monarchinitiative.lirical</groupId>
             <artifactId>lirical-configuration</artifactId>
-            <version>2.0.0-RC2</version>
+            <version>2.0.0-RC3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <!--            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>-->

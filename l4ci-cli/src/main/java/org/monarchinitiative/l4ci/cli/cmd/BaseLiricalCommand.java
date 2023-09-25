@@ -257,7 +257,7 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
                 .setExomiserPath(dataSection.exomiserDatabase.toAbsolutePath().toString())
                 .setAnalysisDate(getTodaysDate())
                 .setSampleName(sampleId)
-                .setnGoodQualityVariants(filteringStats.nGoodQualityVariants())
+                .setnPassingVariants(filteringStats.nPassingVariants())
                 .setnFilteredVariants(filteringStats.nFilteredVariants())
                 .setGenesWithVar(0) // TODO
                 .setGlobalMode(runConfiguration.globalAnalysisMode)
