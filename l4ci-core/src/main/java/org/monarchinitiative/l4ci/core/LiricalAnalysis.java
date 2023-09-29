@@ -57,7 +57,7 @@ public class LiricalAnalysis {
                 .setExomiserPath(pgProperties.getProperty("exomiser.variant.path") == null ? "" : pgProperties.getProperty("exomiser.variant.path"))
                 .setAnalysisDate(getTodaysDate())
                 .setSampleName(analysisData.sampleId())
-                .setnGoodQualityVariants(filteringStats.nGoodQualityVariants())
+                .setnPassingVariants(filteringStats.nPassingVariants())
                 .setnFilteredVariants(filteringStats.nFilteredVariants())
                 .setGenesWithVar(0) // TODO
                 .setGlobalMode(false)
