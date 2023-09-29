@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 
 import org.monarchinitiative.l4ci.core.io.PretestProbaAdjustmentIO;
 import org.monarchinitiative.l4ci.core.mondo.MondoStats;
-import org.monarchinitiative.l4ci.gui.*;
 import org.monarchinitiative.l4ci.gui.PopUps;
 import org.monarchinitiative.l4ci.gui.UrlBrowser;
 import org.monarchinitiative.l4ci.gui.config.AppProperties;
@@ -530,9 +529,9 @@ public class MainController {
     @FXML
     private void omimButtonAction() {
         // TODO - have user choose a Mondo term from the list of Mondo terms in the Omim-to-Mondo map.
-        Optional<List<TermId>> opt = autocompleteOmimTextField.getSelectedIds();
+        Optional<TermId> opt = autocompleteOmimTextField.getSelectedMondoId();
         if (opt.isPresent()) {
-            TermId id = opt.get().get(0);
+            TermId id = opt.get();
             goToTerm(id);
         } else {
             LOGGER.warn("Unable to get term id: ");

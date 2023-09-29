@@ -36,12 +36,12 @@
       <commons.io>2.8.0</commons.io>
     </properties>
 
-    <repositories>
-      <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
-      </repository>
-    </repositories>
+<!--    <repositories>-->
+<!--      <repository>-->
+<!--        <id>jitpack.io</id>-->
+<!--        <url>https://jitpack.io</url>-->
+<!--      </repository>-->
+<!--    </repositories>-->
 
 
     <scm>
@@ -159,12 +159,14 @@
           <version>${protobuf.version}</version>
         </dependency>
         <dependency>
-          <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
+          <!--            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>-->
+          <groupId>org.monarchinitiative.lirical</groupId>
           <artifactId>lirical-core</artifactId>
           <version>${lirical.version}</version>
         </dependency>
         <dependency>
-          <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
+          <!--            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>-->
+          <groupId>org.monarchinitiative.lirical</groupId>
           <artifactId>lirical-io</artifactId>
           <version>${lirical.version}</version>
           <exclusions>

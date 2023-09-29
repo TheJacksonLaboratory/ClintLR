@@ -7,6 +7,7 @@ import org.monarchinitiative.l4ci.core.OptionalHpoaResource;
 import org.monarchinitiative.l4ci.core.Relation;
 import org.monarchinitiative.l4ci.core.io.HPOParser;
 import org.monarchinitiative.l4ci.core.io.OmimMapIO;
+import org.monarchinitiative.l4ci.core.mondo.CalculateOmimToMondoMap;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.exception.LiricalException;
@@ -24,10 +25,7 @@ import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImporter;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImporters;
 import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.ontology.data.Dbxref;
-import org.monarchinitiative.phenol.ontology.data.Ontology;
-import org.monarchinitiative.phenol.ontology.data.Term;
-import org.monarchinitiative.phenol.ontology.data.TermId;
+import org.monarchinitiative.phenol.ontology.data.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -40,6 +38,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
+import java.util.Set;
 
 
 
@@ -122,46 +121,13 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     public Integer call() throws Exception {
         printBanner();
         long start = System.currentTimeMillis();
-        // The benchmark has a logic of its own, hence the `call()` method is overridden.
-        // 0 - check input
-        if (batchDir != null) {
-            phenopacketPaths = new ArrayList<>();
-            File folder = new File(batchDir);
-            File[] files = folder.listFiles();
-            assert files != null;
-            for (File file : files) {
-                BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-                if (basicFileAttributes.isRegularFile() && !basicFileAttributes.isDirectory() && !file.getName().startsWith(".")) {
-                    phenopacketPaths.add(file.toPath());
-                }
-            }
-        }
-        List<String> errors = checkInput();
-        if (!errors.isEmpty())
-            throw new LiricalException(String.format("Errors: %s", String.join(", ", errors)));
 
-        // 1 - bootstrap LIRICAL.
-        Lirical lirical = bootstrapLirical();
+        Lirical lirical = prepareLirical();
 
-        // 2 - prepare the simulation data shared by all phenopackets.
         List<LiricalVariant> backgroundVariants = readBackgroundVariants(lirical);
         OntologyData ontologyData = loadOntologies();
-        Path dataDirectory = Path.of(String.join(File.separator, System.getProperty("user.home"), ".l4ci", "data"));
-        Path omimToMondoPath = dataDirectory.resolve(OMIM_2_MONDO_NAME);
-        Map<TermId, List<TermId>> omim2Mondo;
-        if (Files.exists(omimToMondoPath)) {
-            omim2Mondo = OmimMapIO.read(omimToMondoPath);
-        } else {
-            omim2Mondo = makeOmimMap(ontologyData.mondo);
-        }
 
-        // Flip the OMIM to Mondo map
-        Map<TermId, TermId> mondoToOmim = new HashMap<>();
-        for (Map.Entry<TermId, List<TermId>> e : omim2Mondo.entrySet()) {
-            for (TermId mondoId : e.getValue()) {
-                mondoToOmim.put(mondoId, e.getKey());
-            }
-        }
+        Map<TermId, TermId> omim2Mondo = getOmimMap(ontologyData);
 
         List<String> rangeLines = null;
         if (rangeFilePath != null && Files.isRegularFile(rangeFilePath)) {
@@ -205,6 +171,54 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return 0;
     }
 
+    protected Lirical prepareLirical() throws IOException, LiricalException {
+        // The benchmark has a logic of its own, hence the `call()` method is overridden.
+        // 0 - check input
+        if (batchDir != null) {
+            phenopacketPaths = new ArrayList<>();
+            File folder = new File(batchDir);
+            File[] files = folder.listFiles();
+            assert files != null;
+            for (File file : files) {
+                BasicFileAttributes basicFileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+                if (basicFileAttributes.isRegularFile() && !basicFileAttributes.isDirectory() && !file.getName().startsWith(".")) {
+                    phenopacketPaths.add(file.toPath());
+                }
+            }
+        }
+        List<String> errors = checkInput();
+        if (!errors.isEmpty())
+            throw new LiricalException(String.format("Errors: %s", String.join(", ", errors)));
+
+        // 1 - bootstrap LIRICAL.
+        Lirical lirical = bootstrapLirical();
+        return lirical;
+    }
+
+    protected Map<TermId, TermId> getOmimMap(OntologyData ontologyData) throws IOException {
+
+        // 2 - prepare the simulation data shared by all phenopackets.
+//        Path dataDirectory = Path.of(String.join(File.separator, System.getProperty("user.home"), ".l4ci", "data"));
+        Path dataDirectory = dataSection.liricalDataDirectory;
+        Path omimToMondoPath = dataDirectory.resolve(OMIM_2_MONDO_NAME);
+        Map<TermId, TermId> omim2Mondo;
+        if (Files.exists(omimToMondoPath)) {
+            omim2Mondo = OmimMapIO.read(omimToMondoPath);
+        } else {
+            omim2Mondo = CalculateOmimToMondoMap.calculateOmimMap(ontologyData.mondo);
+        }
+
+        // Flip the OMIM to Mondo map
+        Map<TermId, TermId> mondoToOmim = new HashMap<>();
+        for (Map.Entry<TermId, TermId> e : omim2Mondo.entrySet()) {
+            //for (TermId mondoId : e.getValue()) {
+            mondoToOmim.put(e.getValue(), e.getKey());
+            //}
+        }
+
+        return omim2Mondo;
+    }
+
     protected List<String> checkInput() {
         List<String> errors = super.checkInput();
 
@@ -221,7 +235,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return errors;
     }
 
-    protected void runAnalysis(Lirical lirical, List<LiricalVariant> backgroundVariants, HashMap<String, Path> outputPaths, List<String> rangeLines, Double multiplier, Map<TermId, List<TermId>> omimToMondoMap, OntologyData ontologyData) throws Exception {
+    protected void runAnalysis(Lirical lirical, List<LiricalVariant> backgroundVariants, HashMap<String, Path> outputPaths, List<String> rangeLines, Double multiplier, Map<TermId, TermId> omimToMondoMap, OntologyData ontologyData) throws Exception {
         String[] types = {"target", "narrow", "broad"};
         Set<TermId> omimIDs = omimToMondoMap.keySet();
         for (String type : types) {
@@ -322,22 +336,26 @@ public class BenchmarkCommand extends BaseLiricalCommand {
 
 
     protected record DiseaseId(TermId mondoId, TermId omimId) {}
-    protected static DiseaseId getSelectedDisease(Map<TermId, List<TermId>> omimToMondoMap, Path phenopacketPath) throws Exception {
+    protected static DiseaseId getSelectedDisease(Map<TermId, TermId> omimToMondoMap, Path phenopacketPath) throws Exception {
         PhenopacketData data = readPhenopacketData(phenopacketPath);
         List<TermId> diseaseIds = data.getDiseaseIds();
         TermId omimId = diseaseIds.get(0);
         TermId mondoId = null;
         if (omimToMondoMap.get(omimId) != null) {
-            mondoId = omimToMondoMap.get(omimId).get(0);
+            mondoId = omimToMondoMap.get(omimId);
         }
         return new DiseaseId(mondoId, omimId);
     }
 
     protected record TargetDiseases(DiseaseId targetId, DiseaseId narrowId, DiseaseId broadId) {}
-    protected static TargetDiseases getSelectedDiseases(Map<TermId, List<TermId>> omimToMondoMap, Path phenopacketPath, List<String> rangeLines) throws Exception {
+    protected static TargetDiseases getSelectedDiseases(Map<TermId, TermId> omimToMondoMap, Path phenopacketPath, List<String> rangeLines) throws Exception {
         String phenopacketName = phenopacketPath.getFileName().toString();
         List<String> ids = new ArrayList<>();
         Term targetOmimTerm = null;
+        if (phenopacketName.contains("PMID")) {
+            phenopacketName = phenopacketName.substring(14);
+        }
+
         for (String line : rangeLines) {
             if (line.contains(phenopacketName)) {
                 String[] items = line.split("\t");
@@ -363,9 +381,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                         omimId = targetOmimTerm.id();
                 } else {
                     for (TermId omimIdKey : omimToMondoMap.keySet()) {
-                        List<TermId> mondoIds = omimToMondoMap.get(omimIdKey);
-                        if (mondoIds.contains(mondoId)) {
-                            omimId = omimIdKey;
+                        if (omimToMondoMap.get(omimIdKey).equals(mondoId)) {
+                            mondoId = omimToMondoMap.get(omimIdKey);
                         }
                     }
                 }
@@ -394,23 +411,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         return diseaseMap;
     }
 
-    protected Map<TermId, List<TermId>> makeOmimMap(Ontology mondo) {
-        Map<TermId, List<TermId>> builder = new HashMap<>();
-        for (Term mondoTerm : mondo.getTerms()) {
-            for (Dbxref ref : mondoTerm.getXrefs()) {
-                String refName = ref.getName();
-                if (refName.startsWith("OMIM:")) {
-                    TermId omimId = TermId.of(refName);
-                    builder.computeIfAbsent(omimId, i -> new ArrayList<>())
-                            .add(mondoTerm.id());
-                    break;
-                }
-            }
-        }
-        return Map.copyOf(builder);
-    }
-
-    Map<TermId, TermId> makeSelectedDiseasesMap(Map<TermId, List<TermId>> omimToMondoMap, TermId mondoId,
+    Map<TermId, TermId> makeSelectedDiseasesMap(Map<TermId, TermId> omimToMondoMap, TermId mondoId,
                                                 Ontology mondo, Set<TermId> omimIDs) {
         HashMap<TermId, TermId> selectedTerms = new HashMap<>();
 //        for (TermId omimID : omimIDs) {
@@ -420,8 +421,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 descendents.forEach(d -> System.out.print(d.id() + " "));
                 for (Term descendent : descendents) {
                     for (TermId omimID2 : omimIDs) {
-                        List<TermId> mondoIDs2 = omimToMondoMap.get(omimID2);
-                        if (mondoIDs2.contains(descendent.id())) {
+                        TermId mondoIDs2 = omimToMondoMap.get(omimID2);
+                        if (mondoIDs2.equals(descendent.id())) {
                             selectedTerms.put(omimID2, descendent.id());
                             break;
                         }

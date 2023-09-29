@@ -35,11 +35,14 @@
             <artifactId>phenol-annotations</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
+<!--            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>-->
+            <groupId>org.monarchinitiative.lirical</groupId>
             <artifactId>lirical-core</artifactId>
+            <version>2.0.0-RC2</version>
         </dependency>
         <dependency>
-            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
+            <!--            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>-->
+            <groupId>org.monarchinitiative.lirical</groupId>
             <artifactId>lirical-io</artifactId>
         </dependency>
         <dependency>
