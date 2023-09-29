@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.monarchinitiative.clintlr.gui.controller.*?>
+<?import org.monarchinitiative.clintlr.gui.ui.summary.DiseaseSummaryView?>
+<?import org.monarchinitiative.clintlr.gui.ui.mondotree.MondoTreeView?>
+
+<BorderPane fx:id="contentPane" prefHeight="1000.0" prefWidth="1200.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.monarchinitiative.clintlr.gui.controller.MainController">
+     <top>
+         <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
+             <MenuBar HBox.hgrow="SOMETIMES">
+                 <Menu mnemonicParsing="false" text="File">
+                     <Menu text="Probability Map">
+                         <MenuItem onAction="#loadMapOutputFile" text="Load Map from File"/>
+                         <MenuItem onAction="#saveMapOutputFile" text="Save Map to File"/>
+                         <MenuItem onAction="#showMapInterface" text="Show Map Interface"/>
+                     </Menu>
+                     <MenuItem mnemonicParsing="false" onAction="#close" text="Exit"/>
+                 </Menu>
+                 <Menu mnemonicParsing="false" text="Setup">
+                     <MenuItem onAction="#showResourcesInterface" text="Init/show L4CI Resources"/>
+                 </Menu>
+                 <Menu mnemonicParsing="false" text="View">
+                     <MenuItem fx:id="showMondoStats" onAction="#showMondoStatsAction" text="Show Mondo Stats"/>
+                     <MenuItem onAction="#showLog" text="Show Log"/>
+                 </Menu>
+             </MenuBar>
+             <MenuBar HBox.hgrow="NEVER">
+                 <Menu mnemonicParsing="false" text="Help">
+                     <MenuItem mnemonicParsing="false" onAction="#showHelpWindow" text="Help" />
+                     <MenuItem mnemonicParsing="false" onAction="#aboutWindow" text="About" />
+                 </Menu>
+             </MenuBar>
+         </HBox>
+     </top>
+      <center>
+          <SplitPane dividerPositions="0.5" focusTraversable="true" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1">
+              <VBox BorderPane.alignment="CENTER">
+                  <HBox prefHeight="130.0">
+                      <VBox>
+                          <Label styleClass="bluelabel" stylesheets="@style.css" text="Disease or disease category">
+                              <tooltip>
+                                  <Tooltip text="Search for diseases or disease groups (Mondo terms)"/>
+                              </tooltip>
+                              <VBox.margin>
+                                  <Insets bottom="5.0" left="15.0" top="5.0"/>
+                              </VBox.margin>
+                          </Label>
+                          <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+                                VBox.vgrow="ALWAYS">
+                              <AutoCompleteOntologyTextField fx:id="autocompleteTextField" maxHeight="30.0"
+                                                             maxWidth="1.7976931348623157E308" minHeight="30.0"
+                                                             minWidth="300.0"
+                                                             promptText="autocomplete Mondo term...">
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </AutoCompleteOntologyTextField>
+                              <Button minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false"
+                                      onAction="#goButtonAction" styleClass="Button" stylesheets="@style.css"
+                                      text="Go" textOverrun="CLIP">
+                                  <tooltip>
+                                      <Tooltip text="tell me what to do"/>
+                                  </tooltip>
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="10.0" top="5.0"/>
+                                  </HBox.margin>
+                              </Button>
+                          </HBox>
+                          <Label styleClass="bluelabel" text="OMIM IDs">
+                              <tooltip>
+                                  <Tooltip text="Search for an OMIM identifier such as OMIM:600327"/>
+                              </tooltip>
+                              <VBox.margin>
+                                  <Insets bottom="5.0" left="15.0" top="5.0"/>
+                              </VBox.margin>
+                          </Label>
+                          <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+                                VBox.vgrow="ALWAYS">
+                              <AutoCompleteOntologyTextField fx:id="autocompleteOmimTextField" maxHeight="30.0"
+                                                             maxWidth="1.7976931348623157E308" minHeight="30.0"
+                                                             minWidth="300.0"
+                                                             promptText="autocomplete OMIM term...">
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </AutoCompleteOntologyTextField>
+                              <Button minHeight="30.0" minWidth="-Infinity"
+                                      mnemonicParsing="false" onAction="#omimButtonAction" styleClass="Button"
+                                      text="Go" textOverrun="CLIP">
+                                  <tooltip>
+                                      <Tooltip text="tell me what to do"/>
+                                  </tooltip>
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="10.0" top="5.0"/>
+                                  </HBox.margin>
+                              </Button>
+                          </HBox>
+                          <Label styleClass="bluelabel" text="Pretest Adjustment">
+                              <VBox.margin>
+                                  <Insets bottom="5.0" left="15.0" top="5.0"/>
+                              </VBox.margin>
+                          </Label>
+                          <HBox>
+                              <Slider fx:id="multiplierSlider" prefWidth="200" min="0" max="10" value="0"
+                                      majorTickUnit="2" showTickLabels="true" showTickMarks="true">
+                                  <VBox.margin>
+                                      <Insets bottom="5.0" left="15.0" top="5.0"/>
+                                  </VBox.margin>
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </Slider>
+                              <TextField fx:id="multiplierTextField" prefWidth="50.0">
+                                  <VBox.margin>
+                                      <Insets bottom="5.0" left="15.0" top="5.0"/>
+                                  </VBox.margin>
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </TextField>
+                          </HBox>
+                      </VBox>
+                      <VBox>
+                          <Label styleClass="bluelabel" text="LIRICAL Analysis">
+                              <VBox.margin>
+                                  <Insets bottom="5.0" left="15.0" top="5.0"/>
+                              </VBox.margin>
+                          </Label>
+                          <HBox>
+                              <Label minWidth="135.0" text="LR Threshold:">
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </Label>
+                              <TextField fx:id="lrThresholdTextField" prefWidth="80.0" text="0.05">
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </TextField>
+                          </HBox>
+                          <HBox>
+                              <Label minWidth="135.0" text="Min Diagnosis Count:">
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </Label>
+                              <Spinner fx:id="minDiagnosisSpinner" minWidth="80.0">
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </Spinner>
+                          </HBox>
+                          <HBox>
+                              <Label minWidth="80.0" text="Pathogenicity Threshold:">
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </Label>
+                              <TextField fx:id="pathogenicityTextField" prefWidth="80.0">
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </TextField>
+                          </HBox>
+                          <CheckBox fx:id="variantsCheckbox" mnemonicParsing="false" text="Display All Variants">
+                              <HBox.margin>
+                                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                              </HBox.margin>
+                          </CheckBox>
+                          <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+                                VBox.vgrow="ALWAYS">
+                              <Label text="Results File:">
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </Label>
+                              <TextField fx:id="outputFileTextField" prefWidth="100.0" text="lirical_results">
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                                  </HBox.margin>
+                              </TextField>
+                          </HBox>
+                          <HBox maxHeight="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
+                              <Button minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false"
+                                      onAction="#phenopacketButtonAction" styleClass="Button"
+                                      stylesheets="@style.css" text="Load Phenopacket" textOverrun="CLIP">
+                                  <tooltip>
+                                      <Tooltip text="Load Phenopacket"/>
+                                  </tooltip>
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="10.0" top="5.0"/>
+                                  </HBox.margin>
+                              </Button>
+                              <Button minHeight="30.0" minWidth="-Infinity" mnemonicParsing="false"
+                                      onAction="#vcfButtonAction" styleClass="Button" stylesheets="@style.css"
+                                      text="Load VCF" textOverrun="CLIP">
+                                  <tooltip>
+                                      <Tooltip text="Load VCF"/>
+                                  </tooltip>
+                                  <HBox.margin>
+                                      <Insets bottom="5.0" left="5.0" right="10.0" top="5.0"/>
+                                  </HBox.margin>
+                              </Button>
+                          </HBox>
+                          <Button fx:id="liricalButton" minHeight="30.0" minWidth="-Infinity"
+                                  mnemonicParsing="false" onAction="#liricalButtonAction" styleClass="Button"
+                                  stylesheets="@style.css" text="Run LIRICAL" textOverrun="CLIP">
+                              <tooltip>
+                                  <Tooltip text="Run LIRICAL"/>
+                              </tooltip>
+                              <HBox.margin>
+                                  <Insets bottom="5.0" left="5.0" right="10.0" top="5.0"/>
+                              </HBox.margin>
+                          </Button>
+                      </VBox>
+                  </HBox>
+                  <HBox>
+                      <Label minWidth="80.0" text="Phenopacket: ">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                          </HBox.margin>
+                      </Label>
+                      <Label fx:id="phenopacketLabel" minWidth="300.0">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                          </HBox.margin>
+                      </Label>
+                  </HBox>
+                  <HBox>
+                      <Label minWidth="80.0" text="VCF: ">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                          </HBox.margin>
+                      </Label>
+                      <Label fx:id="vcfLabel" minWidth="300.0">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+                          </HBox.margin>
+                      </Label>
+                  </HBox>
+                  <HBox>
+               <Label minWidth="50.0" text="Ontology File: ">
+                  <HBox.margin>
+                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                  </HBox.margin></Label>
+                      <Label fx:id="treeLabel" minWidth="300.0">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                          </HBox.margin>
+                      </Label>
+                  </HBox>
+                  <VBox VBox.vgrow="ALWAYS">
+                      <VBox.margin>
+                          <Insets left="5.0" right="5.0" top="5.0"/>
+                      </VBox.margin>
+                      <MondoTreeView fx:id="mondoTreeView" VBox.vgrow="ALWAYS"/>
+                      <Button fx:id="resetMultipliersButton" onAction="#resetMultipliersAction"
+                              text="Reset pretest probability adjustment values"/>
+                  </VBox>
+              </VBox>
+
+              <DiseaseSummaryView fx:id="diseaseSummaryView"/>
+          </SplitPane>
+      </center>
+      <bottom>
+          <StackPane BorderPane.alignment="CENTER_LEFT">
+              <AnchorPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="140.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+                  <HBox fx:id="statusHBox" alignment="CENTER_LEFT" />
+                  <HBox AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                      <Label fx:id="copyrightLabel" minHeight="20.0" HBox.hgrow="ALWAYS">
+                          <HBox.margin>
+                              <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                          </HBox.margin>
+                      </Label>
+                  </HBox>
+              </AnchorPane>
+          </StackPane>
+      </bottom>
+</BorderPane>
