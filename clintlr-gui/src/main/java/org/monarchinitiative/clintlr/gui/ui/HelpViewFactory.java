@@ -12,14 +12,14 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * A helper class that displays the Read-the-docs documentation for L4CI in a JavaFX webview browser.
+ * A helper class that displays the Read-the-docs documentation for ClintLR in a JavaFX webview browser.
  * @author <a href="mailto:peter.robinson@jax.org">Peter Robinson</a>
  * @version 0.1.4 (2018-03-04)
  */
 public class HelpViewFactory {
     private static final Logger logger = LoggerFactory.getLogger(HelpViewFactory.class);
 
-    private static final String READTHEDOCS_SITE = "https://thejacksonlaboratory.github.io/L4CI/";
+    private static final String READTHEDOCS_SITE = "https://thejacksonlaboratory.github.io/ClintLR/";
 
 
     /**

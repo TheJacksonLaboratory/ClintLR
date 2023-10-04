@@ -1,10 +1,10 @@
 .. _home:
 
 ====
-L4CI
+ClintLR
 ====
 
-LIRICAL for Clinical Intuition
+Clinical Intuition with Likelihood Ratios
 
 
 
@@ -13,8 +13,8 @@ LIRICAL for Clinical Intuition
 
 
 .. toctree::
-   :caption: L4CI
-   :name: L4CI documentation
+   :caption: ClintLR
+   :name: ClintLR documentation
    :maxdepth: 1
 
    setup
@@ -29,5 +29,5 @@ LIRICAL for Clinical Intuition
 Feedback
 --------
 
-The best place to leave feedback, ask questions, and report bugs is the `L4CI Issue Tracker <https://github.com/TheJacksonLaboratory/L4CI/issues>`_.
+The best place to leave feedback, ask questions, and report bugs is the `ClintLR Issue Tracker <https://github.com/TheJacksonLaboratory/ClintLR/issues>`_.
 

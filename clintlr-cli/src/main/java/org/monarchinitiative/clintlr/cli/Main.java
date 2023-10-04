@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(name = "clintlr",
         mixinStandardHelpOptions = true,
         version = "0.3.0",
-        description = "LIRICAl for clinical intuition")
+        description = "Clinical Intuition with Likelihood Ratios")
 public class Main implements Callable<Integer> {
 
     public static void main(String[] args) {

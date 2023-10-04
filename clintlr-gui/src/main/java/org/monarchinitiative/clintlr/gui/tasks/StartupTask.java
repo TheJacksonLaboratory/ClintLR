@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * Initialization of the GUI resources is being done here. We trigger listeners on {@link OptionalResources}
  * and then set analysis parameters and paths to resource files. The parameters and paths are extracted
- * from {@link Properties} backed by <code>l4ci.properties</code> stored in the app's directory.
+ * from {@link Properties} backed by <code>clintlr.properties</code> stored in the app's directory.
  *
  * @author <a href="mailto:martha.beckwith@jax.org">Martha Beckwith</a>
  * @author <a href="mailto:daniel.danis@jax.org">Daniel Danis</a>

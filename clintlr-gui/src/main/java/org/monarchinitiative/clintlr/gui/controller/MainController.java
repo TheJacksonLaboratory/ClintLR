@@ -53,7 +53,7 @@ import org.monarchinitiative.clintlr.gui.ui.OntologyTermWrapper;
 import org.monarchinitiative.clintlr.gui.ui.logviewer.LogViewerFactory;
 import org.monarchinitiative.clintlr.gui.ui.mondotree.MondoTreeView;
 import org.monarchinitiative.clintlr.gui.ui.summary.DiseaseSummaryView;
-import org.monarchinitiative.clintlr.gui.ui.summary.L4ciDiseaseSummary;
+import org.monarchinitiative.clintlr.gui.ui.summary.ClintLRDiseaseSummary;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.core.analysis.probability.PretestDiseaseProbability;
@@ -161,8 +161,8 @@ public class MainController {
     }
 
     public void aboutWindow(ActionEvent e) {
-        String title = "L4CI";
-        String msg = "LIRICAL for Clinical Intution (L4CI).";
+        String title = "ClintLR";
+        String msg = "LIRICAL for Clinical Intution (ClintLR).";
         PopUps.showInfoMessage(title, msg);
         e.consume();
     }
@@ -197,7 +197,7 @@ public class MainController {
         variantsCheckbox.setSelected(false);
 
         showMondoStats.disableProperty().bind(optionalServices.mondoProperty().isNull());
-        copyrightLabel.setText("L4CI, v. " + appProperties.version() + ", © Monarch Initiative 2022");
+        copyrightLabel.setText("ClintLR, v. " + appProperties.version() + ", © Monarch Initiative 2022");
 
         // ---------- Autocompletion fields ----------
         // Mondo disease name autocomplete
@@ -220,7 +220,7 @@ public class MainController {
         // Show path to Mondo file
         treeLabel.textProperty().bind(showAbsolutePathIfPresent(optionalResources.ontologyResources().mondoPathProperty()));
         if (optionalResources.ontologyResources().mondoPathProperty().getValue() == null) {
-            PopUps.showInfoMessage("Path to Mondo file is not set. Download Mondo and LIRICAL resources (Setup -> Init/show L4CI Resources).",
+            PopUps.showInfoMessage("Path to Mondo file is not set. Download Mondo and LIRICAL resources (Setup -> Init/show ClintLR Resources).",
                     "Mondo Path");
         }
 
@@ -334,7 +334,7 @@ public class MainController {
             if (selectedTermOmimId != null) {
                 pretestProb = pretestMap.get(selectedTermOmimId);
             }
-            L4ciDiseaseSummary summary = new L4ciDiseaseSummary(selectedDiseaseTerm, mondo, adjustment, nTotalDiseases, pretestProb, pretestMap);
+            ClintLRDiseaseSummary summary = new ClintLRDiseaseSummary(selectedDiseaseTerm, mondo, adjustment, nTotalDiseases, pretestProb, pretestMap);
             diseaseSummaryView.dataProperty().set(summary);
         }
     }
@@ -360,7 +360,7 @@ public class MainController {
 
     @FXML
     public void showLog(ActionEvent e) {
-        String logFile = "l4ci-gui/l4ci.log";
+        String logFile = "clintlr-gui/clintlr.log";
         LogViewerFactory factory = new LogViewerFactory(logFile);
         factory.display();
         e.consume();
@@ -435,7 +435,7 @@ public class MainController {
             FXMLLoader loader = new FXMLLoader(Objects.requireNonNull(ResourcesController.class.getResource("ResourcesView.fxml")));
             loader.setControllerFactory(clz -> controller);
             Stage stage = new Stage();
-            stage.setTitle("Initialize L4CI resources");
+            stage.setTitle("Initialize ClintLR resources");
             stage.initOwner(contentPane.getScene().getWindow());
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
@@ -443,7 +443,7 @@ public class MainController {
             stage.showAndWait();
         } catch (IOException ex) {
             LOGGER.warn("Unable to display dialog for setting resources", ex);
-            PopUps.showException("Initialize L4CI resources", "Error: Unable to display dialog for setting resources", ex);
+            PopUps.showException("Initialize ClintLR resources", "Error: Unable to display dialog for setting resources", ex);
         }
         e.consume();
     }

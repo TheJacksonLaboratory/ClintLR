@@ -3,7 +3,7 @@ package org.monarchinitiative.clintlr.gui.tasks;
 import javafx.concurrent.Task;
 import org.monarchinitiative.biodownload.BioDownloader;
 import org.monarchinitiative.clintlr.gui.config.LiricalProperties;
-import org.monarchinitiative.clintlr.gui.exception.L4CIException;
+import org.monarchinitiative.clintlr.gui.exception.ClintLRException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,11 +50,11 @@ public class DownloadLiricalData extends Task<Void> {
     }
 
 
-    private static URL createUrlOrExplode(String url) throws L4CIException {
+    private static URL createUrlOrExplode(String url) throws ClintLRException {
         try {
             return new URL(url);
         } catch (MalformedURLException e) {
-            throw new L4CIException(e);
+            throw new ClintLRException(e);
         }
     }
 }

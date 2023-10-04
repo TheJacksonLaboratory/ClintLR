@@ -2,7 +2,7 @@ package org.monarchinitiative.clintlr.gui.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "l4ci.lirical")
+@ConfigurationProperties(prefix = "clintlr.lirical")
 public class LiricalProperties {
 
     private String jannovarHg19UcscUrl;

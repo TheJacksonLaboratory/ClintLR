@@ -1,6 +1,6 @@
 package org.monarchinitiative.clintlr.gui.io;
 
-import org.monarchinitiative.clintlr.gui.exception.L4CIException;
+import org.monarchinitiative.clintlr.gui.exception.ClintLRException;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDisease;
 import org.monarchinitiative.phenol.annotations.formats.hpo.HpoDiseases;
 import org.monarchinitiative.phenol.annotations.io.hpo.HpoDiseaseLoader;
@@ -73,7 +73,7 @@ public class DirectIndirectHpoAnnotationParser {
     /**
      * Parse annotations file and populate maps containing direct and indirect annotations.
      */
-    private void doParse() throws L4CIException, IOException {
+    private void doParse() throws ClintLRException, IOException {
         if (ontology == null) {
             logger.warn("Ontology unset, cannot parse annotations file");
             return;
@@ -86,7 +86,7 @@ public class DirectIndirectHpoAnnotationParser {
         totalAnnotationMap=new HashMap<>();
         Map<TermId, Set<HpoDisease>> tempmap = new HashMap<>();
         if (diseaseMap==null) {
-            throw new L4CIException("disease map was null after parse of "+pathToPhenotypeAnnotationTab);
+            throw new ClintLRException("disease map was null after parse of "+pathToPhenotypeAnnotationTab);
         }
         for (TermId diseaseId : diseaseMap.keySet()) {
             HpoDisease disease = diseaseMap.get(diseaseId);

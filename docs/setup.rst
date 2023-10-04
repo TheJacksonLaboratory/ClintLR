@@ -1,63 +1,63 @@
 .. _installation:
 
 ===============
-Setting up L4CI
+Setting up ClintLR
 ===============
 
-L4CI is a desktop Java application that includes LIRICAL analysis. Therefore, L4CI requires LIRICAL to be installed.
+ClintLR is a desktop Java application that includes LIRICAL analysis. Therefore, ClintLR requires LIRICAL to be installed.
 Instructions for installing LIRICAL can be found `here <https://thejacksonlaboratory.github.io/LIRICAL/stable/setup.html#rstsetup>`_.
-Similar to LIRICAL, L4CI also requires Exomiser to be installed as a library before it can be compiled and built.
+Similar to LIRICAL, ClintLR also requires Exomiser to be installed as a library before it can be compiled and built.
 
 
 Prerequisites
 ~~~~~~~~~~~~~
 
-L4CI was written with Java version 17 but will compile under Java 17 or better. If you want to
-build L4CI from source, then the build process described below requires
+ClintLR was written with Java version 17 but will compile under Java 17 or better. If you want to
+build ClintLR from source, then the build process described below requires
 `Git <https://git-scm.com/book/en/v2>`_ and
 `Java Development Kit 17 <https://www.oracle.com/java/technologies/downloads/>`_ or better.
 
 .. note::
-  The L4CI GUI requires JavaFX to run. If your Java installation does not include JavaFX, installations of Java that
+  The ClintLR GUI requires JavaFX to run. If your Java installation does not include JavaFX, installations of Java that
   include JavaFX can be found `here <https://www.azul.com/downloads/?package=jdk-fx#zulu>`_
 
 Building from sources
 ~~~~~~~~~~~~~~~~~~~~~
 
-Go the GitHub page of `L4CI <https://github.com/TheJacksonLaboratory/L4CI>`_, and clone or download the project.
+Go the GitHub page of `ClintLR <https://github.com/TheJacksonLaboratory/ClintLR>`_, and clone or download the project.
 Build the executable from source with Maven::
 
-  git clone https://github.com/TheJacksonLaboratory/L4CI.git
-  cd L4CI
+  git clone https://github.com/TheJacksonLaboratory/ClintLR.git
+  cd ClintLR
   ./mvnw clean install
 
 We use the `Maven Wrapper <https://maven.apache.org/wrapper/>`_ for building the sources, so installation
 of Maven prior to build is *not* required.
 
 
-Launching L4CI GUI
+Launching ClintLR GUI
 ~~~~~~~~~~~~~~~~~~
 
-To launch the L4CI GUI, run:
+To launch the ClintLR GUI, run:
 
 .. parsed-literal::
-  java -jar l4ci-gui/target/L4CI.jar
+  java -jar clintlr-gui/target/ClintLR.jar
 
 
 
 Resources Setup
 ~~~~~~~~~~~~~~~
 
-Prior to performing analysis in the L4CI GUI, the locations of certain resources (the Mondo ontology, output directory, LIRICAL data directory, and Exomiser variant files)
+Prior to performing analysis in the ClintLR GUI, the locations of certain resources (the Mondo ontology, output directory, LIRICAL data directory, and Exomiser variant files)
 need to be specified. This can be done from the Resources interface, accessed from the `File -> Show Resources` menu.
 Resources set in this interface are preserved between sessions.
 
-.. figure:: _static/L4CIresources.png
+.. figure:: _static/ClintLRresources.png
     :width: 50 %
     :align: center
-    :alt: Screenshot of the L4CI resources interface
+    :alt: Screenshot of the ClintLR resources interface
 
-    Screenshot of the L4CI resources interface Ontology + Output tab (top) and LIRICAL tab (bottom)
+    Screenshot of the ClintLR resources interface Ontology + Output tab (top) and LIRICAL tab (bottom)
 
 The Mondo ontology and output directory paths are found in the `Ontology + Output` tab, and LIRICAL resources are found in the `LIRICAL` tab.
 If you have a local Mondo ontology file to use, you can set its path using the **Set Path** button. Alternatively, clicking

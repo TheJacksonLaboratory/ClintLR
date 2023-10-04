@@ -1,7 +1,7 @@
 package org.monarchinitiative.clintlr.gui.tasks;
 
 import javafx.concurrent.Task;
-import org.monarchinitiative.clintlr.gui.exception.L4CIException;
+import org.monarchinitiative.clintlr.gui.exception.ClintLRException;
 import org.monarchinitiative.clintlr.gui.resources.LiricalResources;
 import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.AnalysisData;
@@ -103,7 +103,7 @@ public class LiricalRunTask extends Task<Path> {
             // Finally, return path where the resulting HTML should land at.
             return outputOptions.outputDirectory().resolve(outputOptions.prefix() + ".html");
         } else
-            throw new L4CIException("Cannot to write the analysis results in HTML format");
+            throw new ClintLRException("Cannot to write the analysis results in HTML format");
     }
 
     private GenesAndGenotypes readVariants(Path vcfPath) throws Exception {

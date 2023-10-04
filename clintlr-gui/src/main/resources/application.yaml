@@ -1,14 +1,14 @@
 ## This file is supposed to be bundled in the JAR file
 
 # Maven will insert the project version here, e.g. 1.0.9
-l4ci:
+clintlr:
   version: @project.version@
-  title: 'L4CI: LIRICAL for Clinical Intuition'
+  title: 'ClintLR: Clinical Intuition with Likelihood Ratios'
 
   # URL pointing to v2022-12-01 version of Monarch Disease Ontology JSON file.
   # We can replace the URL with permanent URL when the issue below is resolved.
   # https://github.com/monarch-initiative/phenol/issues/372
-  mondo-json-url: https://storage.googleapis.com/ielis/l4ci/mondo.2022-12-01.json.gz
+  mondo-json-url: http://purl.obolibrary.org/obo/mondo.json
   lirical:
     # TODO - consider using Jannovar files hosted at Zenodo, as listed here - https://github.com/charite/jannovar
     jannovar-hg19-ucsc-url: https://storage.googleapis.com/ielis/jannovar/v0.35/hg19_ucsc.ser

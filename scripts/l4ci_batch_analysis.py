@@ -9,7 +9,7 @@ from google.protobuf.json_format import MessageToJson, Parse
 scriptParent = os.path.dirname(sys.argv[0])
 parentPath = os.path.abspath(os.path.dirname(scriptParent))
 grandparentPath = os.path.abspath(os.path.dirname(parentPath))
-DEFAULT_L4CI_JAR=os.path.join(parentPath, 'l4ci-cli', 'target', 'L4CI-CLI.jar')
+DEFAULT_ClintLR_JAR=os.path.join(parentPath, 'clintlr-cli', 'target', 'ClintLR-CLI.jar')
 DEFAULT_DATA_DIR=os.path.join(parentPath, 'data')
 DEFAULT_OUT_DIR=os.path.abspath(scriptParent) #"."
 DEFAULT_VCF_FILE=os.path.join(parentPath, 'scripts', 'project.NIST.hc.snps.indels.NIST7035.vcf')
@@ -61,11 +61,11 @@ def extract_CIrange_selected_term(CIranges_file, phenopacket_name, CIrange):
     return CIrangeTerm, CIrangeLabel
 
    
-def run_l4ci(l4ci_jar, mondo_path, output_directory, input_phenopacket, multiplier, vcf_file, CIranges_file):
+def run_clintlr(clintlr_jar, mondo_path, output_directory, input_phenopacket, multiplier, vcf_file, CIranges_file):
     homeDir = os.path.expanduser("~")
     exomiser = os.path.join(homeDir, "Exomiser/2109_hg19/2109_hg19/2109_hg19_variants.mv.db")
 
-    arg_list = ["java", "-jar", l4ci_jar, "batch", "-M", mondo_path, "-d", data_dir, "-e", exomiser, "-p", input_phenopacket,
+    arg_list = ["java", "-jar", clintlr_jar, "batch", "-M", mondo_path, "-d", data_dir, "-e", exomiser, "-p", input_phenopacket,
                 "--assembly", "hg19", "--vcf", vcf_file, "-r", CIranges_file, "-m", multiplier, "--compress", "-O", output_directory]
 
     command = " ".join(arg_list)
@@ -110,7 +110,7 @@ def extract_rank_and_write_to_summary_file(input_phenopacket, correct_diagnosis,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="LIRICAL analysis of phenopackets (with or without VCF) using a gene list")
-    parser.add_argument("-j", "--jar", nargs='?', default=DEFAULT_L4CI_JAR, help="Path to Java executable JAR file.")
+    parser.add_argument("-j", "--jar", nargs='?', default=DEFAULT_ClintLR_JAR, help="Path to Java executable JAR file.")
     parser.add_argument("-d", "--data", nargs='?', default=DEFAULT_DATA_DIR, help="Path to LIRICAL data directory.")
     parser.add_argument("-O", "--outputDirectory", nargs="?", default=DEFAULT_OUT_DIR, help="Path to directory to write the results files.")
     parser.add_argument("-m", "--multiplier", default=DEFAULT_PRETEST_ADJUSTMENT, help="Comma-separated pretest adjustment values.")
@@ -118,10 +118,10 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--phenopacket", required=True, help="Path(s) to phenopacket JSON file(s).")
     parser.add_argument("-r", "--ranges", default=DEFAULT_CIRANGES_FILE, help="Path to file containing containing Clinical Intuition Range terms.")
     args = parser.parse_args()
-    l4ci_jar = args.jar
-    if not os.path.isfile(l4ci_jar):
-        print(f"Tried and failed to find the L4CI jar file at {l4ci_jar}")
-        raise ValueError("Could not find L4CI executable JAR file. Either build the L4CI package using maven for the default location or set path with -j/--jar")
+    clintlr_jar = args.jar
+    if not os.path.isfile(clintlr_jar):
+        print(f"Tried and failed to find the ClintLR jar file at {clintlr_jar}")
+        raise ValueError("Could not find ClintLR executable JAR file. Either build the ClintLR package using maven for the default location or set path with -j/--jar")
     data_dir = args.data
     if not os.path.isdir(data_dir):
         print(f"Tried and failed to find data directory at {data_dir}")
@@ -141,7 +141,7 @@ if __name__ == "__main__":
         inpath = ".".join([outfile_name, "tsv"])
         with open(inpath, 'wt') as f:
             f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
-            # run_l4ci(l4ci_jar=l4ci_jar, mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop,
+            # run_clintlr(clintlr_jar=clintlr_jar, mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop,
             #          multiplier=mult, vcf_file=vcf, CIranges_file=ranges)
             extract_rank_and_write_to_summary_file(input_phenopacket=phenop, correct_diagnosis=right_dx, CIranges_file=ranges)
             print("Wrote results to: " + inpath)
@@ -152,7 +152,7 @@ if __name__ == "__main__":
             f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
             for phenopFile in sorted(glob.glob(os.path.join(phenop, "*json"))):
                 right_dx = extract_correct_diagnosis_from_phenopacket(phenopFile)
-                # run_l4ci(l4ci_jar=l4ci_jar, mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop,
+                # run_clintlr(clintlr_jar=clintlr_jar, mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop,
                 #          multiplier=mult, vcf_file=vcf, CIranges_file=ranges)
                 extract_rank_and_write_to_summary_file(input_phenopacket=phenopFile, correct_diagnosis=right_dx, CIranges_file=ranges)
             print("Wrote results to: " + inpath)

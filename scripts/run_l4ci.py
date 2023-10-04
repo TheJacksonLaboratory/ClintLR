@@ -2,11 +2,11 @@ import argparse, os, sys, glob
 
 
 # this is the relative location of the jar file that gets built by mvn package
-DEFAULT_L4CI_JAR='../l4ci-cli/target/l4ci-cli-0.0.1.jar'
+DEFAULT_ClintLR_JAR='../clintlr-cli/target/clintlr-cli-0.0.1.jar'
 
 def parseArgs():
 	parser = argparse.ArgumentParser(description="LIRICAL analysis of phenopackets (with or without VCF) using a gene list")
-	parser.add_argument("jar", default=DEFAULT_L4CI_JAR, help="Path to Java executable JAR file.")
+	parser.add_argument("jar", default=DEFAULT_ClintLR_JAR, help="Path to Java executable JAR file.")
 	parser.add_argument("-d", "--data", required=True, help="Path to LIRICAL data directory.")
 	parser.add_argument("-e", "--exomiser", help="Path to Exomiser variant database.")
 	parser.add_argument("-b", "--background", help="Path to non-default background frequency file.")
@@ -39,7 +39,7 @@ def parseArgs():
 	# print(args)
 
 #args = parseArgs()
-#l4ci_jar = args.jar
+#clintlr_jar = args.jar
 #genes_file = args.genes
 ##phenopacket = args.phenopacket
 #outdir = args.outputDirectory
@@ -47,19 +47,19 @@ def parseArgs():
 
 
 
-def run_l4ci_and_extract_rank(input_phenopacket, correct_diagnosis):
+def run_clintlr_and_extract_rank(input_phenopacket, correct_diagnosis):
     # todo - make tempfile
     homeDir = os.path.expanduser("~")
     outfile_path = os.path.join(homeDir, "test")
     outfile_name = os.path.join(outfile_path, "test_results")
-    l4ci_jar=os.path.abspath('./l4ci-cli/target/l4ci-cli-0.0.1.jar')
+    clintlr_jar=os.path.abspath('./clintlr-cli/target/clintlr-cli-0.0.1.jar')
     genes_file='scripts/bbs_genes.txt'
     mondo_path = os.path.abspath('./data/mondo.json')
     data = os.path.abspath("./data")
     exomiser = os.path.join(homeDir, "Exomiser/2109_hg19/2109_hg19/2109_hg19_variants.mv.db")
     assembly = "hg19"
     multiplier = "0,5,10"
-    arg_list = ["java", "-jar", l4ci_jar, "genes", "--mondo", mondo_path, "-d", data, "-e", exomiser, "--assembly", assembly,
+    arg_list = ["java", "-jar", clintlr_jar, "genes", "--mondo", mondo_path, "-d", data, "-e", exomiser, "--assembly", assembly,
     "-O", outfile_path, "--genes", genes_file, "-B", input_phenopacket, "--phenotype-only", "-m", multiplier]
     command = " ".join(arg_list)
     print(command)
@@ -95,6 +95,6 @@ ppak = 'scripts/test_data'
 # right_dx = "OMIM:209900" #"MONDO:0008842"
 right_dx = {"Ajmal": "OMIM:209900", "Bee": "OMIM:615981", "Imani": "OMIM:615983", "Li": "OMIM:615982"}
 
-run_l4ci_and_extract_rank(input_phenopacket=ppak, correct_diagnosis=right_dx)
+run_clintlr_and_extract_rank(input_phenopacket=ppak, correct_diagnosis=right_dx)
 
   

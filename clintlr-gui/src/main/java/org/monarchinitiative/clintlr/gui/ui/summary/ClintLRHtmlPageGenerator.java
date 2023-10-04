@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
  *
  * @author <a href="mailto:peter.robinson@jax.org">Peter Robinson</a>
  */
-class L4ciHtmlPageGenerator {
+class ClintLRHtmlPageGenerator {
     /**@return A String with the HTML for representing one HPO term and the diseases it is annotated to. */
-    static String getHTML(L4ciDiseaseSummary diseaseSummary) {
+    static String getHTML(ClintLRDiseaseSummary diseaseSummary) {
 
         String termID = diseaseSummary.targetMondoId();
         String label = diseaseSummary.targetMondoLabel();
@@ -27,8 +27,8 @@ class L4ciHtmlPageGenerator {
         double adjust = diseaseSummary.getAdjust();
         int nTotalDiseases = diseaseSummary.getNTotalDiseases();
         double pretestProbability = diseaseSummary.getPretestProbability();
-        Set<L4ciDiseaseItem> descendentsWithOmim = diseaseSummary.diseaseItemsWithOmim();
-        Set<L4ciDiseaseItem> descendentsWithNoOmim = diseaseSummary.diseaseItemsWithNoOmim();
+        Set<ClintLRDiseaseItem> descendentsWithOmim = diseaseSummary.diseaseItemsWithOmim();
+        Set<ClintLRDiseaseItem> descendentsWithNoOmim = diseaseSummary.diseaseItemsWithNoOmim();
         double defaultProbability = 1./nTotalDiseases;
         double adjustedProbability = defaultProbability;
         Map<TermId, Double> pretestMap = diseaseSummary.getPretestMap();
@@ -53,7 +53,7 @@ class L4ciHtmlPageGenerator {
     }
 
 
-    private static String getProbabilityTable(String targetLabel, Set<L4ciDiseaseItem> descendentsWithOmim, int nTotalDiseases, double adjustedProbability, double nonAdjustedProbability) {
+    private static String getProbabilityTable(String targetLabel, Set<ClintLRDiseaseItem> descendentsWithOmim, int nTotalDiseases, double adjustedProbability, double nonAdjustedProbability) {
         StringBuilder sb = new StringBuilder();
 //        String title = "Pretest Probabilities Before and After Adjustment";
 //        sb.append("<h3>").append(title).append("</h3>");
@@ -100,7 +100,7 @@ class L4ciHtmlPageGenerator {
         return sb.toString();
     }
 
-    private static String getOmimTable(Set<L4ciDiseaseItem> descendentsWithOmim) {
+    private static String getOmimTable(Set<ClintLRDiseaseItem> descendentsWithOmim) {
         StringBuilder sb = new StringBuilder();
 //        String title = String.format("Descendent diseases with associated gene (n=%d)", descendentsWithOmim.size());
 //        sb.append("<h3>").append(title).append("</h3>");
@@ -114,7 +114,7 @@ class L4ciHtmlPageGenerator {
                         </thead>
                     """, String.format("\nDescendent diseases with associated gene (n=%d)", descendentsWithOmim.size())));
 
-        for (L4ciDiseaseItem ldi : descendentsWithOmim) {
+        for (ClintLRDiseaseItem ldi : descendentsWithOmim) {
             String OmimId;
             if (ldi.getOmimId().isPresent()) {
                 OmimId = ldi.getOmimId().get().getValue();
@@ -140,7 +140,7 @@ class L4ciHtmlPageGenerator {
 
 
 
-    private static String getWithoutOmimTable(Set<L4ciDiseaseItem> descendentsWithNoOmim) {
+    private static String getWithoutOmimTable(Set<ClintLRDiseaseItem> descendentsWithNoOmim) {
         StringBuilder sb = new StringBuilder();
 //        String title = String.format("Descendent diseases with no associated gene (n=%d)", descendentsWithNoOmim.size());
 //        sb.append("<h3>").append(title).append("</h3>");
@@ -154,7 +154,7 @@ class L4ciHtmlPageGenerator {
                         </thead>
                     """, String.format("\nDescendent diseases with no associated gene (n=%d)", descendentsWithNoOmim.size())));
 
-        for (L4ciDiseaseItem ldi : descendentsWithNoOmim) {
+        for (ClintLRDiseaseItem ldi : descendentsWithNoOmim) {
             String row =  String.format("""
                         <tr>
                                 <td>%s</td>

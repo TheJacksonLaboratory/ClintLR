@@ -26,7 +26,7 @@ public class OptionalResourcesTest {
     @Test
     public void initResources() throws Exception {
         String payload = """
-                #L4CI properties
+                #ClintLR properties
                 #Thu Dec 31 23:59:59 EST 2022
                 mondo.json.path=/path/to/mondo.json
                 lirical.data.directory=/path/to/lirical/datadir
