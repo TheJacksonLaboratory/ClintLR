@@ -16,12 +16,12 @@
         </encoder>
     </appender>
 
-    <!-- We write DEBUG and above events into the l4ci.log file. -->
+    <!-- We write DEBUG and above events into the clintlr.log file. -->
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>DEBUG</level>
         </filter>
-        <file>l4ci.log</file>
+        <file>clintlr.log</file>
         <append>false</append>
         <encoder>
             <pattern>${pattern}</pattern>

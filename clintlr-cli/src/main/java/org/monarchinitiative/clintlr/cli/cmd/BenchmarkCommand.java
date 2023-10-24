@@ -198,7 +198,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     protected Map<TermId, TermId> getOmimMap(OntologyData ontologyData) throws IOException {
 
         // 2 - prepare the simulation data shared by all phenopackets.
-//        Path dataDirectory = Path.of(String.join(File.separator, System.getProperty("user.home"), ".l4ci", "data"));
+//        Path dataDirectory = Path.of(String.join(File.separator, System.getProperty("user.home"), ".clintlr", "data"));
         Path dataDirectory = dataSection.liricalDataDirectory;
         Path omimToMondoPath = dataDirectory.resolve(OMIM_2_MONDO_NAME);
         Map<TermId, TermId> omim2Mondo;

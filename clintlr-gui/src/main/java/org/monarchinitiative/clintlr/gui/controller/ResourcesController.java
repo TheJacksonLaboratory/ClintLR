@@ -273,7 +273,7 @@ public class ResourcesController {
         if (mondoPath != null) {
             Path mondoDir = mondoPath.getParent();
             String message = String.join(" ", "Path to Mondo file already set. To download new Mondo file, delete all files in",
-                                        mondoDir.toString(), "and restart L4CI");
+                                        mondoDir.toString(), "and restart ClintLR");
             PopUps.showInfoMessage(message,"Download Mondo");
         } else {
             // Construct Mondo URL

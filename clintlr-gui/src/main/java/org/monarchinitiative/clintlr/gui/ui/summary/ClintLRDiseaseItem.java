@@ -5,19 +5,19 @@ import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.util.Optional;
 
-public class L4ciDiseaseItem {
+public class ClintLRDiseaseItem {
 
     private final TermId mondoId;
     private final String mondoLabel;
     private final Optional<TermId> omimId;
 
-    public L4ciDiseaseItem(TermId mondoId, String mondoLabel, Optional<TermId> opt) {
+    public ClintLRDiseaseItem(TermId mondoId, String mondoLabel, Optional<TermId> opt) {
         this.mondoId = mondoId;
         this.mondoLabel = mondoLabel;
         this.omimId = opt;
     }
 
-    public L4ciDiseaseItem(Term mondoTerm, Optional<TermId> opt) {
+    public ClintLRDiseaseItem(Term mondoTerm, Optional<TermId> opt) {
         this.mondoId = mondoTerm.id();
         this.mondoLabel = mondoTerm.getName();
         this.omimId = opt;

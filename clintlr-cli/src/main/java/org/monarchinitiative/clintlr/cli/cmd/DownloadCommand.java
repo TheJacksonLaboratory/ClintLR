@@ -17,7 +17,7 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "download", aliases = {"D"},
         mixinStandardHelpOptions = true,
-        description = "Download files for L4CI")
+        description = "Download files for ClintLR")
 public class DownloadCommand implements Callable<Integer>{
     private static final Logger logger = LoggerFactory.getLogger(DownloadCommand.class);
     @CommandLine.Option(names={"-d","--data"}, description ="directory to download data (default: ${DEFAULT-VALUE})" )

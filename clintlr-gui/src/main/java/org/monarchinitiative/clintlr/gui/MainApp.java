@@ -9,6 +9,7 @@ import org.monarchinitiative.clintlr.gui.config.AppProperties;
 import org.monarchinitiative.clintlr.gui.config.LiricalProperties;
 import org.monarchinitiative.clintlr.gui.controller.MainController;
 import org.monarchinitiative.clintlr.gui.resources.OptionalResources;
+import org.monarchinitiative.clintlr.gui.ui.summary.DiseaseSummaryView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -36,11 +37,11 @@ public class MainApp  extends Application {
     public void init() {
         String[] args = getParameters().getRaw().toArray(String[]::new);
         //Set before the logger starts. The property will be picked up by logback.xml
-        System.setProperty("log.name", "l4ci-gui/l4ci.log");
+        System.setProperty("log.name", "clintlr-gui/clintlr.log");
 //        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 //        LocalDateTime now = LocalDateTime.now();
 //        String dtime = dtf.format(now);
-//        LOGGER.trace("Starting L4CI: " + dtime);
+//        LOGGER.trace("Starting ClintLR: " + dtime);
         context = new SpringApplicationBuilder(MainApp.class)
                 .headless(false)
                 .run(args);
@@ -85,7 +86,7 @@ public class MainApp  extends Application {
         optionalResources.storeResources(properties);
 
         try (Writer writer = Files.newBufferedWriter(target.toPath())) {
-            properties.store(writer, "L4CI properties");
+            properties.store(writer, "ClintLR properties");
         }
 
         LOGGER.debug("Properties saved to `{}`", target.getAbsolutePath());

@@ -13,7 +13,7 @@
         <DropShadow/>
     </effect>
     <Button onAction="#close" text="Close"/>
-    <Label contentDisplay="CENTER" minWidth="100.0" text="Initialize L4CI resources:" textAlignment="CENTER">
+    <Label contentDisplay="CENTER" minWidth="100.0" text="Initialize ClintLR resources:" textAlignment="CENTER">
         <font>
             <Font name="System Bold" size="24.0"/>
         </font>

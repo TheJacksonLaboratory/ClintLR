@@ -1,16 +1,16 @@
-# L4CI
-LIRICAL for clinical intuition
+# ClintLR
+Clinical Intuition with Likelihood Ratios
 
 
 
 mvn archetype:generate \
--DarchetypeGroupId=org.monarchinitiative.l4ci \
+-DarchetypeGroupId=org.monarchinitiative.clintlr \
 -Dfilter=pom-root \
 -DarchetypeVersion=RELEASE
 
 ## Making the mondo.json file
 
-L4CI reads the Mondo ontology as a JSON file. The mondo in OWL format can be converted to a JSON file using obographs by typing the following into the Terminal:
+ClintLR reads the Mondo ontology as a JSON file. The mondo in OWL format can be converted to a JSON file using obographs by typing the following into the Terminal:
 
 ```$ obographs convert mondo.owl -f json```
 

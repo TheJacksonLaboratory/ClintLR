@@ -15,13 +15,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Configuration
-public class L4CIConfig {
-    private static final Logger LOGGER = LoggerFactory.getLogger(L4CIConfig.class);
+public class ClintLRConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClintLRConfig.class);
 
     /**
      * The name of property file we use to persist paths to local resources such as location of {@code hp.json}.
      */
-    private static final String CONFIG_FILE_BASENAME = "l4ci.properties";
+    private static final String CONFIG_FILE_BASENAME = "clintlr.properties";
 
     @Bean
     public ExecutorService executorService() {
@@ -80,13 +80,13 @@ public class L4CIConfig {
         String osName = System.getProperty("os.name").toLowerCase();
         File appHomeDir;
         if (osName.contains("nix") || osName.contains("nux") || osName.contains("aix")) { // Unix
-            appHomeDir = new File(System.getProperty("user.home") + File.separator + ".l4ci");
+            appHomeDir = new File(System.getProperty("user.home") + File.separator + ".clintlr");
         } else if (osName.contains("win")) { // Windows
-            appHomeDir = new File(System.getProperty("user.home") + File.separator + "l4ci");
+            appHomeDir = new File(System.getProperty("user.home") + File.separator + "clintlr");
         } else if (osName.contains("mac")) { // OsX
-            appHomeDir = new File(System.getProperty("user.home") + File.separator + ".l4ci");
+            appHomeDir = new File(System.getProperty("user.home") + File.separator + ".clintlr");
         } else { // unknown platform
-            appHomeDir = new File(System.getProperty("user.home") + File.separator + "l4ci");
+            appHomeDir = new File(System.getProperty("user.home") + File.separator + "clintlr");
         }
 
         if (!appHomeDir.exists()) {

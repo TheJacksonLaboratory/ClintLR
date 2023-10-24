@@ -45,9 +45,9 @@
 
 
     <scm>
-      <connection>scm:git:git@github.com/TheJacksonLaboratory/L4CI.git</connection>
-      <developerConnection>scm:git:git@github.com/TheJacksonLaboratory/L4CI.git</developerConnection>
-      <url>https://github.com/TheJacksonLaboratory/L4CI</url>
+      <connection>scm:git:git@github.com/TheJacksonLaboratory/ClintLR.git</connection>
+      <developerConnection>scm:git:git@github.com/TheJacksonLaboratory/ClintLR.git</developerConnection>
+      <url>https://github.com/TheJacksonLaboratory/ClintLR</url>
       <tag>v@{project.version}</tag>
     </scm>
 

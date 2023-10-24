@@ -9,14 +9,14 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
  * Note, these properties are <em>not</em> the properties we use to serialize the user data, such as path
  * to {@code mondo.json}, LIRICAL data directory, etc.
  */
-@ConfigurationProperties(prefix = "l4ci")
+@ConfigurationProperties(prefix = "clintlr")
 public class AppProperties {
 
     private String title;
     private String version;
     private String mondoJsonUrl;
 
-    @NestedConfigurationProperty // l4ci.lirical
+    @NestedConfigurationProperty // clintlr.lirical
     private LiricalProperties lirical;
 
     public String title() {

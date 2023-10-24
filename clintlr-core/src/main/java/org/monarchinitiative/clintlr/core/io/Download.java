@@ -38,7 +38,7 @@ public class Download {
     }
 
     public void run() throws Exception {
-        URL mondoJsonUrl = new URL("https://storage.googleapis.com/ielis/l4ci/mondo.2022-12-01.json.gz");
+        URL mondoJsonUrl = new URL("http://purl.obolibrary.org/obo/mondo.json"); //new URL("https://storage.googleapis.com/ielis/l4ci/mondo.2022-12-01.json.gz");
         String hg19UcscURL = "https://storage.googleapis.com/ielis/jannovar/v0.35/hg19_ucsc.ser";
         String hg19RefSeqURL = "https://storage.googleapis.com/ielis/jannovar/v0.35/hg19_refseq.ser";
         String hg38UcscURL = "https://storage.googleapis.com/ielis/jannovar/v0.35/hg38_ucsc.ser";

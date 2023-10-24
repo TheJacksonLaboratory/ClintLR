@@ -10,11 +10,11 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class L4ciDiseaseSummary {
+public class ClintLRDiseaseSummary {
 
     private final Term selectedMondoTerm;
 
-    private final Set<L4ciDiseaseItem> descendentTermSet;
+    private final Set<ClintLRDiseaseItem> descendentTermSet;
 
     private final double adjust;
 
@@ -24,7 +24,7 @@ public class L4ciDiseaseSummary {
 
     private final Map<TermId, Double> pretestMap;
 
-    public L4ciDiseaseSummary(Term selectedDiseaseTerm, Ontology mondo, double adjustment, int nTotalDiseases, double pretestProbability, Map<TermId, Double> pretestMap) {
+    public ClintLRDiseaseSummary(Term selectedDiseaseTerm, Ontology mondo, double adjustment, int nTotalDiseases, double pretestProbability, Map<TermId, Double> pretestMap) {
         this.selectedMondoTerm = selectedDiseaseTerm;
         Set<TermId> descendentIdSet = OntologyAlgorithm.getDescendents(mondo, selectedDiseaseTerm.id());
         this.adjust = adjustment;
@@ -48,21 +48,21 @@ public class L4ciDiseaseSummary {
                         }
                     }
                 }
-                descendentTermSet.add(new L4ciDiseaseItem(t, omimIdOpt));
+                descendentTermSet.add(new ClintLRDiseaseItem(t, omimIdOpt));
             }
         }
     }
 
 
-    public Set<L4ciDiseaseItem> diseaseItemsWithOmim() {
+    public Set<ClintLRDiseaseItem> diseaseItemsWithOmim() {
         return this.descendentTermSet.stream().
-                filter(L4ciDiseaseItem::hasOmimSynonym).
+                filter(ClintLRDiseaseItem::hasOmimSynonym).
                 collect(Collectors.toSet());
     }
 
-    public Set<L4ciDiseaseItem> diseaseItemsWithNoOmim() {
+    public Set<ClintLRDiseaseItem> diseaseItemsWithNoOmim() {
         return this.descendentTermSet.stream().
-                filter(Predicate.not(L4ciDiseaseItem::hasOmimSynonym)).
+                filter(Predicate.not(ClintLRDiseaseItem::hasOmimSynonym)).
                 collect(Collectors.toSet());
     }
 

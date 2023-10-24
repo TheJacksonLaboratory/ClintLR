@@ -4,14 +4,14 @@
 Tutorial
 ========
 
-This tutorial shows how to use L4CI to perform LIRICAL analysis of phenopackets using adjusted pretest probabilities.
+This tutorial shows how to use ClintLR to perform LIRICAL analysis of phenopackets using adjusted pretest probabilities.
 
 
 
 Exomiser data
 ^^^^^^^^^^^^^
 
-L4CI uses the Exomiser variant database that is available
+ClintLR uses the Exomiser variant database that is available
 from the `Exomiser FTP site <http://data.monarchinitiative.org/exomiser/latest/index.html>`_. The versions current as of
 this writing are  ``2302_hg19.zip`` (for the HG19/GRCh37 Genome Assembly) and  ``2302_hg38.zip`` (for the HG38/GRCh38 Genome Assembly).
 Choose the appropriate genome build, and download and extract the corresponding file.
@@ -23,11 +23,11 @@ Test data
 We will use a VCF file that is available in the Exomiser distribution file (e.g., exomiser-cli-13.2.0-distribution.zip),
 which is available from the same FTP site.  The file is called ``Pfeiffer.vcf``
 and can be found in the ``examples`` folder of the unzipped Exomiser distribution file. This file spikes a pathogenic FGFR3
-variant into a public VCF file and can be used to test L4CI.
+variant into a public VCF file and can be used to test ClintLR.
 
 
 
-Running L4CI Analysis
+Running ClintLR Analysis
 ~~~~~~~~~~~~~~~~~~~~~
 
 The tree view shows the loaded Mondo ontology. Tree item icons indicate which terms are OMIM (black circle) or OMIMPS (red circle) terms.
@@ -35,14 +35,14 @@ You can jump to specific terms in the ontology by using the `Browse Mondo Terms`
 The Mondo term search field autocompletes the Mondo ontology disease name/label, and the OMIM term search field autocompletes the OMIM term ID.
 Information for the selected term is displayed in an HTML window to the right of the tree view.
 
-.. figure:: _static/L4CIscreenshot_new.png
+.. figure:: _static/ClintLRscreenshot.png
     :width: 75 %
     :align: center
-    :alt: Screenshot of the L4CI interface
+    :alt: Screenshot of the ClintLR interface
 
-    Screenshot of the L4CI interface (left) and the pretest probability adjustment values interface (right)
+    Screenshot of the ClintLR interface (left) and the pretest probability adjustment values interface (right)
 
-Clinical intuition is incorporated into the LIRICAL algorithm by way of a slider in the L4CI interface.
+Clinical intuition is incorporated into the LIRICAL algorithm by way of a slider in the ClintLR interface.
 The slider increases the pretest probability values that get passed into LIRICAL for the selected term and its descendants.
 In the tree, an up arrow in the selected term’s icon indicates that the pretest probability has been increased for that term.
 The pretest adjustment values can be reset to defaults for all terms by clicking the Reset button below the tree view.
@@ -50,9 +50,9 @@ The pretest probability adjustment values can be viewed in a separate interface 
 If desired, the pretest probability values can be saved as a separate text file (`File -> Probability Map -> Save Map to File`), which can then be imported later.
 
 A phenopacket needs to be loaded (**Load Phenopacket** button) for the LIRICAL analysis to run correctly.
-The LIRICAL analysis parameters can be adjusted as well, and the LIRICAL algorithm can be run directly from L4CI using the **Run LIRICAL** button.
+The LIRICAL analysis parameters can be adjusted as well, and the LIRICAL algorithm can be run directly from ClintLR using the **Run LIRICAL** button.
 The LIRICAL analysis can be performed using only phenotypic information, or using both phenotypic + genotypic information
-by loading a VCF file into L4CI (**Load VCF** button) and then running LIRICAL.
+by loading a VCF file into ClintLR (**Load VCF** button) and then running LIRICAL.
 
 
 
@@ -80,7 +80,7 @@ diseases analyzed. The bottom of the page includes explanations and documents th
 Analysis Using a List of Genes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The default in the L4CI GUI is to apply the adjusted pretest probabilities to the selected term and all of its descendants.
+The default in the ClintLR GUI is to apply the adjusted pretest probabilities to the selected term and all of its descendants.
 Alternatively, there is also a command-line interface where the pretest probability adjustments can be applied to terms based on
 a provided list of genes. There is a Python script to facilitate this analysis. The script accepts 6 arguments:
 

@@ -20,7 +20,7 @@
                      <MenuItem mnemonicParsing="false" onAction="#close" text="Exit"/>
                  </Menu>
                  <Menu mnemonicParsing="false" text="Setup">
-                     <MenuItem onAction="#showResourcesInterface" text="Init/show L4CI Resources"/>
+                     <MenuItem onAction="#showResourcesInterface" text="Init/show ClintLR Resources"/>
                  </Menu>
                  <Menu mnemonicParsing="false" text="View">
                      <MenuItem fx:id="showMondoStats" onAction="#showMondoStatsAction" text="Show Mondo Stats"/>
