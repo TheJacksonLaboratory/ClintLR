@@ -3,8 +3,8 @@ site_name: ClintLR
 theme:
   name: "material"
   features:
-    #- navigation.tabs
-    - navigation.sections
+    - navigation.tabs
+    #- navigation.sections
     - toc.integrate
     - navigation.top
     - search.suggest
