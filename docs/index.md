@@ -1,27 +1,8 @@
-.. _home:
-
 ====
 ClintLR
 ====
 
 Clinical Intuition with Likelihood Ratios
-
-
-
-
-
-
-
-.. toctree::
-   :caption: ClintLR
-   :name: ClintLR documentation
-   :maxdepth: 1
-
-   setup
-   tutorial
-   #contributing
-   authors
-   LICENSE
 
 
 

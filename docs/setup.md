@@ -1,5 +1,3 @@
-.. _installation:
-
 ===============
 Setting up ClintLR
 ===============
