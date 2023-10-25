@@ -1,20 +1,19 @@
---------
-Tutorial
---------
+
+# Tutorial
 
 This tutorial shows how to use ClintLR to perform LIRICAL analysis of phenopackets using adjusted pretest probabilities.
 
 
 
-# Exomiser data
+## Exomiser data
 
 ClintLR uses the Exomiser variant database that is available
-from the [Exomiser FTP site] (http://data.monarchinitiative.org/exomiser/latest/index.html). The versions current as of
+from the [Exomiser FTP site](http://data.monarchinitiative.org/exomiser/latest/index.html). The versions current as of
 this writing are  ```2302_hg19.zip``` (for the HG19/GRCh37 Genome Assembly) and  ```2302_hg38.zip``` (for the HG38/GRCh38 Genome Assembly).
 Choose the appropriate genome build, and download and extract the corresponding file.
 
 
-# Test data
+## Test data
 
 We will use a VCF file that is available in the Exomiser distribution file (e.g., exomiser-cli-13.2.0-distribution.zip),
 which is available from the same FTP site.  The file is called ```Pfeiffer.vcf```
@@ -23,16 +22,17 @@ variant into a public VCF file and can be used to test ClintLR.
 
 
 
-# Running ClintLR Analysis
+## Running ClintLR Analysis
 
 The tree view shows the loaded Mondo ontology. Tree item icons indicate which terms are OMIM (black circle) or OMIMPS (red circle) terms.
 You can jump to specific terms in the ontology by using the *Browse Mondo Terms* or *Browse OMIM Terms* search fields.
 The Mondo term search field autocompletes the Mondo ontology disease name/label, and the OMIM term search field autocompletes the OMIM term ID.
 Information for the selected term is displayed in an HTML window to the right of the tree view.
 
-
-![Screenshot of the ClintLR interface](_static/ClintLR_screenshot_and_results.png "ClintLR (CLinical INTuition with Likelihood Ratios). (A) Users can download input files and adjust settings via the setup interface. (B) The main analysis interface allows users to choose the disease group and adjust the pretest probability of the group to reflect clinical intuition. (C) ClintLR the runs LIRICAL with the adjusted pretest probabilities and displays the results in the system browser.")
-
+<figure>
+  <img src=_static/ClintLR_screenshot_and_results.png alt="Screenshot of the ClintLR interface"/>
+  <figcaption>ClintLR (CLinical INTuition with Likelihood Ratios). (A) Users can download input files and adjust settings via the setup interface. (B) The main analysis interface allows users to choose the disease group and adjust the pretest probability of the group to reflect clinical intuition. (C) ClintLR runs LIRICAL with the adjusted pretest probabilities and displays the results in the system browser.</figcaption>
+</figure>
 
 Clinical intuition is incorporated into the LIRICAL algorithm by way of a slider in the ClintLR interface.
 The slider increases the pretest probability values that get passed into LIRICAL for the selected term and its descendants.
@@ -48,7 +48,7 @@ by loading a VCF file into ClintLR (**Load VCF** button) and then running LIRICA
 
 
 
-# Viewing the results
+## Viewing the results
 
 Once the analysis is complete, the results will be written to a new HTML file which is saved to the output directory and
 opened in a web browser. The top of the page shows some information about the input files and a list of observed
@@ -68,7 +68,7 @@ The remaining part of the HTML output page contains information about the other 
 diseases analyzed. The bottom of the page includes explanations and documents the settings used for the analysis.
 
 
-# Analysis Using a List of Genes
+## Analysis Using a List of Genes
 
 The default in the ClintLR GUI is to apply the adjusted pretest probabilities to the selected term and all of its descendants.
 Alternatively, there is also a command-line interface where the pretest probability adjustments can be applied to terms based on
@@ -92,7 +92,7 @@ The script can be run using the following command:
 The -p argument accepts a list of phenopackets, or a path to a directory that contains the phenopackets to analyze sequentially.
 
 For example, to run analysis on all phenopackets in a directory using pretest adjustment values of 5 and 10 and a genes file,
-use the following command::
+use the following command:
 
   ```python path/to/pythonScript.py -p path/to/phenopacket/directory -m 5,10 -g path/to/genesFile.txt```
 
