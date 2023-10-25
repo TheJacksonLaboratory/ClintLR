@@ -30,7 +30,7 @@ The Mondo term search field autocompletes the Mondo ontology disease name/label,
 Information for the selected term is displayed in an HTML window to the right of the tree view.
 
 <figure>
-  <img src=_static/ClintLR_screenshot_and_results.png alt="Screenshot of the ClintLR interface"/>
+  <img src="_static/ClintLR_screenshot_and_results.png" alt="Screenshot of the ClintLR interface"/>
   <figcaption>ClintLR (CLinical INTuition with Likelihood Ratios). (A) Users can download input files and adjust settings via the setup interface. (B) The main analysis interface allows users to choose the disease group and adjust the pretest probability of the group to reflect clinical intuition. (C) ClintLR runs LIRICAL with the adjusted pretest probabilities and displays the results in the system browser.</figcaption>
 </figure>
 

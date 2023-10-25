@@ -39,14 +39,14 @@ To launch the ClintLR GUI, run:
 
 
 
-# Resources Setup
+## Resources Setup
 
 Prior to performing analysis in the ClintLR GUI, the locations of certain resources (the Mondo ontology, output directory, LIRICAL data directory, and Exomiser variant files)
 need to be specified. This can be done from the Resources interface, accessed from the *File -> Show Resources* menu.
 Resources set in this interface are preserved between sessions.
 
 <figure>
-  <img src=_static/ClintLRresourcesFigure.png alt="Screenshot of the ClintLR resources interface"/>
+  <img src="_static/ClintLRresourcesFigure.png" alt="Screenshot of the ClintLR resources interface"/>
   <figcaption>Screenshot of the ClintLR resources interface Ontology + Output tab (top) and LIRICAL tab (bottom).</figcaption>
 </figure>
 
