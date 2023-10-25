@@ -45,10 +45,7 @@ Prior to performing analysis in the ClintLR GUI, the locations of certain resour
 need to be specified. This can be done from the Resources interface, accessed from the *File -> Show Resources* menu.
 Resources set in this interface are preserved between sessions.
 
-<figure>
-  <img src="_static/ClintLRresourcesFigure.png" alt="Screenshot of the ClintLR resources interface"/>
-  <figcaption>Screenshot of the ClintLR resources interface Ontology + Output tab (top) and LIRICAL tab (bottom).</figcaption>
-</figure>
+![Screenshot of the ClintLR resources interface](_static/ClintLRresourcesFigure.png "Screenshot of the ClintLR resources interface Ontology + Output tab (top) and LIRICAL tab (bottom)")
 
 The Mondo ontology and output directory paths are found in the *Ontology + Output* tab, and LIRICAL resources are found in the *LIRICAL* tab.
 If you have a local Mondo ontology file to use, you can set its path using the **Set Path** button. Alternatively, clicking
