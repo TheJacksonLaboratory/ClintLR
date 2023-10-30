@@ -1,0 +1,36 @@
+name: GraalVM Native Image builds
+on: [push, pull_request]
+jobs:
+  build:
+    name: ClintLR on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: 'true'
+          set-java-home: 'false'
+
+      - name: Build and ClintLR CLI and GUI JARs
+        run: |
+          native-image -jar clintlr-cli/target/ClintLR-CLI.jar ClintLR-CLI
+          native-image -jar clintlr-gui/target/clintlr-gui-0.3.0.jar ClintLR-GUI
+
+      - name: Upload CLI binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: clintlr-cli-${{ matrix.os }}
+          path: clintlr-cli*
+
+      - name: Upload GUI binary
+          uses: actions/upload-artifact@v2
+          with:
+            name: clintlr-gui-${{ matrix.os }}
+            path: clintlr-gui*
