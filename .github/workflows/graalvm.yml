@@ -28,9 +28,3 @@ jobs:
         with:
           name: clintlr-cli-${{ matrix.os }}
           path: clintlr-cli*
-
-      - name: Upload GUI binary
-          uses: actions/upload-artifact@v2
-          with:
-            name: clintlr-gui-${{ matrix.os }}
-            path: clintlr-gui*
