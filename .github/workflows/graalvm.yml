@@ -7,6 +7,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
+        type: ['cli', 'gui']
     steps:
       - uses: actions/checkout@v4
 
@@ -20,11 +21,12 @@ jobs:
 
       - name: Build and ClintLR CLI and GUI JARs
         run: |
+          mvn clean package
           native-image -jar clintlr-cli/target/ClintLR-CLI.jar ClintLR-CLI
           native-image -jar clintlr-gui/target/clintlr-gui-0.3.0.jar ClintLR-GUI
 
-      - name: Upload CLI binary
+      - name: Upload CLI/GUI binary
         uses: actions/upload-artifact@v2
         with:
-          name: clintlr-cli-${{ matrix.os }}
-          path: clintlr-cli*
+          name: clintlr-${{ matrix.type }}-${{ matrix.os }}
+          path: clintlr-${{ matrix.type }}*
