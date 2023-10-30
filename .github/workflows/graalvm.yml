@@ -1,5 +1,5 @@
 name: GraalVM Native Image builds
-#on: [push, pull_request]
+on: [push] #, pull_request]
 jobs:
   build:
     name: ClintLR on ${{ matrix.os }}
