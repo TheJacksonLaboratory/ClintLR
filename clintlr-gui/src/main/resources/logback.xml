@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 <appender name="FileAppender" class="ch.qos.logback.core.FileAppender">
-    <file>${log.name}</file>
+    <file>${java.io.tmpdir}${file.separator}clintlr.log</file>
     <append>true</append>
     <immediateFlush>true</immediateFlush>
     <encoder>
