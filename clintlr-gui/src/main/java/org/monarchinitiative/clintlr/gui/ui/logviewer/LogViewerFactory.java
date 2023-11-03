@@ -33,9 +33,10 @@ import org.monarchinitiative.clintlr.gui.PopUps;
 
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
 
@@ -44,9 +45,9 @@ import java.util.Optional;
  * according to the level of the log item.
  */
 public class LogViewerFactory {
-    private final String logpath;
+    private final Path logpath;
 
-    public LogViewerFactory(String path) {
+    public LogViewerFactory(Path path) {
         this.logpath= path;
     }
 
@@ -58,10 +59,13 @@ public class LogViewerFactory {
     public void display() {
         Log log = new Log();
         MyLogger mylogger = new MyLogger(log, "main");
-        File logfile = new File(logpath);
         try{
-            logfile.createNewFile(); // if file already exists will do nothing
-            BufferedReader br = new BufferedReader(new FileReader(logfile));
+            try {
+                Files.createFile(logpath);
+            } catch (FileAlreadyExistsException fe) {
+                // if file already exists will do nothing
+            }
+            BufferedReader br = Files.newBufferedReader(logpath);
             String line;
             while ((line=br.readLine())!=null) {
                 Optional<LogRecord> opt = LogRecord.fromLine(line);

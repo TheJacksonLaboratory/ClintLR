@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import org.monarchinitiative.clintlr.core.io.PretestProbaAdjustmentIO;
 import org.monarchinitiative.clintlr.core.mondo.MondoStats;
 import org.monarchinitiative.clintlr.gui.PopUps;
+import org.monarchinitiative.clintlr.gui.config.ClintLRConfig;
 import org.monarchinitiative.clintlr.gui.resources.*;
 import org.monarchinitiative.clintlr.gui.UrlBrowser;
 import org.monarchinitiative.clintlr.gui.config.AppProperties;
@@ -360,8 +361,8 @@ public class MainController {
 
     @FXML
     public void showLog(ActionEvent e) {
-        String logFile = "clintlr-gui/clintlr.log";
-        LogViewerFactory factory = new LogViewerFactory(logFile);
+        Path logPath = Path.of(System.getProperty("java.io.tmpdir")).resolve(ClintLRConfig.CLINTLR_LOG_FILENAME);
+        LogViewerFactory factory = new LogViewerFactory(logPath);
         factory.display();
         e.consume();
     }

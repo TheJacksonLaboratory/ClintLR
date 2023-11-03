@@ -23,6 +23,11 @@ public class ClintLRConfig {
      */
     private static final String CONFIG_FILE_BASENAME = "clintlr.properties";
 
+    /**
+     * The name of the log file. Note, the log file name MUST match the file name in the <code>logback.xml</code>.
+     */
+    public static final String CLINTLR_LOG_FILENAME = "clintlr.log";
+
     @Bean
     public ExecutorService executorService() {
         return Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
