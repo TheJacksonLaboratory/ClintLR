@@ -1,23 +1,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.monarchinitiative.l4ci</groupId>
-  <artifactId>l4ci</artifactId>
-  <version>0.1.0</version>
+  <groupId>org.monarchinitiative.clintlr</groupId>
+  <artifactId>clintlr</artifactId>
+  <version>0.3.0</version>
   <packaging>pom</packaging>
-  <name>l4ci</name>
+  <name>clintlr</name>
   <parent>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-parent</artifactId>
       <version>2.6.6</version>
   </parent>
     <modules>
-      <module>l4ci-core</module>
-      <module>l4ci-cli</module>
-      <module>l4ci-gui</module>
+      <module>clintlr-core</module>
+      <module>clintlr-cli</module>
+      <module>clintlr-gui</module>
     </modules>
 
-    <url>https://github.com/TheJacksonLaboratory/L4CI</url>
+    <url>https://github.com/TheJacksonLaboratory/ClintLR</url>
 
     <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,7 +27,7 @@
       <maven.compiler.target>${java.version}</maven.compiler.target>
       <javafx.version>18</javafx.version>
       <phenol.version>2.0.0</phenol.version>
-      <lirical.version>2.0.0-RC2</lirical.version>
+      <lirical.version>2.0.0-RC3-SNAPSHOT</lirical.version>
       <phenopacket.version>2.0.2</phenopacket.version>
       <phenopacket-tools.version>1.0.0-RC1</phenopacket-tools.version>
       <protobuf.version>3.19.4</protobuf.version>
@@ -36,18 +36,18 @@
       <commons.io>2.8.0</commons.io>
     </properties>
 
-    <repositories>
-      <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
-      </repository>
-    </repositories>
+<!--    <repositories>-->
+<!--      <repository>-->
+<!--        <id>jitpack.io</id>-->
+<!--        <url>https://jitpack.io</url>-->
+<!--      </repository>-->
+<!--    </repositories>-->
 
 
     <scm>
-      <connection>scm:git:git@github.com/TheJacksonLaboratory/L4CI.git</connection>
-      <developerConnection>scm:git:git@github.com/TheJacksonLaboratory/L4CI.git</developerConnection>
-      <url>https://github.com/TheJacksonLaboratory/L4CI</url>
+      <connection>scm:git:git@github.com/TheJacksonLaboratory/ClintLR.git</connection>
+      <developerConnection>scm:git:git@github.com/TheJacksonLaboratory/ClintLR.git</developerConnection>
+      <url>https://github.com/TheJacksonLaboratory/ClintLR</url>
       <tag>v@{project.version}</tag>
     </scm>
 
@@ -127,11 +127,6 @@
           <version>11.1.1</version>
         </dependency>
         <dependency>
-          <groupId>net.rgielen</groupId>
-          <artifactId>javafx-weaver-spring-boot-starter</artifactId>
-          <version>1.3.0</version>
-        </dependency>
-        <dependency>
           <groupId>org.monarchinitiative.biodownload</groupId>
           <artifactId>biodownload</artifactId>
           <version>1.1.0</version>
@@ -159,25 +154,28 @@
           <version>${protobuf.version}</version>
         </dependency>
         <dependency>
-          <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
+          <!--            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>-->
+          <groupId>org.monarchinitiative.lirical</groupId>
           <artifactId>lirical-core</artifactId>
           <version>${lirical.version}</version>
         </dependency>
         <dependency>
-          <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
+          <!--            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>-->
+          <groupId>org.monarchinitiative.lirical</groupId>
           <artifactId>lirical-io</artifactId>
-          <version>${lirical.version}</version>
-        </dependency>
-        <dependency>
-          <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
-          <artifactId>lirical-configuration</artifactId>
           <version>${lirical.version}</version>
           <exclusions>
             <exclusion>
+              <!-- Used by HtsJDK under the hood, we're excluding due to module path conflict. -->
               <groupId>commons-logging</groupId>
               <artifactId>commons-logging</artifactId>
             </exclusion>
           </exclusions>
+        </dependency>
+        <dependency>
+          <groupId>org.monarchinitiative.lirical</groupId>
+          <artifactId>lirical-configuration</artifactId>
+          <version>${lirical.version}</version>
         </dependency>
         <dependency>
           <groupId>org.phenopackets.phenopackettools</groupId>

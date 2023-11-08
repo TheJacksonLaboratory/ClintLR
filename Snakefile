@@ -26,7 +26,7 @@ exomiser = os.path.join(homeDir, "Exomiser/2109_hg19/2109_hg19/2109_hg19_variant
 
 # this is the location of the jar file that gets built by mvn package
 parentPath = os.getcwd() #os.path.abspath(os.path.dirname(scriptParent))
-DEFAULT_L4CI_JAR=os.path.join(parentPath, 'l4ci-cli', 'target', 'L4CI-CLI.jar')
+DEFAULT_ClintLR_JAR=os.path.join(parentPath, 'clintlr-cli', 'target', 'ClintLR-CLI.jar')
 DEFAULT_DATA_DIR=os.path.join(parentPath, 'data')
 DEFAULT_VCF_FILE=os.path.join(parentPath, 'scripts', 'project.NIST.hc.snps.indels.NIST7035.vcf')
 DEFAULT_CIRANGES_FILE=os.path.join(parentPath, 'scripts', 'DiseaseIntuitionGroups.tsv')
@@ -117,11 +117,11 @@ rule all:
     expand(os.path.abspath("resources/batchOutput/{type}/global/{phenopacketName}_target_multiplier_0.0.tsv.gz"),
             phenopacketName=phenopacketNames,
             type=types),
-#     "resources/phenotype/l4ci_batch_analysis_results.tsv",
-    "resources/phenotype/l4ci_batch_analysis_results_uniform.tsv"
+#     "resources/phenotype/clintlr_batch_analysis_results.tsv",
+    "resources/phenotype/clintlr_batch_analysis_results_uniform.tsv"
 
 
-rule runL4CIBatchAnalysisGenotype:
+rule runClintLRBatchAnalysisGenotype:
   input:
     os.path.abspath("resources/phenopackets_v2/{phenopacketName}.json")
   output:
@@ -131,7 +131,7 @@ rule runL4CIBatchAnalysisGenotype:
     resources_dir = resources_dir,
     exomiser = exomiser,
     data_dir = DEFAULT_DATA_DIR,
-    l4ci_jar = DEFAULT_L4CI_JAR,
+    clintlr_jar = DEFAULT_ClintLR_JAR,
     mondo_path = os.path.join(DEFAULT_DATA_DIR, "mondo.json"),
     vcf_file = os.path.abspath("scripts/project.NIST.hc.snps.indels.NIST7035.vcf"),
     CIranges_file = os.path.abspath("scripts/DiseaseIntuitionGroups.tsv"),
@@ -142,10 +142,10 @@ rule runL4CIBatchAnalysisGenotype:
     """
     (mkdir -p {params.resources_dir}
     cd {params.resources_dir}
-    java -jar {params.l4ci_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" --vcf {params.vcf_file} -r {params.CIranges_file} -m {wildcards.multiplierValue} --compress -O {params.output_directory}) &> {log}
+    java -jar {params.clintlr_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" --vcf {params.vcf_file} -r {params.CIranges_file} -m {wildcards.multiplierValue} --compress -O {params.output_directory}) &> {log}
     """
 
-rule runL4CIBatchAnalysisGenotypeUniform:
+rule runClintLRBatchAnalysisGenotypeUniform:
   input:
     os.path.abspath("resources/phenopackets_v2/{phenopacketName}.json")
   output:
@@ -155,7 +155,7 @@ rule runL4CIBatchAnalysisGenotypeUniform:
     resources_dir = resources_dir,
     exomiser = exomiser,
     data_dir = DEFAULT_DATA_DIR,
-    l4ci_jar = DEFAULT_L4CI_JAR,
+    clintlr_jar = DEFAULT_ClintLR_JAR,
     mondo_path = os.path.join(DEFAULT_DATA_DIR, "mondo.json"),
     vcf_file = os.path.abspath("scripts/project.NIST.hc.snps.indels.NIST7035.vcf"),
     CIranges_file = os.path.abspath("scripts/DiseaseIntuitionGroups.tsv"),
@@ -166,10 +166,10 @@ rule runL4CIBatchAnalysisGenotypeUniform:
     """
     (mkdir -p {params.resources_dir}
     cd {params.resources_dir}
-    java -jar {params.l4ci_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" --vcf {params.vcf_file} -r {params.CIranges_file} -g --compress -O {params.output_directory}) &> {log}
+    java -jar {params.clintlr_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" --vcf {params.vcf_file} -r {params.CIranges_file} -g --compress -O {params.output_directory}) &> {log}
     """
 
-rule runL4CIBatchAnalysisPhenotype:
+rule runClintLRBatchAnalysisPhenotype:
   input:
     os.path.abspath("resources/phenopackets_v2/{phenopacketName}.json")
   output:
@@ -179,7 +179,7 @@ rule runL4CIBatchAnalysisPhenotype:
     resources_dir = resources_dir,
     exomiser = exomiser,
     data_dir = DEFAULT_DATA_DIR,
-    l4ci_jar = DEFAULT_L4CI_JAR,
+    clintlr_jar = DEFAULT_ClintLR_JAR,
     mondo_path = os.path.join(DEFAULT_DATA_DIR, "mondo.json"),
     vcf_file = os.path.abspath("scripts/project.NIST.hc.snps.indels.NIST7035.vcf"),
     CIranges_file = os.path.abspath("scripts/DiseaseIntuitionGroupsTsv.tsv"),
@@ -190,10 +190,10 @@ rule runL4CIBatchAnalysisPhenotype:
     """
     (mkdir -p {params.resources_dir}
     cd {params.resources_dir}
-    java -jar {params.l4ci_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" -r {params.CIranges_file} -m {wildcards.multiplierValue} --compress -O {params.output_directory}) &> {log}
+    java -jar {params.clintlr_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" -r {params.CIranges_file} -m {wildcards.multiplierValue} --compress -O {params.output_directory}) &> {log}
     """
 
-rule runL4CIBatchAnalysisPhenotypeUniform:
+rule runClintLRBatchAnalysisPhenotypeUniform:
   input:
     os.path.abspath("resources/phenopackets_v2/{phenopacketName}.json")
   output:
@@ -203,7 +203,7 @@ rule runL4CIBatchAnalysisPhenotypeUniform:
     resources_dir = resources_dir,
     exomiser = exomiser,
     data_dir = DEFAULT_DATA_DIR,
-    l4ci_jar = DEFAULT_L4CI_JAR,
+    clintlr_jar = DEFAULT_ClintLR_JAR,
     mondo_path = os.path.join(DEFAULT_DATA_DIR, "mondo.json"),
     vcf_file = os.path.abspath("scripts/project.NIST.hc.snps.indels.NIST7035.vcf"),
     CIranges_file = os.path.abspath("scripts/DiseaseIntuitionGroups.tsv"),
@@ -214,16 +214,16 @@ rule runL4CIBatchAnalysisPhenotypeUniform:
     """
     (mkdir -p {params.resources_dir}
     cd {params.resources_dir}
-    java -jar {params.l4ci_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" -r {params.CIranges_file} -g --compress -O {params.output_directory}) &> {log}
+    java -jar {params.clintlr_jar} batch -M {params.mondo_path} -d {params.data_dir} -e {params.exomiser} -p {input} --assembly "hg19" -r {params.CIranges_file} -g --compress -O {params.output_directory}) &> {log}
     """
 
 rule createOutputFileGenotype:
   input:
     sorted(glob.glob(os.path.join(os.path.abspath("resources/batchOutput/genotype/"), "*.tsv.gz")))
   output:
-    os.path.abspath("resources/genotype/l4ci_batch_analysis_results.tsv")
+    os.path.abspath("resources/genotype/clintlr_batch_analysis_results.tsv")
   log:
-    os.path.abspath("resources/genotype/l4ci_batch_analysis_results_Log.log")
+    os.path.abspath("resources/genotype/clintlr_batch_analysis_results_Log.log")
   run:
     with open(str(output), 'wt') as f:
         print("Writing results file...")
@@ -239,9 +239,9 @@ rule createOutputFileGenotypeUniform:
   input:
     sorted(glob.glob(os.path.join(os.path.abspath("resources/batchOutput/genotype/global/"), "*.tsv.gz")))
   output:
-    os.path.abspath("resources/genotype/l4ci_batch_analysis_results_uniform.tsv")
+    os.path.abspath("resources/genotype/clintlr_batch_analysis_results_uniform.tsv")
   log:
-    os.path.abspath("resources/genotype/l4ci_batch_analysis_results_uniform_Log.log")
+    os.path.abspath("resources/genotype/clintlr_batch_analysis_results_uniform_Log.log")
   run:
     with open(str(output), 'wt') as f:
         print("Writing results file...")
@@ -258,9 +258,9 @@ rule createOutputFilePhenotype:
   input:
     sorted(glob.glob(os.path.join(os.path.abspath("resources/batchOutput/phenotype/"), "*.tsv.gz")))
   output:
-    os.path.abspath("resources/phenotype/l4ci_batch_analysis_results.tsv")
+    os.path.abspath("resources/phenotype/clintlr_batch_analysis_results.tsv")
   log:
-    os.path.abspath("resources/phenotype/l4ci_batch_analysis_results_Log.log")
+    os.path.abspath("resources/phenotype/clintlr_batch_analysis_results_Log.log")
   run:
     with open(str(output), 'wt') as f:
         print("Writing results file...")
@@ -276,9 +276,9 @@ rule createOutputFilePhenotypeUniform:
   input:
     sorted(glob.glob(os.path.join(os.path.abspath("resources/batchOutput/phenotype/global/"), "*.tsv.gz")))
   output:
-    os.path.abspath("resources/phenotype/l4ci_batch_analysis_results_uniform.tsv")
+    os.path.abspath("resources/phenotype/clintlr_batch_analysis_results_uniform.tsv")
   log:
-    os.path.abspath("resources/phenotype/l4ci_batch_analysis_results_uniform_Log.log")
+    os.path.abspath("resources/phenotype/clintlr_batch_analysis_results_uniform_Log.log")
   run:
     with open(str(output), 'wt') as f:
         print("Writing results file...")

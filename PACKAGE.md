@@ -1,6 +1,6 @@
-# Package L4CI as a self-contained Java application
+# Package ClintLR as a self-contained Java application
 
-This file explains how we have packaged L4CI as a standalone application.
+This file explains how we have packaged ClintLR as a standalone application.
 This is an alternative to the traditional method for creating executable jar files for
 Java applications (this is also possible using the standard ``mvn package`` command).
 
@@ -16,24 +16,24 @@ Run the following to create a deb installer (for Debian, Ubuntu, and related sys
 bash package.sh
 ```
 
-This will create a deb file called ``l4ci-gui_0.0.1_amd64.deb``. On some
+This will create a deb file called ``clintlr-gui_0.3.0_amd64.deb``. On some
 systems, the file can be installed with a right-click. From the command line,
 the following installs the package
 
 ```shell
-sudo dpkg -i l4ci-gui_0.0.1_amd64.deb
+sudo dpkg -i clintlr-gui_0.3.0_amd64.deb
 ```
 
-This command will have the effect of installing the application in ``/opt/l4ci-gui``.
+This command will have the effect of installing the application in ``/opt/clintlr-gui``.
 The application will not be on the system path unless you add it manually, but you should be able to start the app via
 the ``Show Applications`` or ``Main Menu`` apps. Alternatively, the app can be started
 with
 ```shell
- /opt/l4ci-gui/bin/l4ci-gui 
+ /opt/clintlr-gui/bin/clintlr-gui 
 ```
 to remove the app, enter the following command
 ```shell
-sudo dpkg remove l4ci-gui_0.0.1_amd64.deb
+sudo dpkg remove clintlr-gui_0.3.0_amd64.deb
 ```
 
 ## Mac
@@ -42,13 +42,13 @@ The command
 ```shell
 bash package.sh
 ```
-will generate a file called ``l4ci-gui-0.0.1.dmg``. This file can
+will generate a file called ``clintlr-gui-0.3.0.dmg``. This file can
 be used to install the package as usual (start with a double-click)
 
 Note that the JAR files and the dmg installation files for M1 and intel macs are not
 compatible with each other. We have uploaded one version of the
-app for M1 Macs (``l4ci-gui-0.0.1-M1.dmg``) and one for older (intel)
-Macs (````l4ci-gui-0.0.1-intel.dmg``). We produced the files on an M1 and an Intel mac and
+app for M1 Macs (``clintlr-gui-0.3.0-M1.dmg``) and one for older (intel)
+Macs (````clintlr-gui-0.3.0-intel.dmg``). We produced the files on an M1 and an Intel mac and
 changed the file names by hand.
 
 ## Windows

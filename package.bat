@@ -6,19 +6,19 @@
 
 : :: :
 : : Static variables
-SET SRC_DIR=l4ci-gui
-SET APP_NAME="L4CI"
-SET CMD_NAME="l4ci-gui"
+SET SRC_DIR=clintlr-gui
+SET APP_NAME="ClintLR"
+SET CMD_NAME="clintlr-gui"
 SET VERSION=1.0.0
-SET JAR_VERSION=0.1.0
+SET JAR_VERSION=0.3.0
 
 SET BUILD_DIR=%SRC_DIR%\target
 SET PACKAGE_DIR=%SRC_DIR%\pkg
-SET JAR_NAME=l4ci-gui-%JAR_VERSION%.jar
-: :JAR_NAME="l4ci-gui.jar"
-SET MAIN_CLASS=org.monarchinitiative.l4ci.gui.StockUIApp
+SET JAR_NAME=clintlr-gui-%JAR_VERSION%.jar
+: :JAR_NAME="clintlr-gui.jar"
+SET MAIN_CLASS=org.monarchinitiative.clintlr.gui.StockUIApp
 SET VENDOR="The Jackson Laboratory"
-SET DESCRIPTION="L4CI is a Java application for incorporating clinical intuition into LIRICAL analysis."
+SET DESCRIPTION="ClintLR is a Java application for incorporating clinical intuition into LIRICAL analysis."
 SET COPYRIGHT="Copyright 2022, All rights reserved"
 : :ICON="%BUILD_DIR%/classes/img/dna_rna_icon"
 
@@ -28,7 +28,7 @@ GOTO:MAIN
     for /f "tokens=4-7 delims=[.] " %%i in ('ver') do (if %%i==Version (set %~1=%%j.%%k) else (set %~1=%%i.%%j))
 EXIT /B 0
 
-: : The following is not used since l4ci is not yet modular
+: : The following is not used since clintlr is not yet modular
 :build_for_module_path
     : : copy the JAR and lib (dependencies)
     COPY %BUILD_DIR%\%JAR_NAME% %PACKAGE_DIR%
@@ -71,21 +71,21 @@ SET PACKAGE="classpath"
 
 
 : : 1. Build
-ECHO "Building l4ci-gui\n"
+ECHO "Building clintlr-gui\n"
 : :mvn clean package
 
 
 : : 2. Prepare packaging folder
-SET PACKAGE_DIR=\tmp\l4ci_app\
+SET PACKAGE_DIR=\tmp\clintlr_app\
 ECHO "Creating temporary directory at %PACKAGE_DIR%"
 mkdir %PACKAGE_DIR%
 
 : : 3. Package for platform and package type
 if %PACKAGE% == "modular" (
-  ECHO "Packaging modular l4ci-gui for Windows %PLATFORM%"
+  ECHO "Packaging modular clintlr-gui for Windows %PLATFORM%"
   call:build_for_module_path
 ) else if %PACKAGE% == "classpath" (
-  ECHO "Packaging classpath l4ci-gui for Windows %PLATFORM%"
+  ECHO "Packaging classpath clintlr-gui for Windows %PLATFORM%"
   call:build_for_class_path %PLATFORM%
 ) else (
   ECHO "\nUnknown packaging type %PACKAGE%"

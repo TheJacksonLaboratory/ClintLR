@@ -45,7 +45,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'LC4I'
+project = u'ClintLR'
 copyright = u'2023'
 author = u'Martha Beckwith, Peter Robinson'
 
@@ -95,7 +95,7 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 #html_style = 'css/isopret.css'
-html_css_files = ['lc4i.css']
+html_css_files = ['clintlr.css']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -116,7 +116,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'LC4I'
+htmlhelp_basename = 'ClintLR'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -149,21 +149,10 @@ latex_elements = {
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'LC4I', u'LC4I Documentation',
+    (master_doc, 'ClintLR', u'ClintLR Documentation',
      [author], 1)
 ]
 
-
-# -- Options for Texinfo output -------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'LC4I', u'LC4I Documentation',
-     author, 'LC4I',
-     'Miscellaneous'),
-]
 
 
 

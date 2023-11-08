@@ -7,19 +7,19 @@
 
 ##
 # Static variables
-SRC_DIR=l4ci-gui
-APP_NAME="L4CI"
-CMD_NAME="l4ci-gui"
+SRC_DIR=clintlr-gui
+APP_NAME="ClintLR"
+CMD_NAME="clintlr-gui"
 VERSION=1.0.0
-JAR_VERSION=0.0.1
+JAR_VERSION=0.3.0
 
 BUILD_DIR=${SRC_DIR}/target
-JAR_NAME="l4ci-gui-${JAR_VERSION}.jar"
-#JAR_NAME="l4ci-gui.jar"
-#MAIN_CLASS="org.monarchinitiative.l4ci.gui.MainApp"
+JAR_NAME="clintlr-gui-${JAR_VERSION}.jar"
+#JAR_NAME="clintlr-gui.jar"
+#MAIN_CLASS="org.monarchinitiative.clintlr.gui.MainApp"
 MAIN_CLASS="org.springframework.boot.loader.JarLauncher"
 VENDOR="The Jackson Laboratory"
-DESCRIPTION="L4CI is a Java application for incorporating clinical intuition into LIRICAL analysis."
+DESCRIPTION="ClintLR is a Java application for incorporating clinical intuition into LIRICAL analysis."
 COPYRIGHT="Copyright 2022, All rights reserved"
 #ICON="${BUILD_DIR}/classes/img/dna_rna_icon"
 
@@ -37,7 +37,7 @@ function detect_platform() {
     fi
 }
 
-# The following function not used since l4ci is not yet modular
+# The following function not used since clintlr is not yet modular
 function build_for_module_path() {
     # copy the JAR and lib (dependencies)
     cp $BUILD_DIR/$JAR_NAME $PACKAGE_DIR
@@ -46,7 +46,7 @@ function build_for_module_path() {
       # Setup Linux CLI using module path
       MPATH="${PACKAGE_DIR}/lib:${PACKAGE_DIR}/${JAR_NAME}"
       printf "Module path: %s\n" "${MPATH}"
-      MODULE="org.jax.l4ci.app/org.jax.l4ci_gui.App"
+      MODULE="org.jax.clintlr.app/org.jax.clintlr_gui.App"
       printf "Module %s\n" "${MODULE}"
 
       DETECTED_MODULES=$(jdeps --multi-release 17 --ignore-missing-deps --print-module-deps --module-path "${MPATH}" ${PACKAGE_DIR}/${JAR_NAME})
@@ -130,22 +130,22 @@ PACKAGE="classpath"
 
 
 # 1. Build
-printf "Building l4ci-gui\n"
+printf "Building clintlr-gui\n"
 #mvn clean package
 
 
 # 2. Prepare packaging folder
-PACKAGE_DIR=/tmp/l4ci_app
+PACKAGE_DIR=/tmp/clintlr_app
 printf "Creating temporary directory at %s\n" ${PACKAGE_DIR}
 mkdir -p $PACKAGE_DIR
 
 # 3. Package for platform and package type
 if [[ "$PACKAGE" == "modular" ]]; then
-  printf "Packaging modular l4ci-gui for %s\n" "${PLATFORM}"
+  printf "Packaging modular clintlr-gui for %s\n" "${PLATFORM}"
   build_for_module_path
 
 elif [[ "$PACKAGE" == "classpath" ]]; then
-  printf "Packaging classpath l4ci-gui for %s\n" "${PLATFORM}"
+  printf "Packaging classpath clintlr-gui for %s\n" "${PLATFORM}"
   build_for_class_path
 
 else
