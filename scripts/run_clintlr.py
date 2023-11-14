@@ -2,7 +2,7 @@ import argparse, os, sys, glob
 
 
 # this is the relative location of the jar file that gets built by mvn package
-DEFAULT_ClintLR_JAR='../clintlr-cli/target/clintlr-cli-0.0.1.jar'
+DEFAULT_ClintLR_JAR='../clintlr-cli/target/ClintLR-CLI.jar'
 
 def parseArgs():
 	parser = argparse.ArgumentParser(description="LIRICAL analysis of phenopackets (with or without VCF) using a gene list")
@@ -52,7 +52,7 @@ def run_clintlr_and_extract_rank(input_phenopacket, correct_diagnosis):
     homeDir = os.path.expanduser("~")
     outfile_path = os.path.join(homeDir, "test")
     outfile_name = os.path.join(outfile_path, "test_results")
-    clintlr_jar=os.path.abspath('./clintlr-cli/target/clintlr-cli-0.0.1.jar')
+    clintlr_jar=os.path.abspath('./clintlr-cli/target/ClintLR-CLI.jar')
     genes_file='scripts/bbs_genes.txt'
     mondo_path = os.path.abspath('./data/mondo.json')
     data = os.path.abspath("./data")

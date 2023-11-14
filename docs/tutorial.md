@@ -80,7 +80,7 @@ a provided list of genes. There is a Python script to facilitate this analysis. 
 | -d or --data            | 1..1         | Path to LIRICAL data directory.                                 |
 | -O or --outputDirectory | 1..1         | Path to directory to write the results files.                   |
 | -m or --multiplier      | 1..1         | Comma-separated pretest adjustment values (e.g. 5,10,15).       |
-| -g or --genes           | 1..1         | Path to file containing a comma-separated list of gene symbols. |
+| -G or --genes           | 1..1         | Path to file containing a comma-separated list of gene symbols. |
 
 
 
@@ -93,7 +93,7 @@ The -p argument accepts a list of phenopackets, or a path to a directory that co
 For example, to run analysis on all phenopackets in a directory using pretest adjustment values of 5 and 10 and a genes file,
 use the following command:
 
-  ```python path/to/pythonScript.py -p path/to/phenopacket/directory -m 5,10 -g path/to/genesFile.txt```
+  ```python path/to/pythonScript.py -p path/to/phenopacket/directory -m 5,10 -G path/to/genesFile.txt```
 
 Individual phenopacket analysis results are saved as TSV files. Additionally, a summary file is created that includes the
 posttest probability values and rankings for the target disease at each pretest adjustment value for all phenopackets analyzed.
