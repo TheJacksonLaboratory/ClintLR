@@ -199,17 +199,6 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
         return genomeBuildOptional.get();
     }
 
-    protected AnalysisOptions prepareAnalysisOptions(Lirical lirical, Map<TermId, Double> preTestMap) {
-        PretestDiseaseProbability pretestDiseaseProbability;
-        if (runConfiguration.globalAnalysisMode) {
-            LOGGER.info("Using uniform pretest disease probabilities.");
-            pretestDiseaseProbability = PretestDiseaseProbabilities.uniform(lirical.phenotypeService().diseases());
-        } else {
-            pretestDiseaseProbability = PretestDiseaseProbability.of(preTestMap);
-        }
-        return AnalysisOptions.of(runConfiguration.globalAnalysisMode, pretestDiseaseProbability);
-    }
-
     protected AnalysisOptions prepareAnalysisOptions(Lirical lirical, Map<TermId, Double> pretestAdjustmentMap,
                                                    Map<TermId, TermId> omimToMondoMap) throws LiricalDataException {
         Map<TermId, Double> diseaseIdToPretestProba = PretestProbability.of(pretestAdjustmentMap, omimToMondoMap, lirical.phenotypeService().diseases().diseaseIds(), 1.0);

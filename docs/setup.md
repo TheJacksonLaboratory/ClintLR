@@ -24,7 +24,7 @@ Build the executable from source with Maven:
 ```
   git clone https://github.com/TheJacksonLaboratory/ClintLR.git
   cd ClintLR
-  ./mvnw clean install
+  ./mvnw clean package
 ```
 
 We use the [Maven Wrapper](https://maven.apache.org/wrapper/) for building the sources, so installation
@@ -35,7 +35,7 @@ of Maven prior to build is *not* required.
 
 To launch the ClintLR GUI, run:
 
-```java -jar clintlr-gui/target/ClintLR.jar```
+```java -jar clintlr-gui/target/clintlr-gui-[version].jar```
 
 
 

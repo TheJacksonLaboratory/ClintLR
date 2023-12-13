@@ -45,9 +45,9 @@ def run_clintlr_and_extract_rank(clintlr_jar, mondo_path, output_directory, inpu
     arg_list = ["java", "-jar", clintlr_jar, "genes", "-d", data_dir, "--genes", genes_file, "-O", output_directory, "-M", mondo_path,
                 "-p", input_phenopacket, "-e", exomiser, "-m", multiplier]
     command = " ".join(arg_list)
-    print(command)
-    retval = os.system(command)
-    print(f"cmd returned {retval}")
+    # print(command)
+    # retval = os.system(command)
+    # print(f"cmd returned {retval}")
 
 
     for file in sorted(glob.glob(os.path.join(os.path.dirname(inpath), "*tsv"))):
@@ -122,5 +122,5 @@ if __name__ == "__main__":
                                         correct_diagnosis=right_dx, 
                                         multiplier=mult, 
                                         genes_file=genes)
-                print("Wrote results to: " + inpath)
+            print("Wrote results to: " + inpath)
     
