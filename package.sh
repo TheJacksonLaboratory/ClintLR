@@ -11,7 +11,7 @@ SRC_DIR=clintlr-gui
 APP_NAME="ClintLR"
 CMD_NAME="clintlr-gui"
 VERSION=1.0.0
-JAR_VERSION=0.3.0
+JAR_VERSION=0.3.1
 
 BUILD_DIR=${SRC_DIR}/target
 JAR_NAME="clintlr-gui-${JAR_VERSION}.jar"

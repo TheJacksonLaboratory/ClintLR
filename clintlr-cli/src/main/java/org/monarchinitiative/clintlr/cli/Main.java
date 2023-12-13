@@ -8,7 +8,7 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "clintlr",
         mixinStandardHelpOptions = true,
-        version = "0.3.0",
+        version = "0.3.1",
         description = "Clinical Intuition with Likelihood Ratios")
 public class Main implements Callable<Integer> {
 
