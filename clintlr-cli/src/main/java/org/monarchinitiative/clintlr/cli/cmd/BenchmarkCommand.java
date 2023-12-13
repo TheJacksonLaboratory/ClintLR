@@ -200,20 +200,14 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         // 2 - prepare the simulation data shared by all phenopackets.
 //        Path dataDirectory = Path.of(String.join(File.separator, System.getProperty("user.home"), ".clintlr", "data"));
         Path dataDirectory = dataSection.liricalDataDirectory;
+        LOGGER.info(String.valueOf(dataDirectory));
         Path omimToMondoPath = dataDirectory.resolve(OMIM_2_MONDO_NAME);
         Map<TermId, TermId> omim2Mondo;
         if (Files.exists(omimToMondoPath)) {
+            LOGGER.info("Using existing omim2mondo map: " + omimToMondoPath);
             omim2Mondo = OmimMapIO.read(omimToMondoPath);
         } else {
             omim2Mondo = CalculateOmimToMondoMap.calculateOmimMap(ontologyData.mondo);
-        }
-
-        // Flip the OMIM to Mondo map
-        Map<TermId, TermId> mondoToOmim = new HashMap<>();
-        for (Map.Entry<TermId, TermId> e : omim2Mondo.entrySet()) {
-            //for (TermId mondoId : e.getValue()) {
-            mondoToOmim.put(e.getValue(), e.getKey());
-            //}
         }
 
         return omim2Mondo;
@@ -240,14 +234,14 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         Set<TermId> omimIDs = omimToMondoMap.keySet();
         for (String type : types) {
             if (outputPaths.get(type) != null) {
-                System.out.print("Starting " + type);
+                LOGGER.info("Starting " + type);
                 try (BufferedWriter writer = openWriter(outputPaths.get(type)); CSVPrinter printer = CSVFormat.DEFAULT.print(writer)) {
                     printer.printRecord("phenopacket", "background_vcf", "selected_mondo_term", "selected_omim_term", "multiplier", "input_pretest_prob", "benchmark_pretest_prob", "sample_id", "rank",
                             "is_causal", "disease_id", "post_test_proba", "LR", "numerator", "denominator"); // header
 
                     for (Path phenopacketPath : phenopacketPaths) {
-                        System.out.println("Range Filepath: " + rangeFilePath + ", " + rangeLines.get(phenopacketPaths.indexOf(phenopacketPath)));
-                        System.out.println(phenopacketPaths.indexOf(phenopacketPath) + " of " + phenopacketPaths.size() + ": " + type + " " + multiplier + " " + phenopacketPath);
+                        LOGGER.info("Range Filepath: " + rangeFilePath + ", " + rangeLines.get(phenopacketPaths.indexOf(phenopacketPath)));
+                        LOGGER.info(phenopacketPaths.indexOf(phenopacketPath) + " of " + phenopacketPaths.size() + ": " + type + " " + multiplier + " " + phenopacketPath);
                         TargetDiseases targetDiseases;
                         if (rangeLines != null) {
                             targetDiseases = getSelectedDiseases(omimToMondoMap, phenopacketPath, rangeLines);
@@ -285,7 +279,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                         }
                     }
                 }
-                System.out.println("Finished " + type);
+                LOGGER.info("Finished " + type);
                 LOGGER.info("Benchmark results were stored to {}", outputPaths.get(type));
             }
         }

@@ -107,7 +107,7 @@ public class GeneAnalysisCommand extends BatchAnalysisCommand {
                 Map<TermId, Double> pretestMap;
                 if (type.equals("genes")) {
                     pretestMap = makeGenePretestMap(multiplier, geneLines, geneIdToDiseases);
-                    System.out.println("genes pretest map = " + pretestMap);
+                    LOGGER.info("genes pretest map = " + pretestMap);
                 } else {
                     Map<TermId, TermId> selectedDiseases = makeSelectedDiseasesMap(omimToMondoMap, selectedDisease.mondoId(), ontologyData.mondo(), omimIDs);
                     pretestMap = makeSelectedDiseasePretestMap(selectedDiseases, multiplier);
@@ -155,7 +155,7 @@ public class GeneAnalysisCommand extends BatchAnalysisCommand {
                 AnalysisResultsMetadata metadata = prepareAnalysisResultsMetadata(gene2Genotypes, lirical, sampleId);
                 writeResultsToFile(lirical, OutputFormat.parse(outputFormatArg), analysisData, results, metadata, outFilename);
             }
-            System.out.println("Finished " + type);
+            LOGGER.info("Finished " + type);
         }
     }
 
@@ -172,7 +172,7 @@ public class GeneAnalysisCommand extends BatchAnalysisCommand {
                 }
             }
         });
-//        System.out.println(diseaseId2GeneAssociations);
+//        LOGGER.info(diseaseId2GeneAssociations);
         return diseaseId2GeneAssociations;
     }
 
@@ -188,13 +188,13 @@ public class GeneAnalysisCommand extends BatchAnalysisCommand {
                 geneId2Diseases.get(geneId).add(e.getKey());
             }
         }
-//        System.out.println(geneId2Diseases);
+//        LOGGER.info(geneId2Diseases);
         return geneId2Diseases;
     }
 
     protected static Map<TermId, Double> makeGenePretestMap(double multiplier, List<String> geneLines, Map<GeneIdentifier, List<TermId>> geneIdToDiseases) {
         Map<TermId, Double> pretestMap = new HashMap<>();
-        System.out.println(geneLines);
+        LOGGER.info(String.valueOf(geneLines));
         for (String line : geneLines) {
             String[] items = line.split(",");
             for (String item : items) {
