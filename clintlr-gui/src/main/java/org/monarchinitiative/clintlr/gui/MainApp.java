@@ -9,7 +9,6 @@ import org.monarchinitiative.clintlr.gui.config.AppProperties;
 import org.monarchinitiative.clintlr.gui.config.LiricalProperties;
 import org.monarchinitiative.clintlr.gui.controller.MainController;
 import org.monarchinitiative.clintlr.gui.resources.OptionalResources;
-import org.monarchinitiative.clintlr.gui.ui.summary.DiseaseSummaryView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

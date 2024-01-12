@@ -1,5 +1,6 @@
 module clintlr.gui {
     requires clintlr.core;
+//    requires lirical.core;
     requires lirical.io;
     requires lirical.configuration;
     requires org.monarchinitiative.phenol.io;
