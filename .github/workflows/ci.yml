@@ -35,9 +35,8 @@ jobs:
       - name: Install LIRICAL
         run: |
           cd ..
-          git clone https://github.com/TheJacksonLaboratory/LIRICAL
+          git clone --branch $LIRICAL_TAG --depth 1 https://github.com/TheJacksonLaboratory/LIRICAL
           cd LIRICAL
-          git checkout $LIRICAL_TAG
           ./mvnw --quiet -PskipTests -Prelease install
 
       - name: Build with Maven
