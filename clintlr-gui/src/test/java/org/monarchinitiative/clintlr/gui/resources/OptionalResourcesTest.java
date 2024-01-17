@@ -85,23 +85,23 @@ public class OptionalResourcesTest {
         instance.storeResources(properties);
 
         // And test..
-        String path = System.getProperty("os.name").contains("Windows") ? "C:/path/to/mondo.json" : "/path/to/mondo.json";
-        assertThat(Path.of(properties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY)), equalTo(Path.of(path)));
-        path = System.getProperty("os.name").contains("Windows") ? "C:/path/to/lirical/datadir" : "/path/to/lirical/datadir";
-        assertThat(Path.of(properties.getProperty(LiricalResources.LIRICAL_DATA_PROPERTY)), equalTo(Path.of(path)));
-        path = System.getProperty("os.name").contains("Windows") ? "C:/path/to/exomiser.hg19.mv.db" : "/path/to/exomiser.hg19.mv.db";
-        assertThat(Path.of(properties.getProperty(LiricalResources.EXOMISER_HG19_VARIANT_PROPERTY)), equalTo(Path.of(path)));
-        path = System.getProperty("os.name").contains("Windows") ? "C:/path/to/exomiser.hg38.mv.db" : "/path/to/exomiser.hg38.mv.db";
-        assertThat(Path.of(properties.getProperty(LiricalResources.EXOMISER_HG38_VARIANT_PROPERTY)), equalTo(Path.of(path)));
-        path = System.getProperty("os.name").contains("Windows") ? "C:/path/to/bg.freq.txt" : "/path/to/bg.freq.txt";
-        assertThat(Path.of(properties.getProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY)), equalTo(Path.of(path)));
+        assertThat(properties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY), matchesPattern("([CD]:)?/path/to/mondo.json"));
+        assertThat(properties.getProperty(LiricalResources.LIRICAL_DATA_PROPERTY),
+                matchesPattern("([CD]:)?/path/to/lirical/datadir"));
+        assertThat(properties.getProperty(LiricalResources.EXOMISER_HG19_VARIANT_PROPERTY),
+                matchesPattern("([CD]:)?/path/to/exomiser.hg19.mv.db"));
+        assertThat(properties.getProperty(LiricalResources.EXOMISER_HG38_VARIANT_PROPERTY),
+                matchesPattern("([CD]:)?/path/to/exomiser.hg38.mv.db"));
+        assertThat(properties.getProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY),
+                matchesPattern("([CD]:)?/path/to/bg.freq.txt"));
         assertThat(properties.getProperty(LiricalResources.PATHOGENICITY_PROPERTY), equalTo("0.5"));
         assertThat(properties.getProperty(LiricalResources.DEFAULT_VARIANT_BACKGROUND_FREQUENCY_PROPERTY), equalTo("0.1234"));
         assertThat(properties.getProperty(LiricalResources.STRICT_PROPERTY), equalTo("true"));
         assertThat(properties.getProperty(LiricalResources.DEFAULT_ALLELE_PROPERTY), equalTo("1.0E-5"));
         assertThat(properties.getProperty(LiricalResources.TRANSCRIPT_DATABASE_PROPERTY), equalTo("UCSC"));
         assertThat(properties.getProperty(LiricalResources.GENOME_BUILD_PROPERTY), equalTo("HG19"));
-        path = System.getProperty("os.name").contains("Windows") ? "C:/path/to/lirical/results" : "/path/to/lirical/results";
-        assertThat(Path.of(properties.getProperty(OptionalResources.LIRICAL_RESULTS_PROPERTY)), equalTo(Path.of(path)));
+
+        assertThat(properties.getProperty(OptionalResources.LIRICAL_RESULTS_PROPERTY),
+                matchesPattern("([CD]:)?/path/to/lirical/results"));
     }
 }
