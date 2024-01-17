@@ -11,6 +11,10 @@ on:
   pull_request:
     branches: [ develop ]
 
+env:
+  # The LIRICAL tag to check out. The tag must correspond to the LIRICAL version used by ClintLR
+  LIRICAL_TAG: v2.0.0
+
 jobs:
   build:
     strategy:
@@ -42,6 +46,6 @@ jobs:
       - name: Upload JAR file
         uses: actions/upload-artifact@v4
         with:
-          name: GUI JAR
+          name: clintlr-gui-${{ matrix.os }}
           path: clintlr-gui/target/clintlr-gui-*.jar
           retention-days: 14
