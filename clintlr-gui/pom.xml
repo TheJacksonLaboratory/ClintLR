@@ -73,6 +73,7 @@
     </dependencies>
 
     <build>
+        <finalName>clintlr-gui-${os.name}-${project.parent.version}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
