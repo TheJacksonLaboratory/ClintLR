@@ -85,7 +85,8 @@ public class OptionalResourcesTest {
         instance.storeResources(properties);
 
         // And test..
-        assertThat(properties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY), matchesPattern(platformSpecificPattern("/path/to/mondo.json")));
+        assertThat(properties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY),
+                matchesPattern(platformSpecificPattern("/path/to/mondo.json")));
         assertThat(properties.getProperty(LiricalResources.LIRICAL_DATA_PROPERTY),
                 matchesPattern(platformSpecificPattern("/path/to/lirical/datadir")));
         assertThat(properties.getProperty(LiricalResources.EXOMISER_HG19_VARIANT_PROPERTY),
@@ -107,7 +108,7 @@ public class OptionalResourcesTest {
 
     private static String platformSpecificPattern(String value) {
         if (System.getProperty("os.name").contains("Windows"))
-            return "[CD]:" + value.replaceAll("/", "\\\\\\\\");
+            return "[CD]:" + value.replaceAll("/", "\\\\\\\\"); // 😱😱😱
         else
             return value;
     }
