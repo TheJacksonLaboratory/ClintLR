@@ -5,6 +5,9 @@ on:
   push:
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - develop
 
 env:
   # The LIRICAL tag to check out. The tag must correspond to the LIRICAL version used by ClintLR
@@ -15,7 +18,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-latest, macOS-latest, ubuntu-latest ]
+        os:
+          - windows-latest
+          - macOS-latest
+          - macos-13-xlarge  # xlarge for M1 arch
+          - ubuntu-latest
 
     runs-on: ${{ matrix.os }}
 
