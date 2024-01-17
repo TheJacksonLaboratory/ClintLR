@@ -107,7 +107,7 @@ public class OptionalResourcesTest {
 
     private static String platformSpecificPattern(String value) {
         if (System.getProperty("os.name").contains("Windows"))
-            return "[CD]:" + value.replaceAll("/", "\\");
+            return "[CD]:" + value.replaceAll("/", "\\\\\\\\");
         else
             return value;
     }
