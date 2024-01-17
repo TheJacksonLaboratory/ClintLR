@@ -8,13 +8,12 @@ Similar to LIRICAL, ClintLR also requires Exomiser to be installed as a library 
 
 ## Prerequisites
 
-ClintLR was written with Java version 17 but will compile under Java 17 or better. If you want to
+ClintLR was written with Java version 17 but will compile under Java 17 or higher. If you want to
 build ClintLR from source, then the build process described below requires
 [Git](https://git-scm.com/book/en/v2) and
-[Java Development Kit 17](https://www.oracle.com/java/technologies/downloads/) or better.
+[Java Development Kit 17](https://www.oracle.com/java/technologies/downloads/) or higher.
 
-**Note:** The ClintLR GUI requires JavaFX to run. If your Java installation does not include JavaFX, installations of Java that
-  include JavaFX can be found [here](https://www.azul.com/downloads/?package=jdk-fx#zulu)
+
 
 ## Building from sources
 
