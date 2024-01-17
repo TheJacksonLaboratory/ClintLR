@@ -21,7 +21,6 @@ jobs:
         os:
           - windows-latest
           - macOS-latest
-          - macos-13-xlarge  # xlarge for M1 arch
           - ubuntu-latest
 
     runs-on: ${{ matrix.os }}
