@@ -206,7 +206,8 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
             LOGGER.info(key + ": " + diseaseIdToPretestProba.get(key));
         }
         PretestDiseaseProbability pretestProba = PretestDiseaseProbability.of(diseaseIdToPretestProba);
-        AnalysisOptions analysisOptions = AnalysisOptions.builder()
+
+        return AnalysisOptions.builder()
                 .genomeBuild(parseGenomeBuild(getGenomeBuild()))
                 .transcriptDatabase(runConfiguration.transcriptDb)
                 .setDiseaseDatabases(List.of(DiseaseDatabase.OMIM))
@@ -215,9 +216,8 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
                 .useStrictPenalties(runConfiguration.strict)
                 .useGlobal(runConfiguration.globalAnalysisMode)
                 .pretestProbability(pretestProba)
-                .disregardDiseaseWithNoDeleteriousVariants(false)
+                .includeDiseasesWithNoDeleteriousVariants(true)
                 .build();
-        return analysisOptions;
     }
 
     protected OutputOptions createOutputOptions(Path resultsDir, String outfilePrefix) {
@@ -248,7 +248,7 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
                 .setSampleName(sampleId)
                 .setnPassingVariants(filteringStats.nPassingVariants())
                 .setnFilteredVariants(filteringStats.nFilteredVariants())
-                .setGenesWithVar(0) // TODO
+                .setGenesWithVar(filteringStats.genesWithVariants())
                 .setGlobalMode(runConfiguration.globalAnalysisMode)
                 .build();
     }
@@ -265,62 +265,12 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
             Optional<VariantParser> variantParser = lirical.variantParserFactory()
                     .forPath(vcfPath, genomeBuild, runConfiguration.transcriptDb);
             if (variantParser.isPresent()) {
-                List<LiricalVariant> variants;
                 try (VariantParser parser = variantParser.get()) {
-                    variants = parser.variantStream()
-                            .toList();
+                    return GenesAndGenotypes.fromVariants(parser.sampleNames(), parser);
                 }
-                return prepareGenesAndGenotypes(variants);
             }
         }
         return GenesAndGenotypes.empty();
-    }
-
-    protected static GenesAndGenotypes readVariantsFromVcfFile(String sampleId,
-                                                               Path vcfPath,
-                                                               VariantParserFactory parserFactory) throws LiricalParseException {
-        if (parserFactory == null) {
-            LOGGER.warn("Cannot process the provided VCF file {}, resources are not set.", vcfPath.toAbsolutePath());
-            return GenesAndGenotypes.empty();
-        }
-
-        List<LiricalVariant> variants;
-        try (VariantParser variantParser = parserFactory.forPath(vcfPath)) {
-            // Ensure the VCF file contains the sample
-            if (!variantParser.sampleNames().contains(sampleId))
-                throw new LiricalParseException("The sample " + sampleId + " is not present in VCF at '" + vcfPath.toAbsolutePath() + '\'');
-            LOGGER.debug("Found sample {} in the VCF file at {}", sampleId, vcfPath.toAbsolutePath());
-
-            // Read variants
-            LOGGER.info("Reading variants from {}", vcfPath.toAbsolutePath());
-            ProgressReporter progressReporter = new ProgressReporter();
-            variants = variantParser.variantStream()
-                    .peek(v -> progressReporter.log())
-                    .toList();
-            progressReporter.summarize();
-        } catch (Exception e) {
-            throw new LiricalParseException(e);
-        }
-
-        return prepareGenesAndGenotypes(variants);
-    }
-
-    protected static GenesAndGenotypes prepareGenesAndGenotypes(List<LiricalVariant> variants) {
-        // Group variants by Entrez ID.
-        Map<GeneIdentifier, List<LiricalVariant>> gene2Genotype = new HashMap<>();
-        for (LiricalVariant variant : variants) {
-            variant.annotations().stream()
-                    .map(TranscriptAnnotation::getGeneId)
-                    .distinct()
-                    .forEach(geneId -> gene2Genotype.computeIfAbsent(geneId, e -> new LinkedList<>()).add(variant));
-        }
-
-        // Collect the variants into Gene2Genotype container
-        List<Gene2Genotype> g2g = gene2Genotype.entrySet().stream()
-                .map(e -> Gene2Genotype.of(e.getKey(), e.getValue()))
-                .toList();
-
-        return GenesAndGenotypes.of(g2g);
     }
 
     protected static void reportElapsedTime(long startTime, long stopTime) {

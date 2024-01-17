@@ -35,13 +35,10 @@
             <artifactId>phenol-annotations</artifactId>
         </dependency>
         <dependency>
-<!--            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>-->
             <groupId>org.monarchinitiative.lirical</groupId>
             <artifactId>lirical-core</artifactId>
-            <version>2.0.0-RC3-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <!--            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>-->
             <groupId>org.monarchinitiative.lirical</groupId>
             <artifactId>lirical-io</artifactId>
         </dependency>
@@ -83,13 +80,6 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>--add-reads com.fasterxml.jackson.datatype.guava=ALL-UNNAMED --add-reads org.monarchinitiative.phenol.io=ALL-UNNAMED</argLine>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

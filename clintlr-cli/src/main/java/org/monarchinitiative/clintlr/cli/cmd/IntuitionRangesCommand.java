@@ -8,10 +8,7 @@ import org.monarchinitiative.lirical.core.analysis.*;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImporter;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImporters;
-import org.monarchinitiative.phenol.ontology.data.Dbxref;
-import org.monarchinitiative.phenol.ontology.data.Ontology;
-import org.monarchinitiative.phenol.ontology.data.Term;
-import org.monarchinitiative.phenol.ontology.data.TermId;
+import org.monarchinitiative.phenol.ontology.data.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -22,10 +19,11 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
 
@@ -142,12 +140,12 @@ public class IntuitionRangesCommand implements Callable<Integer> {
     CIDiseases getSelectedDisease(Map<TermId, List<TermId>> omimToMondoMap, Path phenopacketPath, Ontology ontology) throws Exception {
         PhenopacketData data = readPhenopacketData(phenopacketPath);
         String phenopacketName = phenopacketPath.getFileName().toString();
-        List<TermId> diseaseIds = data.getDiseaseIds();
+        List<TermId> diseaseIds = data.diseaseIds();
         TermId omimId = diseaseIds.get(0);
         if (omimToMondoMap.get(omimId) != null) {
             TermId mondoId = omimToMondoMap.get(omimId).get(0);
             DiseaseId targetId = new DiseaseId(mondoId, omimId);
-            Term targetTerm = ontology.getTermMap().get(mondoId);
+            Term targetTerm = ontology.termForTermId(mondoId).orElseThrow();
             String targetName = targetTerm.getName();
             Set<Term> parents = getTermRelations(targetTerm.id(), Relation.PARENT, ontology);
             List<Term> parentsList = parents.stream().toList();
@@ -172,8 +170,7 @@ public class IntuitionRangesCommand implements Callable<Integer> {
             for (Dbxref ref : mondoTerm.getXrefs()) {
                 String refName = ref.getName();
                 if (refName.contains("OMIM:")) {
-                    Term omimTerm = Term.of(refName, refName);
-                    TermId omimID = omimTerm.id();
+                    TermId omimID = TermId.of(refName);
                     if (!omimToMondoMap.containsKey(omimID)) {
                         omimToMondoMap.put(omimID, new ArrayList<>());
                     }
@@ -194,30 +191,21 @@ public class IntuitionRangesCommand implements Callable<Integer> {
      * @param relation Relation of interest (ancestor, descendent, child, parent)
      * @return relations of term (not including term itself).
      */
-    private Set<Term> getTermRelations(TermId termId, Relation relation, Ontology mondo) {
-        Set<TermId> relationIds;
-        switch (relation) {
+    private Set<Term> getTermRelations(TermId termId, Relation relation, MinimalOntology mondo) {
+        // TODO(mabeckwith) - consider simplifying this function. `relation` is always PARENT.
+        Stream<TermId> stream = switch (relation) {
             case ANCESTOR:
-                relationIds = getAncestorTerms(mondo, termId, false);
-                break;
+                 yield mondo.graph().getAncestorsStream(termId);
             case DESCENDENT:
-                relationIds = getDescendents(mondo, termId);
-                break;
+                yield mondo.graph().getDescendantsStream(termId);
             case CHILD:
-                relationIds = getChildTerms(mondo, termId, false);
-                break;
+                yield  mondo.graph().getChildrenStream(termId);
             case PARENT:
-                relationIds = getParentTerms(mondo, termId, false);
-                break;
-            default:
-                return Set.of();
-        }
-        Set<Term> relations = new HashSet<>();
-        relationIds.forEach(tid -> {
-            Term ht = mondo.getTermMap().get(tid);
-            relations.add(ht);
-        });
-        return relations;
+                yield mondo.graph().getParentsStream(termId);
+        };
+
+        return stream.flatMap(tid -> mondo.termForTermId(tid).stream())
+                .collect(Collectors.toSet());
     }
 
 
@@ -243,9 +231,9 @@ public class IntuitionRangesCommand implements Callable<Integer> {
         }
 
         // Check we have exactly one disease ID.
-        if (data.getDiseaseIds().isEmpty())
+        if (data.diseaseIds().isEmpty())
             throw new LiricalParseException("Missing disease ID which is required for the benchmark!");
-        else if (data.getDiseaseIds().size() > 1)
+        else if (data.diseaseIds().size() > 1)
             throw new LiricalParseException("Saw >1 disease IDs {}, but we need exactly one for the benchmark!");
         return data;
     }

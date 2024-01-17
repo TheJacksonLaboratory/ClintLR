@@ -17,8 +17,8 @@ import org.monarchinitiative.lirical.core.output.AnalysisResultsMetadata;
 import org.monarchinitiative.lirical.core.output.AnalysisResultsWriter;
 import org.monarchinitiative.lirical.core.output.OutputFormat;
 import org.monarchinitiative.lirical.core.output.OutputOptions;
+import org.monarchinitiative.lirical.core.sanitize.*;
 import org.monarchinitiative.lirical.core.service.FunctionalVariantAnnotator;
-import org.monarchinitiative.lirical.core.service.HpoTermSanitizer;
 import org.monarchinitiative.lirical.core.service.VariantMetadataService;
 import org.monarchinitiative.lirical.io.LiricalDataException;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
@@ -239,7 +239,12 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                     printer.printRecord("phenopacket", "background_vcf", "selected_mondo_term", "selected_omim_term", "multiplier", "input_pretest_prob", "benchmark_pretest_prob", "sample_id", "rank",
                             "is_causal", "disease_id", "post_test_proba", "LR", "numerator", "denominator"); // header
 
-                    for (Path phenopacketPath : phenopacketPaths) {
+                    List<DataAndSanitationResultsAndPath> sanitationResults = sanitizePhenopackets(phenopacketPaths,
+                            lirical.phenotypeService().hpo());
+
+                    for (int i = 0; i < phenopacketPaths.size(); i++) {
+                        Path phenopacketPath = phenopacketPaths.get(i);
+                        DataAndSanitationResultsAndPath dasrap = sanitationResults.get(i);
                         LOGGER.info("Range Filepath: " + rangeFilePath + ", " + rangeLines.get(phenopacketPaths.indexOf(phenopacketPath)));
                         LOGGER.info(phenopacketPaths.indexOf(phenopacketPath) + " of " + phenopacketPaths.size() + ": " + type + " " + multiplier + " " + phenopacketPath);
                         TargetDiseases targetDiseases;
@@ -258,13 +263,15 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                             Map<TermId, Double> pretestMap = makeSelectedDiseasePretestMap(selectedDiseases, multiplier);
                             AnalysisOptions analysisOptions = prepareAnalysisOptions(lirical, pretestMap, omimToMondoMap);
                             // 3 - prepare benchmark data per phenopacket
-                            BenchmarkData benchmarkData = prepareBenchmarkData(lirical, backgroundVariants, phenopacketPath);
+                            BenchmarkData benchmarkData = prepareBenchmarkData(lirical, backgroundVariants, dasrap);
                             String sampleId = benchmarkData.analysisData().sampleId();
 
                             // 4 - run the analysis.
                             LOGGER.info("Starting the analysis: {}", analysisOptions);
-                            LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
-                            AnalysisResults results = analysisRunner.run(benchmarkData.analysisData(), analysisOptions);
+                            AnalysisResults results;
+                            try (LiricalAnalysisRunner analysisRunner = lirical.analysisRunner()) {
+                                results = analysisRunner.run(benchmarkData.analysisData(), analysisOptions);
+                            }
 
                             // 5 - summarize the results.
                             String phenopacketName = phenopacketPath.toFile().getName();
@@ -332,7 +339,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     protected record DiseaseId(TermId mondoId, TermId omimId) {}
     protected static DiseaseId getSelectedDisease(Map<TermId, TermId> omimToMondoMap, Path phenopacketPath) throws Exception {
         PhenopacketData data = readPhenopacketData(phenopacketPath);
-        List<TermId> diseaseIds = data.getDiseaseIds();
+        List<TermId> diseaseIds = data.diseaseIds();
         TermId omimId = diseaseIds.get(0);
         TermId mondoId = null;
         if (omimToMondoMap.get(omimId) != null) {
@@ -345,7 +352,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
     protected static TargetDiseases getSelectedDiseases(Map<TermId, TermId> omimToMondoMap, Path phenopacketPath, List<String> rangeLines) throws Exception {
         String phenopacketName = phenopacketPath.getFileName().toString();
         List<String> ids = new ArrayList<>();
-        Term targetOmimTerm = null;
+        TermId targetOmimTermId = null;
         if (phenopacketName.contains("PMID")) {
             phenopacketName = phenopacketName.substring(14);
         }
@@ -357,7 +364,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                     if (item.contains("MONDO") && !item.contains("TO")) {
                         ids.add(item);
                     } else if (item.contains("OMIM")) {
-                        targetOmimTerm = Term.of(item, item);
+                        targetOmimTermId = TermId.of(item);
                     }
                 }
                 break;
@@ -369,10 +376,10 @@ public class BenchmarkCommand extends BaseLiricalCommand {
             List<DiseaseId> diseaseIds = new ArrayList<>();
             for (String id : ids) {
                 TermId omimId = null;
-                TermId mondoId = Term.of(id, id).id();
+                TermId mondoId = TermId.of(id);
                 if (ids.indexOf(id) == 0) {
-                    if (targetOmimTerm != null)
-                        omimId = targetOmimTerm.id();
+                    if (targetOmimTermId != null)
+                        omimId = targetOmimTermId;
                 } else {
                     for (TermId omimIdKey : omimToMondoMap.keySet()) {
                         if (omimToMondoMap.get(omimIdKey).equals(mondoId)) {
@@ -455,13 +462,8 @@ public class BenchmarkCommand extends BaseLiricalCommand {
 
     private BenchmarkData prepareBenchmarkData(Lirical lirical,
                                                List<LiricalVariant> backgroundVariants,
-                                               Path phenopacketPath) throws LiricalParseException, LiricalDataException {
-        LOGGER.info("Reading phenopacket from {}.", phenopacketPath.toAbsolutePath());
-        PhenopacketData data = readPhenopacketData(phenopacketPath);
-
-        HpoTermSanitizer sanitizer = new HpoTermSanitizer(lirical.phenotypeService().hpo());
-        List<TermId> presentTerms = data.getHpoTerms().map(sanitizer::replaceIfObsolete).flatMap(Optional::stream).toList();
-        List<TermId> excludedTerms = data.getNegatedHpoTerms().map(sanitizer::replaceIfObsolete).flatMap(Optional::stream).toList();
+                                               DataAndSanitationResultsAndPath dasrap) throws LiricalDataException {
+        SanitizedInputs inputs = dasrap.result().sanitizedInputs();
 
         GenesAndGenotypes genes;
         if (phenotypeOnly) {
@@ -477,7 +479,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                 FunctionalVariantAnnotator annotator = getFunctionalVariantAnnotator(lirical, parseGenomeBuild(getGenomeBuild())); //lirical.functionalVariantAnnotator();
                 VariantMetadataService metadataService = lirical.variantMetadataServiceFactory().getVariantMetadataService(parseGenomeBuild(getGenomeBuild())).get();
                 List<LiricalVariant> backgroundAndCausal = new ArrayList<>(backgroundVariants.size() + 10);
-                for (GenotypedVariant variant : data.getVariants()) {
+                for (GenotypedVariant variant : dasrap.phenopacketData().variants()) {
                     List<TranscriptAnnotation> annotations = annotator.annotate(variant.variant());
                     List<VariantEffect> effects = annotations.stream()
                             .map(TranscriptAnnotation::getVariantEffects)
@@ -486,23 +488,22 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                             .toList();
                     VariantMetadata metadata = metadataService.metadata(variant.variant(), effects);
 
-                    LiricalVariant lv = LiricalVariant.of(variant, annotations, metadata);
-                    backgroundAndCausal.add(lv);
+                    backgroundAndCausal.add(LiricalVariant.of(variant, annotations, metadata));
                 }
 
                 // Read the VCF file.
-                genes = prepareGenesAndGenotypes(backgroundAndCausal);
+                genes = GenesAndGenotypes.fromVariants(List.of(inputs.sampleId()), backgroundAndCausal);
             }
         }
 
-        AnalysisData analysisData = AnalysisData.of(data.getSampleId(),
-                data.getAge().orElse(null),
-                data.getSex().orElse(null),
-                presentTerms,
-                excludedTerms,
+        AnalysisData analysisData = AnalysisData.of(inputs.sampleId(),
+                inputs.age(),
+                inputs.sex(),
+                inputs.presentHpoTerms(),
+                inputs.excludedHpoTerms(),
                 genes);
 
-        return new BenchmarkData(data.getDiseaseIds().get(0), analysisData);
+        return new BenchmarkData(dasrap.phenopacketData().diseaseIds().get(0), analysisData);
     }
 
     protected static PhenopacketData readPhenopacketData(Path phenopacketPath) throws LiricalParseException {
@@ -527,9 +528,9 @@ public class BenchmarkCommand extends BaseLiricalCommand {
         }
 
         // Check we have exactly one disease ID.
-        if (data.getDiseaseIds().isEmpty())
+        if (data.diseaseIds().isEmpty())
             throw new LiricalParseException("Missing disease ID which is required for the benchmark!");
-        else if (data.getDiseaseIds().size() > 1)
+        else if (data.diseaseIds().size() > 1)
             throw new LiricalParseException("Saw >1 disease IDs {}, but we need exactly one for the benchmark!");
         return data;
     }
@@ -555,7 +556,7 @@ public class BenchmarkCommand extends BaseLiricalCommand {
                         printer.print(backgroundVcfName);
                         printer.print(selectedTerm.mondoId == null ? "N/A": selectedTerm.mondoId);
                         printer.print(selectedTerm.omimId == null ? "N/A": selectedTerm.omimId);
-                        printer.print(!selectedDiseases.keySet().contains(result.diseaseId()) ? 1 : multiplier);
+                        printer.print(!selectedDiseases.containsKey(result.diseaseId()) ? 1 : multiplier);
                         printer.print(pretestMap.get(result.diseaseId()));
                         printer.print(result.pretestProbability());
                         printer.print(benchmarkData.analysisData().sampleId());
@@ -610,5 +611,31 @@ public class BenchmarkCommand extends BaseLiricalCommand {
             // Finally, return path where the resulting HTML should land at.
             outputDir.resolve(htmlFilename + ".html");
         }
+    }
+
+    private List<DataAndSanitationResultsAndPath> sanitizePhenopackets(List<Path> phenopackets,
+                                                                       MinimalOntology hpo) {
+        InputSanitizerFactory factory = new InputSanitizerFactory(hpo);
+        InputSanitizer sanitizer = factory.forType(SanitizerType.MINIMAL);
+        List<DataAndSanitationResultsAndPath> sanitationResults = new ArrayList<>(phenopackets.size());
+        for (Path phenopacketPath : phenopackets) {
+            DataAndSanitationResultsAndPath resultAndPath;
+            try {
+                PhenopacketData inputs = PhenopacketUtil.readPhenopacketData(phenopacketPath);
+                SanitationResult sanitationResult = sanitizer.sanitize(inputs);
+                resultAndPath = new DataAndSanitationResultsAndPath(inputs, sanitationResult, phenopacketPath);
+            } catch (LiricalException e) {
+                resultAndPath = new DataAndSanitationResultsAndPath(null, null, phenopacketPath);
+            }
+            sanitationResults.add(resultAndPath);
+        }
+        return sanitationResults;
+    }
+
+    private record DataAndSanitationResultsAndPath(
+            PhenopacketData phenopacketData,
+            SanitationResult result,
+            Path path
+    ) {
     }
 }

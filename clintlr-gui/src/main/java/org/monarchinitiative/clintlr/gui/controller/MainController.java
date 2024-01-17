@@ -551,12 +551,12 @@ public class MainController {
         if (id == null) return; // button was clicked while field was hasTermsUniqueToOnlyOneDisease, no need to do anything
         Ontology mondo = optionalServices.getMondo();
 
-        Term term = mondo.getTermMap().get(id);
-        if (term == null) {
+        Optional<Term> term = mondo.termForTermId(id);
+        if (term.isEmpty()) {
             LOGGER.error("Could not retrieve Mondo term from {}", id.getValue());
             return;
         }
-        mondoTreeView.expandUntilTerm(term);
+        mondoTreeView.expandUntilTerm(term.get());
     }
 
     @FXML
@@ -630,7 +630,7 @@ public class MainController {
                 .defaultVariantBackgroundFrequency(liricalResources.getDefaultVariantBackgroundFrequency())
                 .useStrictPenalties(liricalResources.isStrict())
                 .pretestProbability(pretestProba)
-                .disregardDiseaseWithNoDeleteriousVariants(false) // TODO - evaluate
+                .includeDiseasesWithNoDeleteriousVariants(true)
                 .build();
     }
 
