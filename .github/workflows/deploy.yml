@@ -5,9 +5,6 @@ on:
   push:
     tags:
       - 'v*'
-  pull_request:
-    branches:
-      - develop
 
 env:
   # The LIRICAL tag to check out. The tag must correspond to the LIRICAL version used by ClintLR
