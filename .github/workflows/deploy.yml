@@ -48,4 +48,4 @@ jobs:
         with:
           name: clintlr-gui-${{ matrix.os }}
           path: clintlr-gui/target/clintlr-gui-*.jar
-          retention-days: 14
+          retention-days: 7
