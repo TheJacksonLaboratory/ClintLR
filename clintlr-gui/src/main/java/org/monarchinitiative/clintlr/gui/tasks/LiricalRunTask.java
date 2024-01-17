@@ -17,7 +17,6 @@ import org.monarchinitiative.lirical.core.output.OutputOptions;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketData;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImportException;
 import org.monarchinitiative.lirical.io.analysis.PhenopacketImporters;
-import org.monarchinitiative.phenol.annotations.formats.GeneIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,16 +67,18 @@ public class LiricalRunTask extends Task<Path> {
         GenesAndGenotypes gene2Genotypes = readVariants(vcfPath);
 
         // Assemble the analysis data.
-        AnalysisData analysisData = AnalysisData.of(phenopacketData.getSampleId(),
-                phenopacketData.getAge().orElse(Age.ageNotKnown()),
-                phenopacketData.getSex().orElse(Sex.UNKNOWN),
-                phenopacketData.getHpoTerms().toList(),
-                phenopacketData.getNegatedHpoTerms().toList(),
+        AnalysisData analysisData = AnalysisData.of(phenopacketData.sampleId(),
+                phenopacketData.parseAge().orElse(null),
+                phenopacketData.parseSex().orElse(Sex.UNKNOWN),
+                phenopacketData.presentHpoTermIds().toList(),
+                phenopacketData.excludedHpoTermIds().toList(),
                 gene2Genotypes);
 
         // Run the analysis.
-        LiricalAnalysisRunner runner = lirical.analysisRunner();
-        AnalysisResults results = runner.run(analysisData, analysisOptions);
+        AnalysisResults results;
+        try (LiricalAnalysisRunner runner = lirical.analysisRunner()) {
+            results = runner.run(analysisData, analysisOptions);
+        }
 
         // Write out the results into HTML file.
         FilteringStats filteringStats = gene2Genotypes.computeFilteringStats();
@@ -91,7 +92,7 @@ public class LiricalRunTask extends Task<Path> {
                 .setSampleName(analysisData.sampleId())
                 .setnPassingVariants(filteringStats.nPassingVariants())
                 .setnFilteredVariants(filteringStats.nFilteredVariants())
-                .setGenesWithVar(0) // TODO
+                .setGenesWithVar(filteringStats.genesWithVariants())
                 .setGlobalMode(analysisOptions.useGlobal())
                 .build();
 
@@ -111,12 +112,10 @@ public class LiricalRunTask extends Task<Path> {
             Optional<VariantParser> variantParser = lirical.variantParserFactory()
                     .forPath(vcfPath, analysisOptions.genomeBuild(), analysisOptions.transcriptDatabase());
             if (variantParser.isPresent()) {
-                List<LiricalVariant> variants;
                 try (VariantParser parser = variantParser.get()) {
-                    variants = parser.variantStream()
-                            .toList();
+                    Collection<String> sampleNames = parser.sampleNames();
+                    return GenesAndGenotypes.fromVariants(sampleNames, parser);
                 }
-                return prepareGenesAndGenotypes(variants);
             }
         }
         return GenesAndGenotypes.empty();
@@ -135,25 +134,6 @@ public class LiricalRunTask extends Task<Path> {
         try (InputStream is = new BufferedInputStream(Files.newInputStream(phenopacketPath))) {
             return PhenopacketImporters.v1().read(is);
         }
-    }
-
-    private static GenesAndGenotypes prepareGenesAndGenotypes(List<LiricalVariant> variants) {
-        // TODO(mabeckwith) - something similar is in LiricalAnalysis. Please decide where the appropriate place for the code is.
-        // Group variants by Entrez ID.
-        Map<GeneIdentifier, List<LiricalVariant>> gene2Genotype = new HashMap<>();
-        for (LiricalVariant variant : variants) {
-            variant.annotations().stream()
-                    .map(TranscriptAnnotation::getGeneId)
-                    .distinct()
-                    .forEach(geneId -> gene2Genotype.computeIfAbsent(geneId, e -> new LinkedList<>()).add(variant));
-        }
-
-        // Collect the variants into Gene2Genotype container
-        List<Gene2Genotype> g2g = gene2Genotype.entrySet().stream()
-                .map(e -> Gene2Genotype.of(e.getKey(), e.getValue()))
-                .toList();
-
-        return GenesAndGenotypes.of(g2g);
     }
 
     /**

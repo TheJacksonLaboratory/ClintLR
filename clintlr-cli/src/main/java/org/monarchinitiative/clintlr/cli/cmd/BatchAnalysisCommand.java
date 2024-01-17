@@ -119,11 +119,11 @@ public class BatchAnalysisCommand extends BenchmarkCommand {
                     GenesAndGenotypes gene2Genotypes = readVariants(vcfPath, lirical, analysisOptions.genomeBuild());
 
                     // Assemble the analysis data.
-                    AnalysisData analysisData = AnalysisData.of(phenopacketData.getSampleId(),
-                            phenopacketData.getAge().orElse(Age.ageNotKnown()),
-                            phenopacketData.getSex().orElse(Sex.UNKNOWN),
-                            phenopacketData.getHpoTerms().toList(),
-                            phenopacketData.getNegatedHpoTerms().toList(),
+                    AnalysisData analysisData = AnalysisData.of(phenopacketData.sampleId(),
+                            phenopacketData.parseAge().orElse(null),
+                            phenopacketData.parseSex().orElse(Sex.UNKNOWN),
+                            phenopacketData.presentHpoTermIds().toList(),
+                            phenopacketData.excludedHpoTermIds().toList(),
                             gene2Genotypes);
 
                     // 4 - run the analysis.
