@@ -10,7 +10,7 @@ on:
     branches: [ main, develop ]
 
 env:
-  # The LIRICAL tag to check out
+  # The LIRICAL tag to check out. The tag must correspond to the LIRICAL version used by ClintLR
   LIRICAL_TAG: v2.0.0
 
 jobs:
@@ -24,26 +24,22 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.jdk }}
           distribution: 'adopt'
 
       - name: Install LIRICAL
         run: |
-          pwd
           cd ..
-          pwd
           git clone https://github.com/TheJacksonLaboratory/LIRICAL
           cd LIRICAL
-          pwd
           git checkout $LIRICAL_TAG
           ./mvnw --quiet -PskipTests -Prelease install
+
       - name: Build with Maven
         run: |
-          pwd
           ./mvnw --quiet --batch-mode test
-
