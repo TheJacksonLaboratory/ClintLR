@@ -85,15 +85,15 @@ public class OptionalResourcesTest {
         instance.storeResources(properties);
 
         // And test..
-        assertThat(properties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY), matchesPattern("([CD]:)?/path/to/mondo.json"));
+        assertThat(properties.getProperty(OntologyResources.MONDO_JSON_PATH_PROPERTY), matchesPattern(platformSpecificPattern("/path/to/mondo.json")));
         assertThat(properties.getProperty(LiricalResources.LIRICAL_DATA_PROPERTY),
-                matchesPattern("([CD]:)?/path/to/lirical/datadir"));
+                matchesPattern(platformSpecificPattern("/path/to/lirical/datadir")));
         assertThat(properties.getProperty(LiricalResources.EXOMISER_HG19_VARIANT_PROPERTY),
-                matchesPattern("([CD]:)?/path/to/exomiser.hg19.mv.db"));
+                matchesPattern(platformSpecificPattern("/path/to/exomiser.hg19.mv.db")));
         assertThat(properties.getProperty(LiricalResources.EXOMISER_HG38_VARIANT_PROPERTY),
-                matchesPattern("([CD]:)?/path/to/exomiser.hg38.mv.db"));
+                matchesPattern(platformSpecificPattern("/path/to/exomiser.hg38.mv.db")));
         assertThat(properties.getProperty(LiricalResources.BACKGROUND_FREQUENCY_PROPERTY),
-                matchesPattern("([CD]:)?/path/to/bg.freq.txt"));
+                matchesPattern(platformSpecificPattern("/path/to/bg.freq.txt")));
         assertThat(properties.getProperty(LiricalResources.PATHOGENICITY_PROPERTY), equalTo("0.5"));
         assertThat(properties.getProperty(LiricalResources.DEFAULT_VARIANT_BACKGROUND_FREQUENCY_PROPERTY), equalTo("0.1234"));
         assertThat(properties.getProperty(LiricalResources.STRICT_PROPERTY), equalTo("true"));
@@ -102,6 +102,14 @@ public class OptionalResourcesTest {
         assertThat(properties.getProperty(LiricalResources.GENOME_BUILD_PROPERTY), equalTo("HG19"));
 
         assertThat(properties.getProperty(OptionalResources.LIRICAL_RESULTS_PROPERTY),
-                matchesPattern("([CD]:)?/path/to/lirical/results"));
+                matchesPattern(platformSpecificPattern("/path/to/lirical/results")));
     }
+
+    private static String platformSpecificPattern(String value) {
+        if (System.getProperty("os.name").contains("Windows"))
+            return "[CD]:" + value.replaceAll("/", "\\\\");
+        else
+            return value;
+    }
+
 }
