@@ -34,12 +34,13 @@ jobs:
 
       - name: Install LIRICAL
         run: |
+          pwd
           cd ..
           pwd
           git clone https://github.com/TheJacksonLaboratory/LIRICAL
           cd LIRICAL
           pwd
-          git checkout LIRICAL_TAG
+          git checkout $LIRICAL_TAG
           ./mvnw --quiet -PskipTests -Prelease install
       - name: Build with Maven
         run: |
