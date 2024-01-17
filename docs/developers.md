@@ -13,12 +13,11 @@ $ cd ClintLR
 $ ./mvnw --also-make --batch-mode package -P release
 ```
 
-TODO UPDATE AFTER LIRICAL 2.0.0 version
 
 To complete setup, download the LIRICAL resources and compile.
 
 ```
-$ java -jar lirical-cli/target/lirical-cli-2.0.0-SNAPSHOT.jar download
+$ java -jar lirical-cli/target/lirical-cli-2.0.0.jar download
 $ ./mvnw clean compile
 ```
 
