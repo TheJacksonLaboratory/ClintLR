@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+env:
+  # The LIRICAL tag to check out
+  LIRICAL_TAG: v2.0.0
+
 jobs:
   build:
     strategy:
@@ -28,6 +32,17 @@ jobs:
           java-version: ${{ matrix.jdk }}
           distribution: 'adopt'
 
+      - name: Install LIRICAL
+        run: |
+          cd ..
+          pwd
+          git clone https://github.com/TheJacksonLaboratory/LIRICAL
+          cd LIRICAL
+          pwd
+          git checkout LIRICAL_TAG
+          ./mvnw --quiet -PskipTests -Prelease install
       - name: Build with Maven
-        run: ./mvnw --quiet --batch-mode test
+        run: |
+          pwd
+          ./mvnw --quiet --batch-mode test
 
