@@ -73,13 +73,20 @@
     </dependencies>
 
     <build>
-        <finalName>clintlr-gui-${os.name}-${project.parent.version}</finalName>
+        <finalName>clintlr-gui-${os.detected.name}-${project.parent.version}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
         </resources>
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.0</version>
+            </extension>
+        </extensions>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
