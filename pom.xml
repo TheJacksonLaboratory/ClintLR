@@ -36,6 +36,13 @@
       <commons.io>2.8.0</commons.io>
     </properties>
 
+      <repositories>
+        <repository>
+          <id>jitpack.io</id>
+          <url>https://jitpack.io</url>
+        </repository>
+      </repositories>
+
     <scm>
       <connection>scm:git:git@github.com/TheJacksonLaboratory/ClintLR.git</connection>
       <developerConnection>scm:git:git@github.com/TheJacksonLaboratory/ClintLR.git</developerConnection>
@@ -126,12 +133,12 @@
           <version>${protobuf.version}</version>
         </dependency>
         <dependency>
-          <groupId>org.monarchinitiative.lirical</groupId>
+          <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
           <artifactId>lirical-core</artifactId>
           <version>${lirical.version}</version>
         </dependency>
         <dependency>
-          <groupId>org.monarchinitiative.lirical</groupId>
+          <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
           <artifactId>lirical-io</artifactId>
           <version>${lirical.version}</version>
           <exclusions>
@@ -143,7 +150,7 @@
           </exclusions>
         </dependency>
         <dependency>
-          <groupId>org.monarchinitiative.lirical</groupId>
+          <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
           <artifactId>lirical-configuration</artifactId>
           <version>${lirical.version}</version>
           <exclusions>

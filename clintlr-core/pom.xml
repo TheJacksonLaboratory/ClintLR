@@ -21,15 +21,15 @@
             <artifactId>phenol-io</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.monarchinitiative.lirical</groupId>
+            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
             <artifactId>lirical-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.monarchinitiative.lirical</groupId>
+            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
             <artifactId>lirical-configuration</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.monarchinitiative.lirical</groupId>
+            <groupId>com.github.TheJacksonLaboratory.LIRICAL</groupId>
             <artifactId>lirical-io</artifactId>
         </dependency>
         <dependency>
