@@ -22,35 +22,73 @@ variant into a public VCF file and can be used to test ClintLR.
 
 
 
-## Running ClintLR Analysis
+## ClintLR Analysis Workflow
 
-The tree view shows the loaded Mondo ontology. Tree item icons indicate which terms are OMIM (black circle) or OMIMPS (red circle) terms.
+### 1. Select diseases
+
+The tree view shows the loaded Mondo ontology. Tree item icons indicate which terms are OMIM (black circle) or 
+OMIMPS (red circle) terms.
 You can jump to specific terms in the ontology by using the *Browse Mondo Terms* or *Browse OMIM Terms* search fields.
-The Mondo term search field autocompletes the Mondo ontology disease name/label, and the OMIM term search field autocompletes the OMIM term ID.
-Information for the selected term is displayed in an HTML window to the right of the tree view.
+The Mondo term search field autocompletes the Mondo ontology disease name/label, and the OMIM term search field autocompletes 
+the OMIM term ID.
+Information for the selected term is displayed in an HTML window to the right of the tree view (Figure 1B).
+
+<figure markdown>
+  ![Screenshot of the ClintLR interface](_static/ClintLR_screenshot_and_results.png)
+  <figcaption>Figure 1:
+ClintLR (CLinical INTuition with Likelihood Ratios).
+(A) Users can download input files and adjust settings via the setup interface.
+(B) The main analysis interface allows users to choose the disease group and adjust the pretest probability of the group to
+reflect clinical intuition.
+(C) ClintLR runs LIRICAL with the adjusted pretest probabilities and displays the results in the system browser.</figcaption>
+</figure>
 
 
-![Screenshot of the ClintLR interface](_static/ClintLR_screenshot_and_results.png "ClintLR (CLinical INTuition with Likelihood Ratios). (A) Users can download input files and adjust settings via the setup interface. (B) The main analysis interface allows users to choose the disease group and adjust the pretest probability of the group to reflect clinical intuition. (C) ClintLR the runs LIRICAL with the adjusted pretest probabilities and displays the results in the system browser.")
-
+### 2. Apply pretest adjustments to selected diseases
 
 Clinical intuition is incorporated into the LIRICAL algorithm by way of a slider in the ClintLR interface.
-The slider increases the pretest probability values that get passed into LIRICAL for the selected term and its descendants.
-In the tree, an up arrow in the selected term’s icon indicates that the pretest probability has been increased for that term.
-The pretest adjustment values can be reset to defaults for all terms by clicking the Reset button below the tree view.
-The pretest probability adjustment values can be viewed in a separate interface (*File -> Probability Map -> Show Map Interface*).
-If desired, the pretest probability values can be saved as a separate text file (*File -> Probability Map -> Save Map to File*), which can then be imported later.
+The slider increases the pretest adjustment, hereafter referred to as *a*, values that get passed into LIRICAL for 
+the selected term and its descendants.
+In the tree, an up arrow in the selected term’s icon indicates that *a* has been increased for that term.
+The *a* values can be reset to defaults for all terms by clicking the **Reset pretest probability adjustment values** 
+button below the tree view.
+
+**Note:** The tree icons do not update automatically. To see icon changes, the tree item must be expanded/collapsed/selected again.
+
+The *a* values can be viewed in a separate interface (*File -> Pretest Adjustment Map -> Show Map Interface*).
+If desired, the *a* values can be saved as a separate text file (*File -> Pretest Adjustment Map -> Save Map to File*), 
+which can then be imported later (*File -> Pretest Adjustment Map -> Load Map from File*).
+
+### 3. Adjust LIRICAL parameters
+
+ClintLR includes fields for various LIRICAL parameters (Figure 1A and 1B), including the likelihood ratio (LR) threshold,
+the pathogenicity threshold, minimum diagnosis count, whether to display all variants, and the name of the results
+output file.
+
+Additional LIRICAL parameters are located in the *LIRICAL* tab of the Resources interface. The values for these parameters
+are preserved between sessions.
+
+### 4. Load a phenopacket
 
 A phenopacket needs to be loaded (**Load Phenopacket** button) for the LIRICAL analysis to run correctly.
-The LIRICAL analysis parameters can be adjusted as well, and the LIRICAL algorithm can be run directly from ClintLR using the **Run LIRICAL** button.
+
+### 5. **Optional:** Load a VCF file
+
 The LIRICAL analysis can be performed using only phenotypic information, or using both phenotypic + genotypic information
-by loading a VCF file into ClintLR (**Load VCF** button) and then running LIRICAL.
+by loading a VCF file into ClintLR (**Load VCF** button).
 
+### 6. Run LIRICAL
 
+The LIRICAL algorithm can be run directly from ClintLR using the **Run LIRICAL** button. 
 
-## Viewing the results
+**Note:** There is currently no progress bar for the **Run LIRICAL** button, however the analysis is being run 
+in the background.
 
-Once the analysis is complete, the results will be written to a new HTML file which is saved to the output directory and
-opened in a web browser. The top of the page shows some information about the input files and a list of observed
+## Analysis results
+
+Once the analysis is complete, the results will be written to a new HTML file (Figure 1C) and opened in a web browser. 
+This HTML file is also saved locally in the output directory specified in the Resources interface.
+The top of the page shows some information about the input files and a list of observed
 and excluded HPO terms. The next section shows summarized representations of the top candidates.
 
 Each row in the summary shows the rank, post-test probability, and name/ID of the disease. The row includes a sparkline
