@@ -70,7 +70,8 @@ are preserved between sessions.
 
 ### 4. Load a phenopacket
 
-A phenopacket needs to be loaded (**Load Phenopacket** button) for the LIRICAL analysis to run correctly.
+A phenopacket needs to be loaded (**Load Phenopacket** button) for the LIRICAL analysis to run correctly. ClintLR
+supports both *v1* and *v2* Phenopacket Schema versions.
 
 ### 5. **Optional:** Load a VCF file
 
