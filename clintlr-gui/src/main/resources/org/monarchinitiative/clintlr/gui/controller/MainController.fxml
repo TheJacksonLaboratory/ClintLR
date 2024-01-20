@@ -12,7 +12,7 @@
          <HBox prefHeight="50.0" prefWidth="400.0" BorderPane.alignment="CENTER">
              <MenuBar HBox.hgrow="SOMETIMES">
                  <Menu mnemonicParsing="false" text="File">
-                     <Menu text="Probability Map">
+                     <Menu text="Pretest Adjustment Map">
                          <MenuItem onAction="#loadMapOutputFile" text="Load Map from File"/>
                          <MenuItem onAction="#saveMapOutputFile" text="Save Map to File"/>
                          <MenuItem onAction="#showMapInterface" text="Show Map Interface"/>

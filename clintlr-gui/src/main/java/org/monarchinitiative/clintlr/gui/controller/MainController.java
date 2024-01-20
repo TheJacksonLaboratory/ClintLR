@@ -419,7 +419,7 @@ public class MainController {
         Bindings.bindContent(mapDisplay.mondoToOmimProperty(), optionalServices.mondoOmimResources().mondoToOmimProperty());
         Bindings.bindContent(mapDisplay.getItems(), source);
         Stage stage = new Stage();
-        stage.setTitle("Probability Map");
+        stage.setTitle("Pretest Adjustment Map");
         stage.setScene(new Scene(mapDisplay));
         stage.showAndWait();
 
