@@ -5,7 +5,6 @@ import org.monarchinitiative.lirical.core.analysis.AnalysisData;
 import org.monarchinitiative.lirical.core.analysis.AnalysisOptions;
 import org.monarchinitiative.lirical.core.analysis.AnalysisResults;
 import org.monarchinitiative.lirical.core.analysis.LiricalAnalysisRunner;
-import org.monarchinitiative.lirical.core.model.Age;
 import org.monarchinitiative.lirical.core.model.GenesAndGenotypes;
 import org.monarchinitiative.lirical.core.model.Sex;
 import org.monarchinitiative.lirical.core.output.AnalysisResultsMetadata;
@@ -121,18 +120,20 @@ public class GeneAnalysisCommand extends BatchAnalysisCommand {
                 GenesAndGenotypes gene2Genotypes = readVariants(vcfPath, lirical, analysisOptions.genomeBuild());
 
                 // Assemble the analysis data.
-                AnalysisData analysisData = AnalysisData.of(phenopacketData.getSampleId(),
-                        phenopacketData.getAge().orElse(Age.ageNotKnown()),
-                        phenopacketData.getSex().orElse(Sex.UNKNOWN),
-                        phenopacketData.getHpoTerms().toList(),
-                        phenopacketData.getNegatedHpoTerms().toList(),
+                AnalysisData analysisData = AnalysisData.of(phenopacketData.sampleId(),
+                        phenopacketData.parseAge().orElse(null),
+                        phenopacketData.parseSex().orElse(Sex.UNKNOWN),
+                        phenopacketData.presentHpoTermIds().toList(),
+                        phenopacketData.excludedHpoTermIds().toList(),
                         gene2Genotypes);
 
                 // 4 - run the analysis.
                 LOGGER.info("Starting the analysis: {}", analysisOptions);
                 String sampleId = analysisData.sampleId();
-                LiricalAnalysisRunner analysisRunner = lirical.analysisRunner();
-                AnalysisResults results = analysisRunner.run(analysisData, analysisOptions);
+                AnalysisResults results;
+                try (LiricalAnalysisRunner analysisRunner = lirical.analysisRunner()) {
+                    results = analysisRunner.run(analysisData, analysisOptions);
+                }
 
                 // Write out the results to output file
                 String phenopacketName = phenopacketPath.toFile().getName();

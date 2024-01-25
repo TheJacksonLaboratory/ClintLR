@@ -71,8 +71,8 @@ markdown_extensions:
   - md_in_html
   - tables
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
 
 copyright: |
-  &copy; 2023 <a href="https://github.com/pnrobinson"  target="_blank" rel="noopener">Peter N Robinson</a>
+  &copy; 2024 <a href="https://github.com/pnrobinson"  target="_blank" rel="noopener">Peter N Robinson</a>

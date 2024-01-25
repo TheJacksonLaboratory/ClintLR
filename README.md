@@ -1,33 +1,22 @@
 # ClintLR
+
+[![GitHub release](https://img.shields.io/github/release/TheJacksonLaboratory/ClintLR.svg)](https://github.com/TheJacksonLaboratory/ClintLR/releases)
+[![Java CI with Maven](https://github.com/TheJacksonLaboratory/ClintLR/workflows/Java%20CI%20with%20Maven/badge.svg)](https://github.com/TheJacksonLaboratory/ClintLR/actions/workflows/ci.yml)
+
 Clinical Intuition with Likelihood Ratios
 
+ClintLR incorporates clinical intuition into the LIRICAL algorithm by boosting the pretest probability 
+of groups of related diseases.
 
+We provide a graphical user interface to set up the analysis.
 
-mvn archetype:generate \
--DarchetypeGroupId=org.monarchinitiative.clintlr \
--Dfilter=pom-root \
--DarchetypeVersion=RELEASE
+![Screenshot of the ClintLR interface](docs/_static/ClintLR_screenshot_and_results.png
+"ClintLR (CLinical INTuition with Likelihood Ratios). (A) Users can download input files and adjust settings via the setup interface.
+(B) The main analysis interface allows users to choose the disease group and adjust the pretest probability
+of the group to reflect clinical intuition.
+(C) ClintLR runs LIRICAL with the adjusted pretest probabilities and displays the results in the system browser.")
 
-## Making the mondo.json file
+The latest release of ClintLR can be found [here](https://github.com/TheJacksonLaboratory/ClintLR/releases).
 
-ClintLR reads the Mondo ontology as a JSON file. The mondo in OWL format can be converted to a JSON file using obographs by typing the following into the Terminal:
+Please see the [documentation](https://thejacksonlaboratory.github.io/ClintLR/) for instructions on how to set up and use ClintLR.
 
-```$ obographs convert mondo.owl -f json```
-
-## Installing the LIRICAL dependency
-
-Clone the LIRICAL project from GitHub, then checkout and package the *modularize* branch.
-
-```
-$ git clone https://github.com/TheJacksonLaboratory/LIRICAL.git
-$ cd LIRICAL
-$ git checkout modularize
-$ ./mvnw --projects lirical-cli,lirical-benchmark --also-make --batch-mode install -P release
-```
-
-To complete setup, download the LIRICAL resources and compile.
-
-```
-$ java -jar lirical-cli/target/lirical-cli-2.0.0-SNAPSHOT.jar download
-$ ./mvnw clean compile
-```
