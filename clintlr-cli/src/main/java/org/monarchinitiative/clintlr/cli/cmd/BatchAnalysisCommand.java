@@ -74,25 +74,30 @@ public class BatchAnalysisCommand extends BenchmarkCommand {
             }
         }
 
+        // Read variants if present.
+        GenesAndGenotypes gene2Genotypes = readVariants(vcfPath, lirical, parseGenomeBuild(getGenomeBuild()));
+
         if (multipliers != null) {
             for (Double multiplier : multipliers) {
-                runAnalysis(lirical, rangeLines, multiplier, omim2Mondo, ontologyData);
+                runAnalysis(lirical, rangeLines, multiplier, omim2Mondo, ontologyData, gene2Genotypes);
             }
         } else {
-            runAnalysis(lirical, rangeLines, 0.0, omim2Mondo, ontologyData);
+            runAnalysis(lirical, rangeLines, 0.0, omim2Mondo, ontologyData, gene2Genotypes);
         }
         reportElapsedTime(start, System.currentTimeMillis());
         return 0;
     }
 
-    protected void runAnalysis(Lirical lirical, List<String> rangeLines, Double multiplier, Map<TermId, TermId> omimToMondoMap, OntologyData ontologyData) throws Exception {
+    protected void runAnalysis(Lirical lirical, List<String> rangeLines, Double multiplier,
+                               Map<TermId, TermId> omimToMondoMap, OntologyData ontologyData,
+                               GenesAndGenotypes gene2Genotypes) throws Exception {
         String[] types = {"target"}; //, "narrow", "broad"};
         if (rangeLines != null)
             types = new String[]{"target", "narrow", "broad"};
         Set<TermId> omimIDs = omimToMondoMap.keySet();
 
         for (String type : types) {
-            LOGGER.info("Starting " + type);
+            LOGGER.info("Starting " + type + " multiplier " + multiplier);
 
             for (Path phenopacketPath : phenopacketPaths) {
                 LOGGER.info(phenopacketPaths.indexOf(phenopacketPath) + " of " + phenopacketPaths.size() + ": " + type + " " + multiplier + " " + phenopacketPath);
@@ -115,8 +120,8 @@ public class BatchAnalysisCommand extends BenchmarkCommand {
                     // Read phenotypic features.
                     PhenopacketData phenopacketData = readPhenopacketData(phenopacketPath);
 
-                    // Read variants if present.
-                    GenesAndGenotypes gene2Genotypes = readVariants(vcfPath, lirical, analysisOptions.genomeBuild());
+//                    // Read variants if present.
+//                    GenesAndGenotypes gene2Genotypes = readVariants(vcfPath, lirical, analysisOptions.genomeBuild());
 
                     // Assemble the analysis data.
                     AnalysisData analysisData = AnalysisData.of(phenopacketData.sampleId(),
@@ -150,7 +155,7 @@ public class BatchAnalysisCommand extends BenchmarkCommand {
                     writeResultsToFile(lirical, OutputFormat.parse(outputFormatArg), analysisData, results, metadata, outFilename);
                 }
             }
-            System.out.println("Finished " + type);
+            System.out.println("Finished " + type + " multiplier " + multiplier);
         }
     }
 

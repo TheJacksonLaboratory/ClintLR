@@ -2,6 +2,9 @@ import argparse, os, sys, glob, re, gzip
 from phenopackets import *
 import json
 from google.protobuf.json_format import MessageToJson, Parse
+import numpy as np
+from multiprocessing import Pool
+from itertools import repeat
 
 
 
@@ -48,7 +51,7 @@ def extract_CIrange_selected_term(CIranges_file, phenopacket_name, CIrange):
             if CIrange == "target":
                 if len(mondoTerms) > 0:
                     CIrangeTerm = mondoTerms[0]
-                    CIrangeLabel = rangeItems[rangeItems.index(CIrangeTerm) + 2]
+                    CIrangeLabel = rangeItems[rangeItems.index(CIrangeTerm) + 1]
             elif CIrange == "narrow":
                 if len(mondoTerms) > 1:
                     CIrangeTerm = mondoTerms[1]
@@ -61,51 +64,76 @@ def extract_CIrange_selected_term(CIranges_file, phenopacket_name, CIrange):
     return CIrangeTerm, CIrangeLabel
 
    
-def run_clintlr(clintlr_jar, mondo_path, output_directory, input_phenopacket, multiplier, vcf_file, CIranges_file):
+def run_clintlr(clintlr_jar, mondo_path, data_dir, output_directory, input_phenopacket, multiplier, vcf_file, CIranges_file, nCores, outFile):
     homeDir = os.path.expanduser("~")
-    exomiser = os.path.join(homeDir, "Exomiser/2109_hg19/2109_hg19/2109_hg19_variants.mv.db")
+    exomiser = os.path.join(homeDir, "Exomiser/2109_hg38/2109_hg38/2109_hg38_variants.mv.db")
+    log_file = os.path.join(output_directory, "_".join([os.path.splitext(os.path.basename(input_phenopacket))[0], "Log.log"]))
 
-    arg_list = ["java", "-jar", clintlr_jar, "batch", "-M", mondo_path, "-d", data_dir, "-e", exomiser, "-p", input_phenopacket,
-                "--assembly", "hg19", "--vcf", vcf_file, "-r", CIranges_file, "-m", multiplier, "--compress", "-O", output_directory]
+    phenopacketName = os.path.basename(input_phenopacket).rsplit('.', 1)[0]
+    outPath = os.path.join(output_directory, phenopacketName + "_batch_analysis_results")
+    outFile = ".".join([outPath, "tsv"])
 
-    command = " ".join(arg_list)
-    print(command)
-    retval = os.system(command)
-    print(f"cmd returned {retval}")
+    if not os.path.isfile(outFile):
 
-    #extract_rank_and_write_to_summary_file(input_phenopacket, correct_diagnosis, CIranges_file)
+        arg_list = ["java", "-jar", clintlr_jar, "batch", "-M", mondo_path, "-d", data_dir, "-e", exomiser, "-p", input_phenopacket,
+                    "--assembly", "hg38", "--vcf", vcf_file, "-r", CIranges_file, "-m", multiplier, "--compress", "-O", output_directory,
+                    "--parallelism", nCores, "--strict", ">", log_file]
 
-def extract_rank_and_write_to_summary_file(input_phenopacket, correct_diagnosis, CIranges_file):
+        command = " ".join(arg_list)
+        print(command)
+        retval = os.system(command)
+        print(f"cmd returned {retval}")
+
+        correct_diagnosis = extract_correct_diagnosis_from_phenopacket(input_phenopacket)
+        print(input_phenopacket + " correct dx = " + correct_diagnosis)
+        extract_rank_and_write_to_summary_file(input_phenopacket, correct_diagnosis, CIranges_file, outFile)
+
+def extract_rank_and_write_to_summary_file(input_phenopacket, correct_diagnosis, CIranges_file, inpath):
     phenopacketName = os.path.basename(input_phenopacket).rsplit('.', 1)[0]
 
-    for file in sorted(glob.glob(os.path.join(os.path.dirname(inpath), "*tsv.gz"))):
-        if not file == inpath and phenopacketName in file:
-            with gzip.open(file, 'rt') as rf:
-                fileName = os.path.basename(rf.name)
-                m = re.search('multiplier_(.+?).tsv', fileName)
-                pretestAdjustment = m.group(1) if m else "N/A"
-                targetOmim = correct_diagnosis #[correct_diagnosis[key] for key in correct_diagnosis.keys() if key in phenopacketName][0]
-                extractTargetLine = [line for line in rf if targetOmim in line]
-                if len(extractTargetLine) > 0:
-                    targetLine = extractTargetLine[0]
-                    targetItems = targetLine.split("\t")
-                    rank = targetItems[0]
-                    diseaseId = targetItems[2]
-                    diseaseLabel = targetItems[1]
-                    pretestProb = targetItems[3]
-                    posttestProb = targetItems[4]
-                    CIrange = ""
-                    if "target" in file:
-                        CIrange = "target"
-                        CIrangeTerm, CIrangeLabel = extract_CIrange_selected_term(CIranges_file, phenopacketName, CIrange)
-                    elif "narrow" in file:
-                        CIrange = "narrow"
-                        CIrangeTerm, CIrangeLabel = extract_CIrange_selected_term(CIranges_file, phenopacketName, CIrange)
-                    elif "broad" in file:
-                        CIrange = "broad"
-                        CIrangeTerm, CIrangeLabel = extract_CIrange_selected_term(CIranges_file, phenopacketName, CIrange)
-                    f.write("\n")
-                    f.write("\t".join([phenopacketName, diseaseId, diseaseLabel, rank, pretestAdjustment, pretestProb, posttestProb, CIrange, CIrangeTerm, CIrangeLabel]))
+    print("Writing " + phenopacketName + " results to " + inpath)
+
+    with open(inpath, 'wt') as f:
+        f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
+
+        for file in sorted(glob.glob(os.path.join(os.path.dirname(inpath), "*tsv.gz"))):
+            if not file == inpath and phenopacketName in file:
+                with gzip.open(file, 'rt') as rf:
+                    fileName = os.path.basename(rf.name)
+                    m = re.search('multiplier_(.+?).tsv', fileName)
+                    pretestAdjustment = m.group(1) if m else "N/A"
+                    targetOmim = correct_diagnosis #[correct_diagnosis[key] for key in correct_diagnosis.keys() if key in phenopacketName][0]
+                    extractTargetLine = [line for line in rf if targetOmim in line]
+                    if len(extractTargetLine) > 0:
+                        targetLine = extractTargetLine[0]
+                        targetItems = targetLine.split("\t")
+                        rank = targetItems[0]
+                        diseaseId = targetItems[2]
+                        diseaseLabel = targetItems[1]
+                        pretestProb = targetItems[3]
+                        posttestProb = targetItems[4]
+                        CIrange = ""
+                        if "target" in file:
+                            CIrange = "target"
+                            CIrangeTerm, CIrangeLabel = extract_CIrange_selected_term(CIranges_file, phenopacketName, CIrange)
+                        elif "narrow" in file:
+                            CIrange = "narrow"
+                            CIrangeTerm, CIrangeLabel = extract_CIrange_selected_term(CIranges_file, phenopacketName, CIrange)
+                        elif "broad" in file:
+                            CIrange = "broad"
+                            CIrangeTerm, CIrangeLabel = extract_CIrange_selected_term(CIranges_file, phenopacketName, CIrange)
+                        f.write("\n")
+                        f.write("\t".join([phenopacketName, diseaseId, diseaseLabel, rank, pretestAdjustment, pretestProb, posttestProb, CIrange, CIrangeTerm, CIrangeLabel]))
+                        print("Wrote " + CIrange + " term " + CIrangeTerm + " to " + inpath)
+                try:
+                    os.remove(file)
+                except OSError as e: # name the Exception `e`
+                    print(e)
+
+
+def pool_analysis(phenopList, clintlr_jar, mondoPath, dataDir, outdir, mult, vcf, ranges, nCores, f):
+    return [run_clintlr(clintlr_jar=clintlr_jar, mondo_path=mondoPath, data_dir=dataDir, output_directory=outdir, input_phenopacket=phenop,
+                       multiplier=mult, vcf_file=vcf, CIranges_file=ranges, nCores=nCores, outFile=f) for phenop in phenopList]
 
 
 if __name__ == "__main__":
@@ -117,6 +145,7 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--vcf", default=DEFAULT_VCF_FILE, help="Path to file containing a comma-separated list of gene symbols.")
     parser.add_argument("-p", "--phenopacket", required=True, help="Path(s) to phenopacket JSON file(s).")
     parser.add_argument("-r", "--ranges", default=DEFAULT_CIRANGES_FILE, help="Path to file containing containing Clinical Intuition Range terms.")
+    parser.add_argument("-nC", "--nCores", default=4, help="Number of cores to use for parallel processing.")
     args = parser.parse_args()
     clintlr_jar = args.jar
     if not os.path.isfile(clintlr_jar):
@@ -132,8 +161,9 @@ if __name__ == "__main__":
     mult = args.multiplier
     vcf = args.vcf
     ranges = args.ranges
+    nCores = int(args.nCores)
 
-    outfile_name = os.path.join(outdir, "Tran_analysis_results")
+    outfile_name = os.path.join(outdir, "new_candidates_batch_analysis_results")
 
 
     if os.path.isfile(phenop):
@@ -147,14 +177,38 @@ if __name__ == "__main__":
             print("Wrote results to: " + inpath)
 
     elif os.path.isdir(phenop):
+        # inpath = ".".join([outfile_name, "tsv"])
+        # with open(inpath, 'at') as f:
+        #     f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
+        #     for phenopFile in sorted(glob.glob(os.path.join(phenop, "*json"))):
+        #     right_dx = extract_correct_diagnosis_from_phenopacket(phenopFile)
+        #     run_clintlr(clintlr_jar=clintlr_jar, mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop,
+        #              multiplier=mult, vcf_file=vcf, CIranges_file=ranges)
+        #     # extract_rank_and_write_to_summary_file(input_phenopacket=phenopFile, correct_diagnosis=right_dx, CIranges_file=ranges)
+        # print("Wrote results to: " + inpath)
+
+        allPhenopFiles = sorted(glob.glob(os.path.join(phenop, "*.json")))
+        blockSize = len(allPhenopFiles) / nCores
+        phenopFileBlocks = np.array_split(allPhenopFiles, np.ceil(len(allPhenopFiles)/blockSize))
+
         inpath = ".".join([outfile_name, "tsv"])
-        with open(inpath, 'at') as f:
-            f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
-            for phenopFile in sorted(glob.glob(os.path.join(phenop, "*json"))):
-                right_dx = extract_correct_diagnosis_from_phenopacket(phenopFile)
-                # run_clintlr(clintlr_jar=clintlr_jar, mondo_path=mondoPath, output_directory=outdir, input_phenopacket=phenop,
-                #          multiplier=mult, vcf_file=vcf, CIranges_file=ranges)
-                extract_rank_and_write_to_summary_file(input_phenopacket=phenopFile, correct_diagnosis=right_dx, CIranges_file=ranges)
-            print("Wrote results to: " + inpath)
+        # with open(inpath, 'wt') as f:
+        #     f.write("\t".join(["phenopacket", "diseaseID", "diseaseLabel", "rank", "pretestAdjustment", "pretestProbability", "posttestProbability", "CIrange", "CIrangeTerm", "CIrangeLabel"]))
+        with Pool(nCores) as pool:
+            print(pool.starmap(pool_analysis, zip(phenopFileBlocks, repeat(clintlr_jar), repeat(mondoPath), repeat(data_dir),
+                        repeat(outdir), repeat(mult), repeat(vcf), repeat(ranges), repeat(str(nCores)), repeat(inpath))))
+
+
+#
+# L1 = [1,2,3]
+# L2 = [3,4,5]
+# L3 = [5,6,7]
+#
+# def f(li):
+#     return [x * 2 for x in li]
+#
+# if __name__ == '__main__':
+#     with Pool(4) as pool:
+#         print(pool.map(f, [L1, L2, L3]))
 
 
