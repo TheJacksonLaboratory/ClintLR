@@ -75,10 +75,7 @@ public class LiricalRunTask extends Task<Path> {
                 gene2Genotypes);
 
         // Run the analysis.
-        AnalysisResults results;
-        try (LiricalAnalysisRunner runner = lirical.analysisRunner()) {
-            results = runner.run(analysisData, analysisOptions);
-        }
+        AnalysisResults results = lirical.analysisRunner().run(analysisData, analysisOptions);
 
         // Write out the results into HTML file.
         FilteringStats filteringStats = gene2Genotypes.computeFilteringStats();
