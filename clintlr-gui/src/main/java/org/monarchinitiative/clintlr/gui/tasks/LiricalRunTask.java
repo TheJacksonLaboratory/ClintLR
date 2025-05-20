@@ -7,7 +7,6 @@ import org.monarchinitiative.lirical.core.Lirical;
 import org.monarchinitiative.lirical.core.analysis.AnalysisData;
 import org.monarchinitiative.lirical.core.analysis.AnalysisOptions;
 import org.monarchinitiative.lirical.core.analysis.AnalysisResults;
-import org.monarchinitiative.lirical.core.analysis.LiricalAnalysisRunner;
 import org.monarchinitiative.lirical.core.io.VariantParser;
 import org.monarchinitiative.lirical.core.model.*;
 import org.monarchinitiative.lirical.core.output.AnalysisResultsMetadata;
@@ -75,10 +74,7 @@ public class LiricalRunTask extends Task<Path> {
                 gene2Genotypes);
 
         // Run the analysis.
-        AnalysisResults results;
-        try (LiricalAnalysisRunner runner = lirical.analysisRunner()) {
-            results = runner.run(analysisData, analysisOptions);
-        }
+        AnalysisResults results = lirical.analysisRunner().run(analysisData, analysisOptions);
 
         // Write out the results into HTML file.
         FilteringStats filteringStats = gene2Genotypes.computeFilteringStats();

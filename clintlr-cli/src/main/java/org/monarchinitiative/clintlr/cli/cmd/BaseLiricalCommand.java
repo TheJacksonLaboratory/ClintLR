@@ -241,11 +241,13 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
         MinDiagnosisCount minDiagnosisCount = MinDiagnosisCount.setToUserDefinedMinCount(10);
         float pathogenicityThreshold = runConfiguration.pathogenicityThreshold;
         boolean displayAllVariants = false;
+        boolean showDiseasesWithNoDeleteriousVariants = false;
 
         return new OutputOptions(lrThreshold,
                 minDiagnosisCount,
                 pathogenicityThreshold,
                 displayAllVariants,
+                showDiseasesWithNoDeleteriousVariants,
                 resultsDir,
                 outfilePrefix);
     }
