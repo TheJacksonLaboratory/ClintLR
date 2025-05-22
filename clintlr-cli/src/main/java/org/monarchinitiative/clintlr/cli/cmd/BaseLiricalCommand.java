@@ -247,7 +247,7 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
                 minDiagnosisCount,
                 pathogenicityThreshold,
                 displayAllVariants,
-                showDiseasesWithNoDeleteriousVariants,
+//                showDiseasesWithNoDeleteriousVariants,
                 resultsDir,
                 outfilePrefix);
     }

@@ -653,7 +653,7 @@ public class MainController {
                 minDiagnosisCount,
                 pathogenicityThreshold,
                 displayAllVariants,
-                false,
+//                false,
                 resultsDir,
                 outfilePrefix);
     }
