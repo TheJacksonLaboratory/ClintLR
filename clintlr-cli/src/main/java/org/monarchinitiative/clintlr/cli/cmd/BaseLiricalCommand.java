@@ -86,12 +86,6 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
                 description = "Path to non-default background frequency file.")
         public Path backgroundFrequencyFile = null;
 
-        @CommandLine.Option(names = "--parallelism",
-                description = {
-                        "The number of workers/threads to use.",
-                        "The value must be a positive integer.",
-                        "Default: ${DEFAULT-VALUE}"})
-        public int parallelism = 1;
     }
 
 
@@ -169,11 +163,6 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
             errors.add(msg);
         }
 
-        if (dataSection.parallelism <= 0) {
-            String msg = "Parallelism must be a positive integer but was %d".formatted(dataSection.parallelism);
-            errors.add(msg);
-        }
-
         return errors;
     }
 
@@ -193,7 +182,6 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
         return LiricalBuilder.builder(dataSection.liricalDataDirectory)
                 .exomiserVariantDbPath(parseGenomeBuild(getGenomeBuild()), dataSection.exomiserDatabase)
 //                .defaultVariantAlleleFrequency(runConfiguration.defaultAlleleFrequency)
-                .parallelism(dataSection.parallelism)
                 .build();
     }
 
