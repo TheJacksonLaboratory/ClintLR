@@ -85,6 +85,7 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
         @CommandLine.Option(names = {"-b", "--background"},
                 description = "Path to non-default background frequency file.")
         public Path backgroundFrequencyFile = null;
+
     }
 
 
@@ -161,6 +162,7 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
             LOGGER.error(msg);
             errors.add(msg);
         }
+
         return errors;
     }
 
@@ -227,11 +229,13 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
         MinDiagnosisCount minDiagnosisCount = MinDiagnosisCount.setToUserDefinedMinCount(10);
         float pathogenicityThreshold = runConfiguration.pathogenicityThreshold;
         boolean displayAllVariants = false;
+        boolean showDiseasesWithNoDeleteriousVariants = false;
 
         return new OutputOptions(lrThreshold,
                 minDiagnosisCount,
                 pathogenicityThreshold,
                 displayAllVariants,
+//                showDiseasesWithNoDeleteriousVariants,
                 resultsDir,
                 outfilePrefix);
     }
