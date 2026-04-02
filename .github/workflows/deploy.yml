@@ -8,7 +8,7 @@ on:
 
 env:
   # The LIRICAL tag to check out. The tag must correspond to the LIRICAL version used by ClintLR
-  LIRICAL_TAG: v2.0.0
+  LIRICAL_TAG: v2.3.0
 
 jobs:
   build:
