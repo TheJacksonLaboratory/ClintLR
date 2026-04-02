@@ -39,10 +39,12 @@ public class Download {
 
     public void run() throws Exception {
         URL mondoJsonUrl = new URL("http://purl.obolibrary.org/obo/mondo.json"); //new URL("https://storage.googleapis.com/ielis/l4ci/mondo.2022-12-01.json.gz");
-        String hg19UcscURL = "https://storage.googleapis.com/ielis/jannovar/v0.35/hg19_ucsc.ser";
-        String hg19RefSeqURL = "https://storage.googleapis.com/ielis/jannovar/v0.35/hg19_refseq.ser";
-        String hg38UcscURL = "https://storage.googleapis.com/ielis/jannovar/v0.35/hg38_ucsc.ser";
-        String hg38RefSeqURL = "https://storage.googleapis.com/ielis/jannovar/v0.35/hg38_refseq.ser";
+        String hg19EnsemblURL = "https://zenodo.org/record/5410367/files/ensembl_87_hg19.ser";
+        String hg19RefSeqURL = "https://zenodo.org/record/5410367/files/refseq_105_hg19.ser";
+        String hg19RefSeqCuratedURL = "https://zenodo.org/record/5410367/files/refseq_curated_105_hg19.ser";
+        String hg38EnsemblURL = "https://zenodo.org/record/5410367/files/ensembl_91_hg38.ser";
+        String hg38RefSeqURL = "https://zenodo.org/record/5410367/files/refseq_109_hg38.ser";
+        String hg38RefSeqCuratedURL = "https://zenodo.org/record/5410367/files/refseq_curated_109_hg38.ser";
 
         System.out.println("Downloading mondo.json and LIRICAL data files to {}" + Path.of(path).toAbsolutePath());
         // Download Mondo JSON and Lirical data files and complain in case of any errors.
@@ -59,10 +61,12 @@ public class Download {
                 .mondoJson()
                 .geneInfoHuman()
                 // Jannovar v0.35 transcript databases
-                .custom("hg19_ucsc.ser", createUrlOrExplode(hg19UcscURL))
                 .custom("hg19_refseq.ser", createUrlOrExplode(hg19RefSeqURL))
-                .custom("hg38_ucsc.ser", createUrlOrExplode(hg38UcscURL))
+                .custom("hg19_refseq_curated.ser", createUrlOrExplode(hg19RefSeqCuratedURL))
                 .custom("hg38_refseq.ser", createUrlOrExplode(hg38RefSeqURL))
+                .custom("hg38_refseq_curated.ser", createUrlOrExplode(hg38RefSeqCuratedURL))
+                .custom("hg19_ensembl.ser", createUrlOrExplode(hg19EnsemblURL))
+                .custom("hg38_ensembl.ser", createUrlOrExplode(hg38EnsemblURL))
                 .build();
 
         downloader.download();

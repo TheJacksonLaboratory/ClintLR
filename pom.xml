@@ -27,7 +27,7 @@
       <maven.compiler.target>${java.version}</maven.compiler.target>
       <javafx.version>18</javafx.version>
       <phenol.version>[2.0.5,3.0.0)</phenol.version>
-      <lirical.version>2.0.0</lirical.version>
+      <lirical.version>2.3.0</lirical.version>
       <phenopacket.version>2.0.2</phenopacket.version>
       <phenopacket-tools.version>1.0.0-RC3</phenopacket-tools.version>
       <protobuf.version>3.21.7</protobuf.version>
@@ -101,7 +101,7 @@
         <dependency>
           <groupId>org.monarchinitiative.biodownload</groupId>
           <artifactId>biodownload</artifactId>
-          <version>1.1.0</version>
+          <version>1.1.2</version>
         </dependency>
 
         <dependency>

@@ -37,7 +37,7 @@ public class OptionalResourcesTest {
                 lirical.default.variant.background.frequency=0.1234
                 lirical.strict=true
                 lirical.default.allele.frequency=1.0E-7
-                lirical.transcript.database=UCSC
+                lirical.transcript.database=REFSEQ
                 lirical.genome.build=HG19
                 lirical.results.directory=/path/to/lirical/results
                 anything.else.should.not.crash=the/application""";
@@ -57,7 +57,7 @@ public class OptionalResourcesTest {
         assertThat(liricalResources.getDefaultVariantBackgroundFrequency(), closeTo(.1234, ERROR));
         assertThat(liricalResources.isStrict(), equalTo(true));
         assertThat((double) liricalResources.getDefaultAlleleFrequency(), closeTo(1E-7, ERROR));
-        assertThat(liricalResources.getTranscriptDatabase(), equalTo(TranscriptDatabase.UCSC));
+        assertThat(liricalResources.getTranscriptDatabase(), equalTo(TranscriptDatabase.REFSEQ));
         assertThat(liricalResources.getGenomeBuild(), equalTo(GenomeBuild.HG19));
 
         assertThat(instance.getLiricalResults(), equalTo(Path.of("/path/to/lirical/results")));
@@ -76,7 +76,7 @@ public class OptionalResourcesTest {
         liricalResources.setDefaultVariantBackgroundFrequency(.1234);
         liricalResources.setStrict(true);
         liricalResources.setDefaultAlleleFrequency(1E-5f);
-        liricalResources.setTranscriptDatabase(TranscriptDatabase.UCSC);
+        liricalResources.setTranscriptDatabase(TranscriptDatabase.REFSEQ);
         liricalResources.setGenomeBuild(GenomeBuild.HG19);
         instance.setLiricalResults(Path.of("/path/to/lirical/results"));
 
@@ -99,7 +99,7 @@ public class OptionalResourcesTest {
         assertThat(properties.getProperty(LiricalResources.DEFAULT_VARIANT_BACKGROUND_FREQUENCY_PROPERTY), equalTo("0.1234"));
         assertThat(properties.getProperty(LiricalResources.STRICT_PROPERTY), equalTo("true"));
         assertThat(properties.getProperty(LiricalResources.DEFAULT_ALLELE_PROPERTY), equalTo("1.0E-5"));
-        assertThat(properties.getProperty(LiricalResources.TRANSCRIPT_DATABASE_PROPERTY), equalTo("UCSC"));
+        assertThat(properties.getProperty(LiricalResources.TRANSCRIPT_DATABASE_PROPERTY), equalTo("REFSEQ"));
         assertThat(properties.getProperty(LiricalResources.GENOME_BUILD_PROPERTY), equalTo("HG19"));
 
         assertThat(properties.getProperty(OptionalResources.LIRICAL_RESULTS_PROPERTY),

@@ -40,10 +40,12 @@ public class DownloadLiricalData extends Task<Void> {
                 .hgnc()
                 .medgene2MIM()
                 // Jannovar v0.35 transcript databases
-                .custom("hg19_ucsc.ser", createUrlOrExplode(liricalProperties.jannovarHg19UcscUrl()))
+                .custom("hg19_ensembl.ser", createUrlOrExplode(liricalProperties.jannovarHg19EnsemblUrl()))
                 .custom("hg19_refseq.ser", createUrlOrExplode(liricalProperties.jannovarHg19RefseqUrl()))
-                .custom("hg38_ucsc.ser", createUrlOrExplode(liricalProperties.jannovarHg38UcscUrl()))
+                .custom("hg19_refseq_curated.ser", createUrlOrExplode(liricalProperties.jannovarHg19RefseqCuratedUrl()))
+                .custom("hg38_ensembl.ser", createUrlOrExplode(liricalProperties.jannovarHg38EnsemblUrl()))
                 .custom("hg38_refseq.ser", createUrlOrExplode(liricalProperties.jannovarHg38RefseqUrl()))
+                .custom("hg38_refseq_curated.ser", createUrlOrExplode(liricalProperties.jannovarHg38RefseqCuratedUrl()))
                 .build();
         downloader.download();
         return null;
