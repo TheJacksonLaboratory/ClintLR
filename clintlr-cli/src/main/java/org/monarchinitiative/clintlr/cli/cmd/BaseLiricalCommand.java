@@ -108,7 +108,7 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
         public boolean disregardDiseaseWithNoDeleteriousVariants = true;
 
         @CommandLine.Option(names = {"--transcript-db"},
-                paramLabel = "{REFSEQ,UCSC}",
+                paramLabel = "{Ensembl,Refseq,Refseq_Curated}",
                 description = "Transcript database (default: ${DEFAULT-VALUE}).")
         public TranscriptDatabase transcriptDb = TranscriptDatabase.REFSEQ;
 
@@ -235,7 +235,7 @@ abstract class BaseLiricalCommand implements Callable<Integer> {
                 minDiagnosisCount,
                 pathogenicityThreshold,
                 displayAllVariants,
-//                showDiseasesWithNoDeleteriousVariants,
+                showDiseasesWithNoDeleteriousVariants,
                 resultsDir,
                 outfilePrefix);
     }

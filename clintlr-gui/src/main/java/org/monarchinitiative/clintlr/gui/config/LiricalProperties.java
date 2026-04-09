@@ -5,17 +5,19 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "clintlr.lirical")
 public class LiricalProperties {
 
-    private String jannovarHg19UcscUrl;
+    private String jannovarHg19EnsemblUrl;
     private String jannovarHg19RefseqUrl;
-    private String jannovarHg38UcscUrl;
+    private String jannovarHg19RefseqCuratedUrl;
+    private String jannovarHg38EnsemblUrl;
     private String jannovarHg38RefseqUrl;
+    private String jannovarHg38RefseqCuratedUrl;
 
-    public String jannovarHg19UcscUrl() {
-        return jannovarHg19UcscUrl;
+    public String jannovarHg19EnsemblUrl() {
+        return jannovarHg19EnsemblUrl;
     }
 
-    public void setJannovarHg19UcscUrl(String jannovarHg19UcscUrl) {
-        this.jannovarHg19UcscUrl = jannovarHg19UcscUrl;
+    public void setJannovarHg19EnsemblUrl(String jannovarHg19EnsemblUrl) {
+        this.jannovarHg19EnsemblUrl = jannovarHg19EnsemblUrl;
     }
 
     public String jannovarHg19RefseqUrl() {
@@ -26,12 +28,20 @@ public class LiricalProperties {
         this.jannovarHg19RefseqUrl = jannovarHg19RefseqUrl;
     }
 
-    public String jannovarHg38UcscUrl() {
-        return jannovarHg38UcscUrl;
+    public String jannovarHg19RefseqCuratedUrl() {
+        return jannovarHg19RefseqCuratedUrl;
     }
 
-    public void setJannovarHg38UcscUrl(String jannovarHg38UcscUrl) {
-        this.jannovarHg38UcscUrl = jannovarHg38UcscUrl;
+    public void setJannovarHg19RefseqCuratedUrl(String jannovarHg19RefseqCuratedUrl) {
+        this.jannovarHg19RefseqCuratedUrl = jannovarHg19RefseqCuratedUrl;
+    }
+
+    public String jannovarHg38EnsemblUrl() {
+        return jannovarHg38EnsemblUrl;
+    }
+
+    public void setJannovarHg38EnsemblUrl(String jannovarHg38EnsemblUrl) {
+        this.jannovarHg38EnsemblUrl = jannovarHg38EnsemblUrl;
     }
 
     public String jannovarHg38RefseqUrl() {
@@ -40,5 +50,13 @@ public class LiricalProperties {
 
     public void setJannovarHg38RefseqUrl(String jannovarHg38RefseqUrl) {
         this.jannovarHg38RefseqUrl = jannovarHg38RefseqUrl;
+    }
+
+    public String jannovarHg38RefseqCuratedUrl() {
+        return jannovarHg38RefseqCuratedUrl;
+    }
+
+    public void setJannovarHg38RefseqCuratedUrl(String jannovarHg38RefseqCuratedUrl) {
+        this.jannovarHg38RefseqCuratedUrl = jannovarHg38RefseqCuratedUrl;
     }
 }

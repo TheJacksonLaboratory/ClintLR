@@ -11,7 +11,9 @@ clintlr:
   mondo-json-url: http://purl.obolibrary.org/obo/mondo.json
   lirical:
     # TODO - consider using Jannovar files hosted at Zenodo, as listed here - https://github.com/charite/jannovar
-    jannovar-hg19-ucsc-url: https://storage.googleapis.com/ielis/jannovar/v0.35/hg19_ucsc.ser
-    jannovar-hg19-refseq-url: https://storage.googleapis.com/ielis/jannovar/v0.35/hg19_refseq.ser
-    jannovar-hg38-ucsc-url: https://storage.googleapis.com/ielis/jannovar/v0.35/hg38_ucsc.ser
-    jannovar-hg38-refseq-url: https://storage.googleapis.com/ielis/jannovar/v0.35/hg38_refseq.ser
+    jannovar-hg19-ensembl-url: https://zenodo.org/record/5410367/files/ensembl_87_hg19.ser
+    jannovar-hg19-refseq-url: https://zenodo.org/record/5410367/files/refseq_105_hg19.ser
+    jannovar-hg19-refseq-curated-url: https://zenodo.org/record/5410367/files/refseq_curated_105_hg19.ser
+    jannovar-hg38-ensembl-url: https://zenodo.org/record/5410367/files/ensembl_91_hg38.ser
+    jannovar-hg38-refseq-url: https://zenodo.org/record/5410367/files/refseq_109_hg38.ser
+    jannovar-hg38-refseq-curated-url: https://zenodo.org/record/5410367/files/refseq_curated_109_hg38.ser

@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.monarchinitiative.clintlr</groupId>
   <artifactId>clintlr</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <packaging>pom</packaging>
   <name>ClintLR</name>
   <parent>
@@ -25,12 +25,12 @@
       <java.version>17</java.version>
       <maven.compiler.source>${java.version}</maven.compiler.source>
       <maven.compiler.target>${java.version}</maven.compiler.target>
-      <javafx.version>18</javafx.version>
+      <javafx.version>24</javafx.version>
       <phenol.version>[2.0.5,3.0.0)</phenol.version>
-      <lirical.version>2.0.0</lirical.version>
+      <lirical.version>2.4.0</lirical.version>
       <phenopacket.version>2.0.2</phenopacket.version>
       <phenopacket-tools.version>1.0.0-RC3</phenopacket-tools.version>
-      <protobuf.version>3.21.7</protobuf.version>
+      <protobuf.version>4.34.1</protobuf.version>
       <jackson.fasterxml.version>2.15.0</jackson.fasterxml.version>
       <slf4j.version>[2.0.0,3.0.0)</slf4j.version>
       <commons.io>2.8.0</commons.io>
@@ -101,7 +101,7 @@
         <dependency>
           <groupId>org.monarchinitiative.biodownload</groupId>
           <artifactId>biodownload</artifactId>
-          <version>1.1.0</version>
+          <version>1.1.2</version>
         </dependency>
 
         <dependency>
