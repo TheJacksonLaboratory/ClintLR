@@ -24,13 +24,6 @@ An executable JAR file can also be built from sources. When building from source
 Instructions for installing LIRICAL as a library can be found
 [here](https://thejacksonlaboratory.github.io/LIRICAL/stable/setup.html#building-to-use-as-a-library).
 
-If there are issues building all LIRICAL modules, you can build only the ClintLR necessary LIRICAL modules (core, io, and configuration) 
-using the following command:
-
-```
-  ./mvnw clean package -pl :lirical-core,:lirical-io,:lirical-configuration
-```
-
 To build ClintLR from sources, go the GitHub page of [ClintLR](https://github.com/TheJacksonLaboratory/ClintLR), 
 and clone or download the project, then build the executable from source with Maven:
 
