@@ -25,7 +25,7 @@
       <java.version>17</java.version>
       <maven.compiler.source>${java.version}</maven.compiler.source>
       <maven.compiler.target>${java.version}</maven.compiler.target>
-      <javafx.version>18</javafx.version>
+      <javafx.version>24</javafx.version>
       <phenol.version>[2.0.5,3.0.0)</phenol.version>
       <lirical.version>2.4.0</lirical.version>
       <phenopacket.version>2.0.2</phenopacket.version>
