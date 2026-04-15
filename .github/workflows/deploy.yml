@@ -1,4 +1,4 @@
-name: Build GUI JARs
+name: Build GUI JARs and Release
 
 on:
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
 
       - uses: graalvm/setup-graalvm@v4
         with:
-          java-version: 21
+          java-version: 24
           distribution: 'graalvm'
 
       - name: Install LIRICAL
@@ -47,3 +47,24 @@ jobs:
           name: clintlr-gui-${{ matrix.os }}
           path: clintlr-gui/target/clintlr-gui-*.jar
           retention-days: 7
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: clintlr-gui/target/
+
+      - name: Display structure
+        run: ls -R clintlr-gui/target/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v4
+        with:
+          files: |
+            clintlr-gui/target/clintlr-gui-*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
