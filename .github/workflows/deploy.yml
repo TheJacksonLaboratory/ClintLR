@@ -68,6 +68,6 @@ jobs:
         with:
 #          tag_name: ${{ github.ref_name }}
           files:
-            dist/*
+            clintlr-gui/target/clintlr-gui-*-latest/clintlr-gui-*.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
