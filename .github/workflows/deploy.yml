@@ -50,8 +50,8 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: build
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -62,7 +62,7 @@ jobs:
         run: ls -R clintlr-gui/target/
 
       - name: Create Release
-        uses: softprops/action-gh-release@v4
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             clintlr-gui/target/clintlr-gui-*.jar
