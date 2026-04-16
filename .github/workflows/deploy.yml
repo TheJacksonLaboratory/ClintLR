@@ -66,8 +66,9 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          files: |
-            clintlr-gui/target/clintlr-gui-*.jar
+#          tag_name: ${{ github.ref_name }}
+          files:
+
+            dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
