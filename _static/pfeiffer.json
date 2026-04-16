@@ -1,0 +1,51 @@
+{
+   "subject": {
+      "id": "individual_1",
+      "timeAtLastEncounter": {
+         "age": {
+            "iso8601duration": "P3Y"
+         }
+      },
+      "sex": "FEMALE"
+   },
+   "metaData": {
+      "createdBy": "Anonymous undefined",
+      "submittedBy": "Anonymous undefined",
+      "resources": [
+         {
+            "id": "hp",
+            "name": "Human Phenotype Ontology",
+            "url": "http://purl.obolibrary.org/obo/hp.json",
+            "version": "2023-04-05",
+            "namespacePrefix": "HP",
+            "iriPrefix": "http://purl.obolibrary.org/obo/HP_"
+         }
+      ],
+      "created": "2023-07-14T20:26:33.767Z",
+      "phenopacketSchemaVersion": "2.0",
+      "externalReferences": []
+   },
+   "id": "pfeiffer",
+   "phenotypicFeatures": [
+      {
+         "type": {
+            "id": "HP:0002676",
+            "label": "Cloverleaf skull"
+         }
+      },
+      {
+         "excluded": false,
+         "type": {
+            "id": "HP:0000244",
+            "label": "Brachyturricephaly"
+         }
+      },
+      {
+         "excluded": false,
+         "type": {
+            "id": "HP:0000520",
+            "label": "Proptosis"
+         }
+      }
+   ]
+}
