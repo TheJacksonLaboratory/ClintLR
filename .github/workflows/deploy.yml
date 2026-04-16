@@ -51,7 +51,7 @@ jobs:
   release:
     name: Create GitHub Release
     needs: build
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
